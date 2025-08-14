@@ -4,7 +4,7 @@
 .env
 .DS_Store
 /api_zuixinh.tar.gz
-/runtime
+/runtime/
 /public/.user.ini
 /*.sql
 /composer.lock.bak

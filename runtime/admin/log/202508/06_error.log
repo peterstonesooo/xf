@@ -1,6 +1,0 @@
-[2025-08-06T13:14:33+08:00][error] [8192]htmlentities(): Passing null to parameter #1 ($string) of type string is deprecated[/Applications/XAMPP/xamppfiles/htdocs/xf/runtime/admin/temp/96d507430c767866cbf70d1e1df6a095.php:207]
-[2025-08-06T13:14:45+08:00][error] [8192]htmlentities(): Passing null to parameter #1 ($string) of type string is deprecated[/Applications/XAMPP/xamppfiles/htdocs/xf/runtime/admin/temp/96d507430c767866cbf70d1e1df6a095.php:207]
-[2025-08-06T13:18:25+08:00][error] [8192]htmlentities(): Passing null to parameter #1 ($string) of type string is deprecated[/Applications/XAMPP/xamppfiles/htdocs/xf/runtime/admin/temp/96d507430c767866cbf70d1e1df6a095.php:207]
-[2025-08-06T13:18:29+08:00][error] [8192]htmlentities(): Passing null to parameter #1 ($string) of type string is deprecated[/Applications/XAMPP/xamppfiles/htdocs/xf/runtime/admin/temp/96d507430c767866cbf70d1e1df6a095.php:207]
-[2025-08-06T13:18:38+08:00][error] [8192]htmlentities(): Passing null to parameter #1 ($string) of type string is deprecated[/Applications/XAMPP/xamppfiles/htdocs/xf/runtime/admin/temp/96d507430c767866cbf70d1e1df6a095.php:207]
-[2025-08-06T13:21:12+08:00][error] [8192]htmlentities(): Passing null to parameter #1 ($string) of type string is deprecated[/Applications/XAMPP/xamppfiles/htdocs/xf/runtime/admin/temp/96d507430c767866cbf70d1e1df6a095.php:207]

@@ -1,0 +1,45 @@
+# IDE files
+/.idea
+/.vscode
+
+# Log files
+*.log
+
+# Environment files
+.env
+.env.backup
+
+# System files
+.DS_Store
+
+# Archive files
+/api_zuixinh.tar.gz
+*.tar.gz
+*.zip
+*.rar
+
+# Runtime directory
+/runtime/
+
+# Public files
+/public/.user.ini
+
+# SQL files
+/*.sql
+
+# Backup files
+/composer.lock.bak
+
+# SSL certificate challenge files
+/.well-known/acme-challenge/h1PVSottpXWnP_wkzW-p34bdRv6BCTB2eWN5pxnt3kc
+/.well-known/acme-challenge/lloeZVNh4mSyuu9D5tmyT8mxlRDZ-MTR7Jdtw1rQzSo
+public/.well-known/acme-challenge/*
+
+# Old files
+/app/common/command/CheckBonus_old2.php
+/public/chatlink.html
+/test/TestCheckBonus.php
+
+# Cache files
+/vendor/bin/.phpunit.result.cache
+/config/cache.php 

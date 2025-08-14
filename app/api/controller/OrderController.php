@@ -232,10 +232,10 @@ class OrderController extends AuthController
                 }
                 if($project['class'] == 12){
                     if($project['gongfu_amount'] > 0){
-                        User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,'国家专项补贴共富金',0,1);
+                        User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,'共富专项金',0,1);
                     }
                     if($project['minsheng_amount'] > 0){
-                        User::changeInc($user['id'], $project['minsheng_amount'], 'balance',52,$order['id'],4,'国家专项补贴民生金',0,1);
+                        User::changeInc($user['id'], $project['minsheng_amount'], 'balance',52,$order['id'],4,'民生保障金',0,1);
                     }
                 }
                 // 累计总收益和赠送数字人民币  到期结算
@@ -569,10 +569,10 @@ class OrderController extends AuthController
                 }
                 if($project['class'] == 11){
                     if($project['minsheng_amount'] > 0){
-                        User::changeInc($user['id'], $project['minsheng_amount'], 'balance',52,$order['id'],4,'国家专项补贴民生金',0,1);
+                        User::changeInc($user['id'], $project['minsheng_amount'], 'balance',52,$order['id'],4,'民生保障金',0,1);
                     }
                     if($project['gongfu_amount'] > 0){
-                        User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,'国家专项补贴共富金',0,1);
+                        User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,'共富专项金',0,1);
                     }
                 }
                 if($project['project_group_id'] == 13){

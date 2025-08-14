@@ -1,0 +1,61 @@
+<div class="search">
+    <!-- <a {:auth_show_judge('PaymentConfig/addPaymentConfig')} class="btn btn-flat btn-success m_10 f_r"
+    href="{:url('admin/Huodong/signinPrizeAdd')}"><i class="fa fa-plus m-r-10"></i>添 加</a> -->
+</form>
+</div>
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>名称</th>
+                            <th>简介</th>
+                            <th>赠送金额</th>
+                            <th>概率（百分比）</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>{$v['name']}</td>
+                                <td>{$v['intro']}</td>
+                                <td>{$v['amount']}</td>
+                                <td>{$v['v']}</td>
+                                <td>
+                                    <a {:auth_show_judge('LevelConfig/editLevelConfig')} class="btn btn-flat btn-info
+                                    btn-xs" href="{:url('admin/Huodong/prizeSetting', ['id' => $v['id']])}"><i
+                                            class="fa fa-edit"></i> 编辑</a>
+                                    <a {:auth_show_judge('Huodong/del')} class="btn btn-flat btn-danger
+                                            btn-xs" href="javascript:;" onclick="del({$v['id']})"><i
+                                                    class="fa fa-trash-o"></i> 删除</a>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function del(id)
+    {
+        //确认框
+        layer.confirm('确定删除吗？', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("admin/Huodong/del")}', {id: id}, function (res) {
+                if (res.code == '200') {
+                    location.reload(true);
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+</script>

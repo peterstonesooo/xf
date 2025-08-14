@@ -1,0 +1,253 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['user_id']??''}" name="user_id" placeholder="用户ID" class="form-control">
+        <select name="type" class="form-control">
+            <option value="">搜索类型</option>
+            <?php foreach (config('map.user_balance_log')['balance_type_map'] as $k => $v) { ?>
+                <option <?php if (isset($req['type']) && $req['type'] == $k) {
+                    echo 'selected = "selected"';
+                } ?> value="{$k}">{$v}
+                </option>
+            <?php } ?>
+        </select>
+        <select name="log_type" class="form-control">
+            <option value="">搜索钱包类型</option>
+            <?php foreach (config('map.user_balance_log')['log_type_map'] as $k => $v) { ?>
+                <option <?php if (isset($req['log_type']) && $req['log_type'] == $k) {
+                    echo 'selected = "selected"';
+                } ?> value="{$k}">{$v}
+                </option>
+            <?php } ?>
+        </select>
+        <input placeholder="开始时间" autocomplete="off" value="{$req['start_date']??''}" name="start_date" class="form-control layer-date" id="start">
+        ～
+        <input placeholder="结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
+
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <h3 class="box-title">数据修正 - 用户余额日志重复数据（type在[59,67,68,60,64]范围内）</h3>
+                <div class="box-tools">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="batchDelete()">批量删除重复数据</button>
+                </div>
+            </div>
+            <div class="box-body table-responsive no-padding">
+                <table class="table table-bordered table-hover table-striped">
+                    <tbody>
+                    <tr>
+                        <th width="50">
+                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                        </th>
+                        <th>用户ID</th>
+                        <th>类型</th>
+                        <th>钱包类型</th>
+                        <th>关联ID</th>
+                        <th>变动金额</th>
+                        <th>日期</th>
+                        <th>重复数量</th>
+                        <th>操作</th>
+                    </tr>
+                    <?php if (!empty($data)) { ?>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="group-checkbox" value="{$v['user_id']}_{$v['type']}_{$v['log_type']}_{$v['relation_id']}_{$v['change_balance']}_{$v['date']}">
+                                </td>
+                                <td>{$v['user_id']}</td>
+                                <td>
+                                    <?php 
+                                    $typeMap = config('map.user_balance_log.balance_type_map');
+                                    echo isset($typeMap[$v['type']]) ? $typeMap[$v['type']] : $v['type'];
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php 
+                                    $logTypeMap = config('map.user_balance_log.log_type_map');
+                                    echo isset($logTypeMap[$v['log_type']]) ? $logTypeMap[$v['log_type']] : $v['log_type'];
+                                    ?>
+                                </td>
+                                <td>{$v['relation_id']}</td>
+                                <td>{$v['change_balance']}</td>
+                                <td>{$v['date']}</td>
+                                <td><span class="label label-danger">{$v['duplicate_count']}</span></td>
+                                <td>
+                                    <button type="button" class="btn btn-xs btn-warning" onclick="viewDetails('{$v['user_id']}', '{$v['type']}', '{$v['log_type']}', '{$v['relation_id']}', '{$v['change_balance']}', '{$v['date']}')">查看详情</button>
+                                    <button type="button" class="btn btn-xs btn-danger" onclick="deleteDuplicate('{$v['user_id']}', '{$v['type']}', '{$v['log_type']}', '{$v['relation_id']}', '{$v['change_balance']}', '{$v['date']}')">删除重复</button>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    <?php } else { ?>
+                        <tr>
+                            <td colspan="9" style="text-align: center;">暂无重复数据</td>
+                        </tr>
+                    <?php } ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php if (!empty($data)) { ?>
+                <div style="text-align:center;font-size: 14px;padding: 10px;">
+                    <h5>共找到 <?php echo count($data); ?> 组重复数据</h5>
+                </div>
+            <?php } ?>
+        </div>
+    </div>
+</div>
+
+<!-- 详情模态框 -->
+<div class="modal fade" id="detailsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <h4 class="modal-title">重复数据详情</h4>
+            </div>
+            <div class="modal-body">
+                <div id="detailsContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        //日期范围限制
+        var start = {
+            elem: '#start',
+            format: 'yyyy-MM-dd',
+        };
+        var end = {
+            elem: '#end',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(start);
+        laydate.render(end);
+    });
+
+    function toggleSelectAll() {
+        var checked = $('#selectAll').prop('checked');
+        $('.group-checkbox').prop('checked', checked);
+    }
+
+    function viewDetails(userId, type, logType, relationId, changeBalance, date) {
+        // 获取当前页面的数据
+        var details = <?php echo json_encode($data ?? []); ?>;
+        var targetGroup = null;
+        
+        for (var i = 0; i < details.length; i++) {
+            var item = details[i];
+            if (item.user_id == userId && item.type == type && item.log_type == logType && 
+                item.relation_id == relationId && item.change_balance == changeBalance && item.date == date) {
+                targetGroup = item;
+                break;
+            }
+        }
+        
+        if (targetGroup && targetGroup.details) {
+            var html = '<table class="table table-bordered">';
+            html += '<tr><th>ID</th><th>用户ID</th><th>类型</th><th>钱包类型</th><th>关联ID</th><th>变动前余额</th><th>变动金额</th><th>变动后余额</th><th>备注</th><th>创建时间</th></tr>';
+            
+            for (var i = 0; i < targetGroup.details.length; i++) {
+                var detail = targetGroup.details[i];
+                html += '<tr>';
+                html += '<td>' + (detail.id || '') + '</td>';
+                html += '<td>' + (detail.user_id || '') + '</td>';
+                html += '<td>' + (detail.type || '') + '</td>';
+                html += '<td>' + (detail.log_type || '') + '</td>';
+                html += '<td>' + (detail.relation_id || '') + '</td>';
+                html += '<td>' + (detail.before_balance || '') + '</td>';
+                html += '<td>' + (detail.change_balance || '') + '</td>';
+                html += '<td>' + (detail.after_balance || '') + '</td>';
+                html += '<td>' + (detail.remark || '') + '</td>';
+                html += '<td>' + (detail.created_at || '') + '</td>';
+                html += '</tr>';
+            }
+            html += '</table>';
+            
+            $('#detailsContent').html(html);
+            $('#detailsModal').modal('show');
+        } else {
+            alert('未找到详细信息');
+        }
+    }
+
+    function deleteDuplicate(userId, type, logType, relationId, changeBalance, date) {
+        if (!confirm('确定要删除这组重复数据吗？将保留第一条记录，删除其他重复记录。')) {
+            return;
+        }
+        
+        $.ajax({
+            url: '{:url("deleteDuplicateData")}',
+            type: 'POST',
+            data: {
+                user_id: userId,
+                type: type,
+                log_type: logType,
+                relation_id: relationId,
+                change_balance: changeBalance,
+                date: date
+            },
+            success: function(res) {
+                if (res.code == 0) {
+                    alert(res.msg);
+                    location.reload();
+                } else {
+                    alert(res.msg);
+                }
+            },
+            error: function() {
+                alert('操作失败，请重试');
+            }
+        });
+    }
+
+    function batchDelete() {
+        var selectedGroups = [];
+        $('.group-checkbox:checked').each(function() {
+            var values = $(this).val().split('_');
+            selectedGroups.push({
+                user_id: values[0],
+                type: values[1],
+                log_type: values[2],
+                relation_id: values[3],
+                change_balance: values[4],
+                date: values[5]
+            });
+        });
+        
+        if (selectedGroups.length == 0) {
+            alert('请选择要删除的重复数据组');
+            return;
+        }
+        
+        if (!confirm('确定要批量删除选中的 ' + selectedGroups.length + ' 组重复数据吗？')) {
+            return;
+        }
+        
+        $.ajax({
+            url: '{:url("batchDeleteDuplicateData")}',
+            type: 'POST',
+            data: {
+                ids: selectedGroups
+            },
+            success: function(res) {
+                if (res.code == 0) {
+                    alert(res.msg);
+                    location.reload();
+                } else {
+                    alert(res.msg);
+                }
+            },
+            error: function() {
+                alert('操作失败，请重试');
+            }
+        });
+    }
+</script> 

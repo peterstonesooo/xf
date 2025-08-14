@@ -1,0 +1,101 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['user_id']??''}" name="user_id" placeholder="搜索用户ID"
+        class="form-control">
+        <input type="text" value="{$req['user_phone']??''}" name="user_phone" placeholder="搜索手机号码" class="form-control">
+        <select name="red_envelope_id" class="form-control">
+            <option value="">红包类型</option>
+            <?php foreach($prize as $v) {?>
+            <option <?php if (isset($req['red_envelope_id']) && $req['red_envelope_id'] == $v['id']){echo 'selected = "selected"';} ?> value="{$v['id']}">{$v['name']}红包</option>
+            <?php }?>
+        </select>
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <!-- <a {:auth_show_judge('AdminUser/addAdminUser')} class="btn btn-flat btn-success m_10 f_r" href="{:url('admin/AdminUser/showAdminUser')}"><i class="fa fa-plus m-r-10"></i>添 加</a> -->
+    </form>
+</div>
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户</th>
+                            <th>红包金额</th>
+                            <th>领取时间</th>
+                            <!-- <th>手机号码</th>
+                            <th>身份证号</th>
+                            <th>收货地址</th>
+                            <th>手持身份证人像面照片</th>
+                            <th>手持身份证国徽面照片</th>
+                            <th>同名银行卡照片</th>
+                            <th>同名微信收款照片</th>
+                            <th>同名支付宝收款码</th>
+                            <th>实名认证金</th>
+                            <th>实名认证支付状态</th>
+                            <th>创建时间</th>
+                            <th>操作</th> -->
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>{$v['phone']}</td>
+                                <td>{$v['number']}</td>
+                                <td>{$v['created_at']}</td>
+                                <!-- <td>{$v['user_phone']}</td>
+                                <td>{$v['user_idcard']}</td>
+                                <td>{$v['user_address']}</td>
+                                <td>{$v['user_idcard_photo_front']}</td>
+                                <td>{$v['user_idcard_photo_back']}</td>
+                                <td>{$v['user_bankcard_photo']}</td>
+                                <td>{$v['user_wechat_photo']}</td>
+                                <td>{$v['user_alipay_photo']}</td>
+                                <td>{$v['auth_price']}</td>
+                                <td>
+                                    <?php switch($v){
+                                        case $v['pay_status'] == 0:
+                                            echo '未支付';
+                                            break;
+                                        case $v['pay_status'] == 1:
+                                            echo '已支付';
+                                            break;
+                                    }
+                                    ?>
+                                </td>
+                                <td>{$v['created_at']}</td> -->
+                                <!-- <td> -->
+                                    <!-- <a {:auth_show_judge('LevelConfig/editLevelConfig')} class="btn btn-flat btn-info
+                                    btn-xs" href="{:url('admin/RedEnvelope/prizeSetting', ['id' => $v['id']])}"><i
+                                            class="fa fa-edit"></i> 编辑</a> -->
+                                    <!-- <a {:auth_show_judge('RedEnvelope/del')} class="btn btn-flat btn-danger
+                                            btn-xs" href="javascript:;" onclick="del({$v['id']})"><i
+                                                    class="fa fa-trash-o"></i> 删除</a> -->
+                                <!-- </td> -->
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function del(id)
+    {
+        //确认框
+        layer.confirm('确定删除吗？', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("admin/RedEnvelope/del")}', {id: id}, function (res) {
+                if (res.code == '200') {
+                    location.reload(true);
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+</script>

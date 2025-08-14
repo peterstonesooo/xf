@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>积分商品订单列表</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="__STATIC__/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="__STATIC__/admin/style/admin.css" media="all">
+    <link rel="stylesheet" href="__STATIC__/admin/style/login.css" media="all">
+</head>
+<body>
+    <div class="layui-fluid">
+        <div class="layui-card">
+            <div class="layui-card-header">积分商品订单列表</div>
+            <div class="layui-card-body">
+                <div class="search">
+                    <form class="form-inline">
+                        <input type="text" value="{$req.user|default=''}" name="user" placeholder="搜索用户手机号" class="form-control">
+                        <select name="order_status" class="form-control">
+                            <option value="">搜索订单状态</option>
+                            {foreach $order_status as $k=>$v}
+                            <option value="{$k}" {if isset($req.order_status) && $req.order_status == $k}selected{/if}>{$v}</option>
+                            {/foreach}
+                        </select>
+                        <input placeholder="开始时间" autocomplete="off" value="{$req.start_date|default=''}" name="start_date" class="form-control layer-date" id="start">
+                        ～
+                        <input placeholder="结束时间" autocomplete="off" value="{$req.end_date|default=''}" name="end_date" class="form-control layer-date" id="end">
+                        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+                        &nbsp;&nbsp;&nbsp;<span>共 {$total} 条数据</span>
+                    </form>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <div class="box">
+                            <div class="box-header">
+                                <div class="box-body table-responsive no-padding">
+                                    <table class="table table-bordered table-hover table-striped">
+                                        <tbody>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>用户</th>
+                                            <th>商品名称</th>
+                                            <th>积分数量</th>
+                                            <th>购买数量</th>
+                                            <th>订单状态</th>
+                                            <th>创建时间</th>
+                                            <th>发货时间</th>
+                                            <th>签收时间</th>
+                                            <th>操作</th>
+                                        </tr>
+                                        {foreach $data as $v}
+                                        <tr>
+                                            <td>{$v.id}</td>
+                                            <td>{$v.realname}({$v.phone})</td>
+                                            <td>{$v.product_name}</td>
+                                            <td>{$v.points_used}</td>
+                                            <td>{$v.number}</td>
+                                            <td>{$v.order_status_txt}</td>
+                                            <td>{$v.create_time}</td>
+                                            <td>{$v.delivery_time|default='-'}</td>
+                                            <td>{$v.signing_time|default='-'}</td>
+                                            <td>
+                                                {if $v.order_status == 1}
+                                                <button class="btn btn-flat btn-success btn-xs" onclick="delivery({$v.id})">发货</button>
+                                                {elseif $v.order_status == 2}
+                                                <button class="btn btn-flat btn-info btn-xs" onclick="confirmSign({$v.id})">确认签收</button>
+                                                {/if}
+                                            </td>
+                                        </tr>
+                                        {/foreach}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div style="text-align:center;font-size: 14px;">{$data|raw}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="__STATIC__/layui/layui.js"></script>
+    <script>
+    $(function () {
+        //日期范围限制
+        var start = {
+            elem: '#start',
+            format: 'yyyy-MM-dd',
+        };
+        var end = {
+            elem: '#end',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(start);
+        laydate.render(end);
+    });
+
+    function delivery(id) {
+        layer.confirm('确认发货？', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("delivery")}', {id: id}, function (res) {
+                if (res.code == 200) {
+                    location.reload(true);
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+
+    function confirmSign(id) {
+        layer.confirm('确认签收？', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("confirmSign")}', {id: id}, function (res) {
+                if (res.code == 200) {
+                    location.reload(true);
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+    </script>
+</body>
+</html> 

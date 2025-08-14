@@ -1,0 +1,94 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['user_id']??''}" name="user_id" placeholder="搜索用户ID" class="form-control">
+        <a  class="btn btn-flat btn-success m_10 f_r"
+            href="{:url('admin/User/showUserNum',['user_id' => $req['user_id']])}"> <i class="fa fa-plus m-r-10"></i>添 加</a>
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;共 {$count} 条记录</span>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>身份证（正面）</th>
+                            <th>身份证（背面）</th>
+                            <th>创建时间</th>
+                            <th>编辑</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                        <tr>
+                            <td>{$v['id']}</td>
+                            <td><img src="{$v['id_card_front']}" onclick="seePhoto('{$v["id_card_front"]}')" style="max-width: 80px;"></td>
+                            <td><img src="{$v['id_card_opposite']}" onclick="seePhoto('{$v["id_card_opposite"]}')" style="max-width: 80px;"></td>
+                            <td>{$v['created_at']}</td>
+                            <td>
+                                <a {:auth_show_judge('User/delUserNum')} onclick="deluser({$v['id']})" class="btn btn-flat btn-xs" href="#">删除</a>
+                                <a {:auth_show_judge('User/applyedit')} onclick="changeUser({$v['id']})" class="btn btn-flat btn-xs" href="#">审核</a>
+                            </td>
+                        </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        //日期范围限制
+        var start = {
+            elem: '#start',
+            format: 'yyyy-MM-dd',
+        };
+        var end = {
+            elem: '#end',
+            format: 'yyyy-MM-dd',
+        };
+        var active_date = {
+            elem: '#active_date',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(start);
+        laydate.render(end);
+        laydate.render(active_date);
+    });
+    function changeUser(id, value)
+    {
+        //确认框
+        layer.confirm('确定操作吗', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("applyedit")}', {"id": id, "status": 1}, function (res) {
+                layer.msg(res.msg, {icon: 7, time: 2500, offset: '80px'}, function (){
+                    window.location.reload();
+                });
+            });
+        });
+    }
+    function deluser(id)
+    {
+        //确认框
+        layer.confirm('确定操作吗', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("delUserNum")}', {"id": id}, function (res) {
+                layer.msg(res.msg, {icon: 7, time: 2500, offset: '80px'}, function (){
+                    window.location.reload();
+                });
+            });
+        });
+    }
+</script>
+<style>
+    th{
+        font-size: 14px;
+    }
+</style>

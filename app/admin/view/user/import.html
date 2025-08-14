@@ -1,0 +1,336 @@
+<div class="search">
+    <form class="form-inline" id="fileUploadForm">
+        <div class="form-group" style="margin-right: 15px;">
+            <label for="wallet_type" style="margin-right: 10px; font-weight: bold;">选择钱包类型：</label>
+            <select name="wallet_type" id="wallet_type" class="form-control" style="min-width: 150px; height: 34px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="topup_balance">余额</option>
+                <option value="team_bonus_balance">荣誉钱包</option>
+                <option value="butie">稳盈钱包</option>
+                <option value="balance">民生钱包</option>
+                <option value="digit_balance">收益钱包</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-right: 15px;">
+            <label for="amount" style="margin-right: 10px; font-weight: bold;">固定金额：</label>
+            <input type="number" name="amount" id="amount" class="form-control" style="width: 150px; height: 34px; border: 1px solid #ddd; border-radius: 4px;" placeholder="请输入金额">
+        </div>
+        <div class="form-group" style="margin-right: 15px;">
+            <label for="remark" style="margin-right: 10px; font-weight: bold;">备注：</label>
+            <input type="text" name="remark" id="remark" class="form-control" style="width: 200px; height: 34px; border: 1px solid #ddd; border-radius: 4px;" placeholder="请输入备注信息">
+        </div>
+        <div class="form-group" style="margin-right: 15px;">
+            <label for="file" style="margin-right: 10px; font-weight: bold;">选择文件：</label>
+            <input type="file" name="file" id="file" class="form-control" style="display: inline-block; padding: 6px 12px;">
+        </div>
+        <button type="button" class="btn btn-primary" id="uploadBtn" style="height: 34px; padding: 0 20px;">
+            <i class="fa fa-upload"></i> 上传
+        </button>
+        <button type="button" class="btn btn-info" id="checkProgressBtn" style="height: 34px; padding: 0 20px; margin-left: 10px;">
+            <i class="fa fa-refresh"></i> 查询进度
+        </button>
+    </form>
+</div>
+<div class="row">
+    <div class="col-xs-12">
+        <a href="/import.xlsx">查看示例文件</a>
+    </div>
+</div>
+
+<!-- 队列进度显示区域 -->
+<div class="row" style="margin-top: 20px;">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <h3 class="box-title">队列进度</h3>
+            </div>
+            <div class="box-body">
+                <div id="queueProgress">
+                    <p>点击"查询进度"按钮查看当前队列状态</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 入金记录表格区域 -->
+<div class="row" style="margin-top: 20px;">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <h3 class="box-title">入金记录</h3>
+                <div class="box-tools pull-right">
+                    <button type="button" class="btn btn-info btn-sm" id="refreshRecordsBtn">
+                        <i class="fa fa-refresh"></i> 刷新记录
+                    </button>
+                </div>
+            </div>
+            <div class="box-body">
+                <div id="rujinRecords">
+                    <p><i class="fa fa-spinner fa-spin"></i> 正在加载入金记录...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // 页面加载时自动获取入金记录
+        loadRujinRecords();
+        
+        // 全选功能
+        $('#selectAll').change(function() {
+            var isChecked = $(this).prop('checked');
+            $('input[type="checkbox"]').prop('checked', isChecked);
+        });
+
+        // 查询进度按钮点击事件
+        $('#checkProgressBtn').click(function() {
+            $.ajax({
+                url: '<?php echo  url("admin/User/checkQueueProgress");?>',
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.code == 200) {
+                        var data = response.data;
+                        var html = '<div class="alert alert-info">';
+                        html += '<h4><i class="fa fa-info-circle"></i> 队列状态</h4>';
+                        html += '<p><strong>队列名称：</strong>批量入金任务队列</p>';
+                        html += '<p><strong>剩余任务数：</strong><span class="text-primary" style="font-size: 18px; font-weight: bold;">' + data.queue_length + '</span> 条</p>';
+                        if (data.queue_length > 0) {
+                            html += '<p><strong>状态：</strong><span class="text-warning">处理中</span></p>';
+                            html += '<p><strong>最后更新时间：</strong>' + data.last_check_time + '</p>';
+                        } else {
+                            html += '<p><strong>状态：</strong><span class="text-success">队列为空</span></p>';
+                        }
+                        html += '</div>';
+                        $('#queueProgress').html(html);
+                    } else {
+                        $('#queueProgress').html('<div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> ' + response.msg + '</div>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#queueProgress').html('<div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> 查询失败：' + error + '</div>');
+                }
+            });
+        });
+
+        // 刷新入金记录按钮点击事件
+        $('#refreshRecordsBtn').click(function() {
+            loadRujinRecords();
+        });
+
+        // 加载入金记录的函数
+        function loadRujinRecords() {
+            $.ajax({
+                url: '<?php echo  url("admin/User/getRujinRecords");?>',
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.code == 200) {
+                        var data = response.data;
+                        if (data && data.length > 0) {
+                            var html = '<div class="table-responsive">';
+                            html += '<table class="table table-bordered table-striped">';
+                            html += '<thead>';
+                            html += '<tr>';
+                            html += '<th>批次ID</th>';
+                            html += '<th>状态</th>';
+                            html += '<th>数量</th>';
+                            html += '<th>创建时间</th>';
+                            html += '<th>操作</th>';
+                            html += '</tr>';
+                            html += '</thead>';
+                            html += '<tbody>';
+                            
+                            // 存储记录数据到全局变量
+                            window.rujinRecordsData = data;
+                            
+                            data.forEach(function(record, index) {
+                                var statusClass = record.type === 'success' ? 'success' : 'danger';
+                                var statusText = record.type === 'success' ? '入金成功' : '入金失败';
+                                var statusIcon = record.type === 'success' ? 'fa-check-circle' : 'fa-times-circle';
+                                
+                                html += '<tr>';
+                                html += '<td>' + record.batch_id + '</td>';
+                                html += '<td><span class="label label-' + statusClass + '"><i class="fa ' + statusIcon + '"></i> ' + statusText + '</span></td>';
+                                html += '<td><span class="badge bg-' + statusClass + '">' + record.count + '</span></td>';
+                                html += '<td>' + record.created_time + '</td>';
+                                html += '<td>';
+                                html += '<button type="button" class="btn btn-xs btn-info viewDetailsBtn" data-record-index="' + index + '">';
+                                html += '<i class="fa fa-eye"></i> 查看详情';
+                                html += '</button>';
+                                html += '</td>';
+                                html += '</tr>';
+                            });
+                            
+                            html += '</tbody>';
+                            html += '</table>';
+                            html += '</div>';
+                        } else {
+                            html = '<div class="alert alert-info"><i class="fa fa-info-circle"></i> 暂无入金记录</div>';
+                        }
+                        $('#rujinRecords').html(html);
+                    } else {
+                        $('#rujinRecords').html('<div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> ' + response.msg + '</div>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#rujinRecords').html('<div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> 获取记录失败：' + error + '</div>');
+                }
+            });
+        }
+
+        // 查看详情按钮点击事件（使用事件委托）
+        $(document).on('click', '.viewDetailsBtn', function() {
+            var recordIndex = $(this).data('record-index');
+            var record = window.rujinRecordsData[recordIndex];
+            
+            if (!record) {
+                layer.alert('记录数据不存在');
+                return;
+            }
+            
+            var batchId = record.batch_id;
+            var type = record.type;
+            var phones = record.phones;
+            
+            console.log('查看详情 - 批次ID:', batchId);
+            console.log('查看详情 - 类型:', type);
+            console.log('查看详情 - 手机号原始数据:', phones);
+            
+            var statusText = type === 'success' ? '入金成功' : '入金失败';
+            var phoneList = phones.split(',').filter(function(phone) { return phone.trim() !== ''; });
+            
+            console.log('查看详情 - 处理后的手机号列表:', phoneList);
+            
+            var html = '<div class="modal-header">';
+            html += '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>';
+            html += '<h4 class="modal-title">' + statusText + ' - 批次ID: ' + batchId + '</h4>';
+            html += '</div>';
+            html += '<div class="modal-body">';
+            html += '<p><strong>手机号列表：</strong></p>';
+            html += '<div style="max-height: 300px; overflow-y: auto;">';
+            if (phoneList.length > 0) {
+                phoneList.forEach(function(phone) {
+                    html += '<span class="label label-default" style="margin: 2px; display: inline-block;">' + phone.trim() + '</span>';
+                });
+            } else {
+                html += '<p class="text-muted">暂无手机号记录</p>';
+            }
+            html += '</div>';
+            html += '<div style="margin-top: 15px;">';
+            html += '<p><strong>原始数据：</strong></p>';
+            html += '<pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; font-size: 12px;">' + phones + '</pre>';
+            html += '</div>';
+            html += '</div>';
+            html += '<div class="modal-footer">';
+            html += '<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>';
+            html += '</div>';
+            
+            // 创建模态框
+            var modal = $('<div class="modal fade" tabindex="-1" role="dialog">');
+            modal.find('.modal-dialog').remove();
+            modal.html('<div class="modal-dialog modal-lg" role="document"><div class="modal-content">' + html + '</div></div>');
+            
+            $('body').append(modal);
+            modal.modal('show');
+            
+            // 模态框关闭后移除
+            modal.on('hidden.bs.modal', function() {
+                modal.remove();
+            });
+        });
+
+        $('#uploadBtn').click(function() {
+            var formData = new FormData($('#fileUploadForm')[0]);
+            var walletType = $('#wallet_type').val();
+            var amount = $('#amount').val();
+            var remark = $('#remark').val();
+            formData.append('wallet_type', walletType);
+            formData.append('amount', amount);
+            formData.append('remark', remark);
+            $.ajax({
+                url: '<?php echo  url("admin/User/importSubmit");?>',
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                dataType: 'json',
+                success: function(response) {
+                    layer.alert(response.msg);
+                    // 上传成功后自动查询进度
+                    $('#checkProgressBtn').click();
+                    // 上传成功后自动刷新入金记录
+                    loadRujinRecords();
+                    // console.log('File uploaded successfully:', response);
+                    // $("#body").html('');
+                    // if(response.data.error.length > 0){
+                    //     layer.alert('导入失败，手机号：'+response.data.error.join(','));
+                    // }
+                    // $.each(response.data.success, function(i, val) {
+                    //     var multyData = "";
+                    //     var checkedStatus = "checked='checked'";
+                    //     if (val.head) {
+                    //         checkedStatus = '';
+                    //     }
+                    //     var walletTypeText = '';
+                    //     switch(val.wallet_type) {
+                    //         case 'topup_balance':
+                    //             walletTypeText = '余额';
+                    //             break;
+                    //         case 'team_bonus_balance':
+                    //             walletTypeText = '荣誉钱包';
+                    //             break;
+                    //         case 'butie':
+                    //             walletTypeText = '稳盈钱包';
+                    //             break;
+                    //         case 'balance':
+                    //             walletTypeText = '民生钱包';
+                    //             break;
+                    //         case 'digit_balance':
+                    //             walletTypeText = '收益钱包';
+                    //             break;
+                    //     }
+                    //     // 使用固定金额替换Excel中的金额
+                    //     var displayAmount = amount ? amount : val.amount;
+                    //     var row = $("<tr " + multyData + "><td><input type='checkbox' name='' data-id='"+val.id+"' data-amount='"+displayAmount+"' data-remark='"+val.remark+"' data-wallet-type='"+val.wallet_type+"' " + checkedStatus + "></td>" + "<td>" + val.realname + "</td>"+"<td>"+val.phone+"</td>" + "<td>" + displayAmount + "</td>" + "<td>" + walletTypeText + "</td>" + "<td>" + val.remark + "</td>" + "</tr>");
+                    //     $("#body").append(row);
+                    // })
+                    // $("#body").append($("<tr><td></td><td><input class='btn btn-flat btn-primary m_10' type='button' value='确认提交' id='upBalance'></td></tr>"));
+                },
+                error: function(xhr, status, error) {
+                    console.error('File upload failed:', status, error);
+                    layer.alert(error);
+                }
+            });
+        });
+
+        $(document).on('click', '#upBalance', function() {
+            var checkedValues = $('input[type="checkbox"]:checked').map(function() {
+                return {
+                    'id': $(this).attr('data-id'), 
+                    'amount': $(this).attr('data-amount'), 
+                    'remark': $(this).attr('data-remark'),
+                    'wallet_type': $(this).attr('data-wallet-type')
+                };
+            }).get();
+            console.log(checkedValues)
+            $.ajax({
+                url: '<?php echo  url("admin/User/importExec");?>',
+                type: 'post',
+                dataType: 'json',
+                data: {'ids': checkedValues},
+                success: function(response) {
+                    console.log(response)
+                    if (response.code == 200) {
+                        $("#body").html('');
+                        alert('操作成功')
+                    }
+                },error: function(e) {
+                    console.log(e)                    
+                }
+            })
+        })
+    });
+</script>

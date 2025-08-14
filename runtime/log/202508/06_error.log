@@ -1,0 +1,1 @@
+[2025-08-06T13:19:46+08:00][error] [0]Too few arguments to function app\model\Capital::getTypeTextAttr(), 0 passed in /Applications/XAMPP/xamppfiles/htdocs/xf/vendor/topthink/think-orm/src/model/concern/Attribute.php on line 572 and exactly 2 expected[/Applications/XAMPP/xamppfiles/htdocs/xf/app/model/Capital.php:12]

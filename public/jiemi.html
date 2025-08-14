@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据解密工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .form-group textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .result {
+            background: #f8f9fa;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            display: none;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .error {
+            background: #fee;
+            border-color: #fcc;
+            color: #c33;
+        }
+        
+        .success {
+            background: #efe;
+            border-color: #cfc;
+            color: #363;
+        }
+        
+        .info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #1976d2;
+        }
+        
+        .info h4 {
+            margin-bottom: 8px;
+            color: #1565c0;
+        }
+        
+        .info ul {
+            margin-left: 20px;
+        }
+        
+        .info li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 数据解密工具</h1>
+            <p>基于项目AES加密算法的解密工具</p>
+        </div>
+        
+        <div class="info">
+            <h4>📋 使用说明：</h4>
+            <ul>
+                <li>支持解密项目中的AES-128-CBC加密数据</li>
+                <li>密钥：i9hys6gdb5stfzge</li>
+                <li>IV：i9hys6gdb5stfzge</li>
+                <li>加密算法：AES-128-CBC + Base64编码</li>
+                <li>支持快捷键：Ctrl+Enter 快速解密</li>
+            </ul>
+        </div>
+        
+        <div class="form-group">
+            <label for="encryptedData">🔒 加密数据：</label>
+            <textarea id="encryptedData" placeholder="请输入需要解密的Base64编码数据..."></textarea>
+        </div>
+        
+        <button class="btn" onclick="decryptData()">🔓 解密数据</button>
+        
+        <div class="result" id="result">
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+        // AES解密函数
+        function decryptAES(encryptedData, key, iv) {
+            try {
+                // 将密钥和IV转换为WordArray
+                const keyWords = CryptoJS.enc.Utf8.parse(key);
+                const ivWords = CryptoJS.enc.Utf8.parse(iv);
+                
+                // 解密
+                const decrypted = CryptoJS.AES.decrypt(encryptedData, keyWords, {
+                    iv: ivWords,
+                    mode: CryptoJS.mode.CBC,
+                    padding: CryptoJS.pad.Pkcs7
+                });
+                
+                // 转换为UTF8字符串
+                return decrypted.toString(CryptoJS.enc.Utf8);
+            } catch (error) {
+                console.error('解密错误:', error);
+                return false;
+            }
+        }
+        
+        function decryptData() {
+            const encryptedData = document.getElementById('encryptedData').value.trim();
+            
+            if (!encryptedData) {
+                showResult('❌ 请输入需要解密的数据', 'error');
+                return;
+            }
+            
+            try {
+                // 使用项目中的密钥和IV
+                const key = 'i9hys6gdb5stfzge';
+                const iv = 'i9hys6gdb5stfzge';
+                
+                // 解密数据
+                const decrypted = decryptAES(encryptedData, key, iv);
+                
+                if (decrypted === false || decrypted === '') {
+                    showResult('❌ 解密失败，请检查数据格式是否正确', 'error');
+                    return;
+                }
+                
+                // 尝试解析JSON
+                try {
+                    const jsonData = JSON.parse(decrypted);
+                    // 如果是JSON格式，美化输出
+                    const formattedResult = JSON.stringify(jsonData, null, 2);
+                    showResult('✅ 解密成功（JSON格式）：\n\n' + formattedResult, 'success');
+                } catch (jsonError) {
+                    // 如果不是JSON格式，直接输出
+                    showResult('✅ 解密成功：\n\n' + decrypted, 'success');
+                }
+                
+            } catch (error) {
+                showResult('❌ 解密过程中发生错误：' + error.message, 'error');
+            }
+        }
+        
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+            
+            resultContent.textContent = message;
+            resultDiv.className = 'result show ' + type;
+        }
+        
+        // 支持回车键解密
+        document.getElementById('encryptedData').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                decryptData();
+            }
+        });
+        
+        // 页面加载完成后的提示
+        window.addEventListener('load', function() {
+            console.log('🔐 解密工具已加载完成');
+            console.log('📝 使用说明：');
+            console.log('- 密钥：i9hys6gdb5stfzge');
+            console.log('- IV：i9hys6gdb5stfzge');
+            console.log('- 算法：AES-128-CBC');
+            console.log('- 编码：Base64');
+        });
+    </script>
+</body>
+</html> 

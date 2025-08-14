@@ -1,0 +1,123 @@
+<div class="search">
+    <form class="form-inline">
+        <a class="btn btn-flat btn-primary m_10_l_0" href="{:url('admin/PassiveIncomeRecord/passiveIncomeRecordList')}">显示全部</a>
+        <a class="btn btn-flat btn-success m_10 f_r" onclick="javascript:history.back(-1)"><i class="fa fa-undo m-r-10"></i>返 回</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-sm-12 col-xs-12">
+        <form id="commentForm">
+            <?php if (!empty($data)){ ?>
+                <input type="hidden" class="form-control" value="{$data['id']}" name="id">
+            <?php } ?>
+            <div class="box box-body">
+                <div class="row dd_input_group">
+<div class="form-group">
+<label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">用户ID</label>
+<div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+<input type="text" name="user_id" class="form-control" placeholder="请输入用户ID" value="{$data['user_id']??''}">
+</div>
+<div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+</div>
+</div>
+<div class="row dd_input_group">
+<div class="form-group">
+<label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">订单ID</label>
+<div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+<input type="text" name="order_id" class="form-control" placeholder="请输入订单ID" value="{$data['order_id']??''}">
+</div>
+<div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+</div>
+</div>
+<div class="row dd_input_group">
+<div class="form-group">
+<label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">金额</label>
+<div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+<input type="text" name="amount" class="form-control" placeholder="请输入金额" value="{$data['amount']??''}">
+</div>
+<div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+</div>
+</div>
+<div class="row dd_input_group">
+<div class="form-group">
+<label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">天数</label>
+<div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+<input type="text" name="days" class="form-control" placeholder="请输入天数" value="{$data['days']??''}">
+</div>
+<div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+</div>
+</div>
+<div class="row dd_input_group">
+<div class="form-group">
+<label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">状态</label>
+<div class="col-xs-8 col-sm-6 col-md-4 col-lg-4">
+<select name="status" class="form-control">
+<?php foreach (config('map.passive_income_record')['status_map'] as $k => $v) { ?>
+<option <?php if(isset($data['status']) && $data['status'] == $k){ ?> selected="selected" <?php } ?> value="{$k}">{$v}</option>
+<?php } ?>
+</select>
+</div>
+<div class="col-xs-12 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+</div>
+</div>
+<div class="row dd_input_group">
+<div class="form-group">
+<label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">是否结束收益</label>
+<div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+<div class="dd_radio_lable_left">
+<label class="dd_radio_lable">
+<input <?php if(isset($data['is_finish']) && $data['is_finish'] == '0'){ ?> checked <?php } ?> type="radio" name="is_finish" value="0" class="dd_radio"><span>否</span>
+</label>
+<label class="dd_radio_lable">
+<input <?php if(isset($data['is_finish']) && $data['is_finish'] == '1'){ ?> checked <?php } ?> type="radio" name="is_finish" value="1" class="dd_radio"><span>是</span>
+</label>
+</div>
+</div>
+<div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts"> *</div>
+</div>
+</div>
+<div class="row dd_input_group">
+<div class="form-group">
+<label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">执行日期</label>
+<div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+<input type="text" name="execute_day" class="form-control" placeholder="请输入执行日期" value="{$data['execute_day']??''}">
+</div>
+<div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+</div>
+</div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <div class="col-xs-12 col-sm-8 col-md-6 col-lg-5 text-center">
+                            <button type="button" class="btn btn-flat btn-primary" onclick="sub()">提 交</button>
+                            <button type="button" class="btn btn-flat btn-default" onclick="javascript:history.back(-1)">返 回</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    $(function(){
+        var url = "{:url('admin/PassiveIncomeRecord/passiveIncomeRecordList')}";
+        $('a[href="'+url+'"]').parents('.menu-li').addClass('active');
+        var headerText = $('a[href="'+url+'"]').children('span').text();
+        var is_add = "<?php echo !empty($data) ? '0' : '1';?>";
+        var headerTitle = is_add == "1" ? headerText + '-添加' : headerText + '-编辑';
+        $('#content-header-title').text(headerTitle);
+    });
+
+    function sub()
+    {
+        $.post('<?php echo !empty($data) ? url("admin/PassiveIncomeRecord/editPassiveIncomeRecord") : url("admin/PassiveIncomeRecord/addPassiveIncomeRecord");?>', $('#commentForm').serialize(), function (res) {
+            if (res.code == '200'){
+                window.location.href = document.referrer;
+            }
+            else {
+                layer.msg(res.msg, {icon: 5, time: 3000});
+            }
+        });
+    }
+</script>

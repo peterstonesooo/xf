@@ -1,0 +1,85 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['user']??''}" name="user" placeholder="搜索用户ID/手机号" class="form-control">
+        <select name="type" class="form-control">
+            <option value="">搜索类型</option>
+            <?php foreach (config('map.user_balance_log')['balance_type_map'] as $k => $v) { ?>
+                <option <?php if (isset($req['type']) && $req['type'] == $k) {
+                    echo 'selected = "selected"';
+                } ?> value="{$k}">{$v}
+                </option>
+            <?php } ?>
+        </select>
+        <select name="log_type" class="form-control">
+            <option value="">搜索钱包类型</option>
+            <?php foreach (config('map.user_balance_log')['log_type_map'] as $k => $v) { ?>
+                <option <?php if (isset($req['log_type']) && $req['log_type'] == $k) {
+                    echo 'selected = "selected"';
+                } ?> value="{$k}">{$v}
+                </option>
+            <?php } ?>
+        </select>
+        <input placeholder="开始时间" autocomplete="off" value="{$req['start_date']??''}" name="start_date" class="form-control layer-date" id="start">
+        ～
+        <input placeholder="结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
+
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>会员</th>
+                            <th>类型</th>
+                            <th>变化前的余额</th>
+                            <th>变动金额</th>
+                            <th>变化后的余额</th>
+                            <th>备注</th>
+                            <th>关联id</th>
+                            <th>后台用户</th>
+                            <th>创建时间</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>{$v['user']['phone']}</td>
+                                <td>{$v['type_text']}</td>
+                                <td>{$v['before_balance']}</td>
+                                <td>{$v['change_balance']}</td>
+                                <td>{$v['after_balance']}</td>
+                                <td>{$v['remark']}</td>
+                                <td>{$v['relation_id']}</td>
+                                <td>{$v['adminUser']['nickname']??''}</td>
+                                <td>{$v['created_at']}</td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?> <h5>总 {$data->total()}</h5></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(function () {
+        //日期范围限制
+        var start = {
+            elem: '#start',
+            format: 'yyyy-MM-dd',
+        };
+        var end = {
+            elem: '#end',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(start);
+        laydate.render(end);
+    });
+</script>

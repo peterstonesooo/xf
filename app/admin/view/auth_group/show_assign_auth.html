@@ -1,0 +1,200 @@
+{__NOLAYOUT__}
+<!DOCTYPE html>
+<html>
+
+{include file="head" /}
+
+<body class="hold-transition skin-blue fixed sidebar-mini">
+
+<div id="wrapper">
+    <div class="row">
+        <div class="col-sm-12 col-xs-12">
+            <div class="box">
+                <div class="box-header">
+                    <h3 class="box-title">权限分配</h3>
+                    <div class="box-tools pull-right">
+                        <button class="btn btn-flat btn-info btn-xs" onclick="expandAll()"><i class="fa fa-expand"></i> 展开全部</button>
+                        <button class="btn btn-flat btn-warning btn-xs" onclick="collapseAll()"><i class="fa fa-compress"></i> 收起全部</button>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <div id="searchTree" class="test treeview">
+                        <!-- 权限树将在这里显示 -->
+                    </div>
+                </div>
+                <div class="box-footer">
+                    <div class="text-center">
+                        <button class="btn btn-flat btn-primary" style="width: 120px;font-size: 16px;" onclick="sub()">
+                            <i class="fa fa-save m-r-10"></i>保存权限
+                        </button>
+                        <button class="btn btn-flat btn-default" style="width: 120px;font-size: 16px;" onclick="parent.layer.closeAll()">
+                            <i class="fa fa-times m-r-10"></i>取消
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="__ADMIN__/plugins/treeview/bootstrap-treeview.js"></script>
+    <style>
+        .box-header h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #333;
+        }
+        .treeview {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        .treeview .list-group-item {
+            border: none;
+            background: transparent;
+        }
+        .treeview .list-group-item:hover {
+            background-color: #f5f5f5;
+        }
+        .box-footer {
+            background-color: #f9f9f9;
+            border-top: 1px solid #ddd;
+            padding: 15px;
+        }
+        .btn-xs {
+            margin-left: 5px;
+        }
+    </style>
+    
+    <script>
+        $(function () {
+            var json = '<?php echo $nodeJson;?>';
+
+            $('#searchTree').treeview({
+                showCheckbox: true,
+                data: json,
+                onNodeChecked: nodeChecked,
+                onNodeUnchecked: nodeUnchecked,
+                levels: 2
+            });
+
+            var nodeCheckedSilent = false;
+            function nodeChecked(event, node) {
+                if (nodeCheckedSilent) {
+                    return;
+                }
+                nodeCheckedSilent = true;
+                checkAllParent(node.nodeId);
+                checkAllSon(node);
+                nodeCheckedSilent = false;
+            }
+
+            var nodeUncheckedSilent = false;
+            function nodeUnchecked(event, node) {
+                if (nodeUncheckedSilent)
+                    return;
+                nodeUncheckedSilent = true;
+                uncheckAllParent(node.nodeId);
+                uncheckAllSon(node);
+                nodeUncheckedSilent = false;
+            }
+
+            // 选中全部父节点
+            function checkAllParent(nodeId) {
+                $('#searchTree').treeview('expandNode', [nodeId, {levels: 2, silent: true}]);
+                $('#searchTree').treeview('checkNode', nodeId, {silent: true});
+                var parentNode = $('#searchTree').treeview('getParent', nodeId);
+                if (!("nodeId" in parentNode)) {
+                    return;
+                } else {
+                    checkAllParent(parentNode.nodeId);
+                }
+            }
+            
+            // 取消全部父节点
+            function uncheckAllParent(nodeId) {
+                $('#searchTree').treeview('uncheckNode', nodeId, {silent: true});
+                var siblings = $('#searchTree').treeview('getSiblings', nodeId);
+                var parentNode = $('#searchTree').treeview('getParent', nodeId);
+                if (!("nodeId" in parentNode)) {
+                    return;
+                }
+                var isAllUnchecked = true;  // 是否全部没选中
+                for (var i in siblings) {
+                    if (siblings[i].state.checked) {
+                        isAllUnchecked = false;
+                        break;
+                    }
+                }
+                if (isAllUnchecked) {
+                    uncheckAllParent(parentNode.nodeId);
+                }
+            }
+            
+            // 级联选中所有子节点
+            function checkAllSon(node) {
+                $('#searchTree').treeview('checkNode', node.nodeId, {silent: true});
+                if (node.nodes != null && node.nodes.length > 0) {
+                    for (var i in node.nodes) {
+                        checkAllSon(node.nodes[i]);
+                    }
+                }
+            }
+            
+            // 级联取消所有子节点
+            function uncheckAllSon(node) {
+                $('#searchTree').treeview('uncheckNode', node.nodeId, {silent: true});
+                if (node.nodes != null && node.nodes.length > 0) {
+                    for (var i in node.nodes) {
+                        uncheckAllSon(node.nodes[i]);
+                    }
+                }
+            }
+        });
+
+        // 展开全部节点
+        function expandAll() {
+            $('#searchTree').treeview('expandAll', {levels: 2, silent: true});
+        }
+
+        // 收起全部节点
+        function collapseAll() {
+            $('#searchTree').treeview('collapseAll', {silent: true});
+        }
+
+        function sub() {
+            var node = $('#searchTree').treeview('getChecked');
+            var auth_group_id = <?php echo $auth_group_id; ?>;
+            var rules = [];
+            
+            $.each(node, function (k, v) {
+                if (v.nodes) {
+                    return true; // 跳过父节点
+                }
+                if (v.authRuleName) {
+                    rules.push(v.authRuleName);
+                }
+            });
+            
+            if (rules.length === 0) {
+                parent.layer.msg('请至少选择一个权限', {icon: 5, time: 2000, offset: '80px'});
+                return;
+            }
+            
+            $.post('{:url("admin/AuthGroup/submitAssignAuth")}', {rules: rules, auth_group_id: auth_group_id}, function (res) {
+                if (res.code == '200') {
+                    parent.layer.msg('权限分配成功', {icon: 6, time: 2000, offset: '80px'});
+                    setTimeout(function() {
+                        parent.layer.closeAll('iframe');
+                        top.location.reload(true);
+                    }, 2000);
+                } else {
+                    parent.layer.msg(res.msg, {icon: 5, time: 2500, offset: '80px'});
+                }
+            });
+        }
+    </script>
+</div>
+</body>
+</html>

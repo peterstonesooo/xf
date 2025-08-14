@@ -1,0 +1,102 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['user']??''}" name="user" placeholder="搜索用户ID/手机号" class="form-control">
+        <input placeholder="开始时间" autocomplete="off" value="{$req['start_date']??''}" name="start_date" class="form-control layer-date" id="start">
+        ～
+        <input placeholder="结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        &nbsp;&nbsp;&nbsp;<span>共 <?php echo $count;?> 条数据</span>
+    </form>
+</div>
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>手机号</th>
+                            <th>姓名</th>
+                            <th>纳税金额</th>
+                            <th>缴纳金额</th>
+                            <th>优惠券折扣</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>{$v['user']['phone']}</td>
+                                <td>{$v['user']['realname']}</td>
+                                <td>{$v['shenbao_amount']}</td>
+                                <td>{$v['amount']}</td>
+                                <td>
+                                    <?php 
+                                        if($v['is_off']) {
+                                            echo $v['is_off'].'折';
+                                        } else {
+                                            echo '';
+                                        }
+                                    ?>
+                                </td>
+                                <td>{$v['created_at']}</td>
+                                <td>
+                                   
+                                    <!-- <a {:auth_show_judge('LevelConfig/editLevelConfig')} class="btn btn-flat btn-info
+                                    btn-xs" href="{:url('admin/ReleaseWithdrawal/agree', ['id' => $v['id']])}"><i
+                                            class="fa fa-edit"></i> 同意</a> -->
+                                    <!-- <a {:auth_show_judge('LevelConfig/editLevelConfig')} class="btn btn-flat btn-info
+                                            btn-xs" href="javascript:;" onclick="agree({$v['id']})"><i
+                                                    class="fa fa-trash-o"></i> 同意</a> -->
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        <tr>
+                            <td><strong>总计：</strong></td>
+                            <td></td>
+                            <td></td>
+                            <td><strong>{$total_shenbao_amount}</strong></td>
+                            <td><strong>{$total_amount}</strong></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+        $(function () {
+        //日期范围限制
+        var start = {
+            elem: '#start',
+            format: 'yyyy-MM-dd',
+        };
+        var end = {
+            elem: '#end',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(start);
+        laydate.render(end);
+    });
+    function agree(id)
+    {
+        //确认框
+        layer.confirm('确定同意吗？', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("admin/ReleaseWithdrawal/agree")}', {id: id}, function (res) {
+                if (res.code == '200') {
+                    location.reload(true);
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+</script>

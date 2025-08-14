@@ -1,0 +1,130 @@
+<div class="search">
+    <form class="form-inline">
+        <select name="type" class="form-control">
+            <option value="">协议类型</option>
+            <option value="1" {if(isset($req['type']) && $req['type']==1)} selected {/if}>用户协议</option>
+            <option value="2" {if(isset($req['type']) && $req['type']==2)} selected {/if}>隐私条款</option>
+        </select>
+        <select name="status" class="form-control">
+            <option value="">状态</option>
+            <option value="1" {if(isset($req['status']) && $req['status']==1)} selected {/if}>启用</option>
+            <option value="0" {if(isset($req['status']) && $req['status']==0)} selected {/if}>不启用</option>
+        </select>
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <a {:auth_show_judge('Agreement/add')} class="btn btn-flat btn-success m_10 f_r"
+        href="{:url('admin/Agreement/add')}"><i class="fa fa-plus m-r-10"></i>添 加</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>协议类型</th>
+                            <th>版本号</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                            <th>更新时间</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td><?php echo $v['id']; ?></td>
+                                <td>
+                                    <?php if($v['type'] == 1){ ?>
+                                        用户协议
+                                    <?php }elseif($v['type'] == 2){ ?>
+                                        隐私条款
+                                    <?php }elseif($v['type'] == 3){ ?>
+                                        用户捐赠协议
+                                    <?php }elseif($v['type'] == 4){ ?>
+                                        个人信息保护声明
+                                    <?php } ?>
+                                </td>
+                                <td><?php echo $v['version']; ?></td>
+                                <td>
+                                    <div class="switch">
+                                        <div class="onoffswitch">
+                                            <input type="checkbox" <?php echo $v['status'] == 1 ? 'checked' : ''; ?>
+                                                   class="onoffswitch-checkbox" id="status<?php echo $v['id']; ?>">
+                                            <label class="onoffswitch-label" for="status<?php echo $v['id']; ?>"
+                                                   onclick="changeStatus(<?php echo $v['id']; ?>, 'status')">
+                                                <span class="onoffswitch-inner"></span>
+                                                <span class="onoffswitch-switch"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><?php echo $v['created_at']; ?></td>
+                                <td><?php echo $v['updated_at']; ?></td>
+                                <td>
+                                    <a {:auth_show_judge('Agreement/edit')} class="btn btn-flat btn-info btn-xs"
+                                    href="{:url('admin/Agreement/edit', ['id' => $v['id']])}"><i
+                                            class="fa fa-edit"></i> 编辑</a>
+                                    <a {:auth_show_judge('Agreement/del')} class="btn btn-flat btn-danger btn-xs"
+                                    href="javascript:;" onclick="delAgreement(<?php echo $v['id']; ?>)"><i class="fa fa-trash-o"></i>
+                                    删除</a>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function delAgreement(id)
+    {
+        //确认框
+        layer.confirm('确定删除吗？', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("admin/Agreement/del")}', {id: id}, function (res) {
+                if (res.code == 0) {
+                    location.reload(true);
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+
+    function changeStatus(id, field)
+    {
+        var value = 0;
+        if ($('#' + field + id).is(':checked')) {
+            value = 0;
+        } else {
+            value = 1;
+        }
+
+        //确认框
+        layer.confirm('确定操作吗', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("admin/Agreement/status")}', {"id": id, "status": value}, function (res) {
+                if (res.code != 0) {
+                    if (value == 0) {
+                        $('#' + field + id).prop('checked', true);
+                    } else {
+                        $('#' + field + id).prop('checked', false);
+                    }
+                    layer.msg(res.msg, {icon: 5, time: 2500, offset: '80px'});
+                }
+            });
+        }, function (index2) {
+            if (value == 0) {
+                $('#' + field + id).prop('checked', true);
+            } else {
+                $('#' + field + id).prop('checked', false);
+            }
+        });
+    }
+</script>

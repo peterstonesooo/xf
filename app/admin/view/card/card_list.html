@@ -1,0 +1,90 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['user']??''}" name="user" placeholder="搜索用户ID/手机号" class="form-control">
+
+        <select name="card_id" class="form-control">
+            <option value="">搜索卡类型</option>
+            <?php foreach ($card as $k => $v) { ?>
+            <option <?php if (isset($req['card_id']) && is_numeric($req['card_id']) && $req['card_id'] == $v['id']) {
+                    echo 'selected = "selected"';
+                } ?> value="{$v['id']}">{$v['title']}
+            </option>
+            <?php } ?>
+        </select>
+
+        <input placeholder="开始时间" autocomplete="off" value="{$req['start_date']??''}" name="start_date" class="form-control layer-date" id="start">
+        ～
+        <input placeholder="结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
+
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+    </form>
+
+    <div>
+        购买总数：{$total} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;购买人数去重：{$unique_user_num}
+    </div>
+
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>手机号</th>
+                            <th>姓名</th>
+                            <th>卡类型</th>
+                            <th>卡号</th>
+                            <th>预存金额</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['user']['phone'] ?? ''}</td>
+                                <td>{$v['user']['realname'] ?? ''}</td>
+                                <td>{$v['title']}</td>
+                                <td>{$v['bank_card']}</td>
+                                <td>{$v['fee']}</td>
+                                <td>{$v['card_status_text']}</td>
+                                <td>{$v['created_at']}</td>
+                            </tr>
+                        <?php } ?>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td>总计：{$total_amount}</td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    $(function () {
+        //日期范围限制
+        var start = {
+            elem: '#start',
+            format: 'yyyy-MM-dd',
+        };
+        var end = {
+            elem: '#end',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(start);
+        laydate.render(end);
+    });
+
+
+</script>

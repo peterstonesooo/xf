@@ -1,0 +1,55 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['user_id']??''}" name="user_id" placeholder="搜索用户ID"
+               class="form-control">
+        <input type="text" value="{$req['phone']??''}" name="phone" placeholder="搜索用户手机号"
+               class="form-control">
+        <select name="prize_id" class="form-control">
+            <option value="">--全部--</option>
+            <?php foreach ($prize as $k => $v) { ?>
+                <option <?php if (isset($req['prize_id']) && $req['prize_id'] == $v['id']) {
+                    echo 'selected = "selected"';
+                } ?> value="{$v['id']}">{$v['power']}%
+                </option>
+            <?php } ?>
+        </select>
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+    </form>
+</div>
+<div class="row">
+<div class="col-xs-12">
+    <div class="box">
+        <div class="box-header">
+            <div class="box-body table-responsive no-padding">
+                <table class="table table-bordered table-hover table-striped">
+                    <tbody>
+                    <tr>
+                        <th>ID</th>
+                        <th>用户ID</th>
+                        <th>用户手机号</th>
+                        <th>能量度</th>
+                        <th>领取红包</th>
+                        <th>时间</th>
+                    </tr>
+                    <?php foreach ($data as $k => $v) { ?>
+                        <tr>
+                            <td>{$v['id']}</td>
+                            <td>{$v['user_id']}</td>
+                            <td>{$v['phone']}</td>
+                            <td>{$v['power']}%</td>
+                            <td>{$v['reward']}</td>
+                            <td>{$v['created_at']}</td>
+                        </tr>
+                    <?php } ?>
+                    </tbody>
+                </table>
+            </div>
+            <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+
+</script>

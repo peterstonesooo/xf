@@ -1,0 +1,134 @@
+<div class="search">
+    <form class="form-inline">
+        <a class="btn btn-flat btn-primary m_10_l_0" href="{:url('admin/PayAccount/payAccountList')}">显示全部</a>
+        <a class="btn btn-flat btn-success m_10 f_r" onclick="javascript:history.back(-1)"><i
+                    class="fa fa-undo m-r-10"></i>返 回</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-sm-12 col-xs-12">
+        <form id="commentForm">
+            <?php if (!empty($data)) { ?>
+                <input type="hidden" class="form-control" value="{$data['id']}" name="id">
+            <?php } ?>
+            <div class="box box-body">
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">支付类型</label>
+                        <div class="col-xs-8 col-sm-6 col-md-4 col-lg-4">
+                            <select disabled name="pay_type" class="form-control">
+                                <?php foreach (config('map.pay_account')['pay_type_map'] as $k => $v) { ?>
+                                    <option <?php if (isset($data['pay_type']) && $data['pay_type'] == $k) { ?> selected="selected" <?php } ?>
+                                            value="{$k}">{$v}
+                                    </option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                        <div class="col-xs-12 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">用户实名</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input disabled type="text" name="realname" class="form-control" placeholder="请输入用户实名"
+                                   value="{$data['realname']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group" <?php if (empty($data['pay_type']) || $data['pay_type'] != 3) { ?> style="display: none" <?php } ?>>
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">银行名称</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="bank_name" class="form-control" placeholder="请输入银行名称"
+                                   value="{$data['bank_name']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group" <?php if (empty($data['pay_type']) || $data['pay_type'] != 3) { ?> style="display: none" <?php } ?>>
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">银行支行</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="bank_branch" class="form-control" placeholder="银行支行"
+                                   value="{$data['bank_branch']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">账号(卡号)</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="account" class="form-control" placeholder="请输入账号(卡号)"
+                                   value="{$data['account']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <div class="col-xs-12 col-sm-8 col-md-6 col-lg-5 text-center">
+                            <button type="button" class="btn btn-flat btn-primary" onclick="sub()">提 交</button>
+                            <button type="button" class="btn btn-flat btn-default"
+                                    onclick="javascript:history.back(-1)">返 回
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        var url = "{:url('admin/User/userList')}";
+        $('a[href="' + url + '"]').parents('.menu-li').addClass('active');
+        $('#content-header-title').text('用户收款配置-编辑');
+    });
+
+    function sub()
+    {
+        var formData = new FormData($('#commentForm')[0]);
+        $.ajax({
+            url: '<?php echo !empty($data) ? url("admin/PayAccount/editPayAccount") : url("admin/PayAccount/addPayAccount");?>',
+            type: 'POST',
+            data: formData,
+            async: false,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function (res) {
+                if (res.code == '200'){
+                    window.location.href = document.referrer;
+                }
+                else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            },
+            error: function (res) {
+                layer.msg(res.msg, {icon: 5, time: 3000});
+            }
+        });
+    }
+
+    function selectFile(i)
+    {
+        $('#img_preview'+i).html('');
+        var files = document.getElementById('img_url'+i).files;
+        if(files.length == 0){
+            return;
+        }
+        var file = files[0]; //把上传的图片显示出来
+        var reader = new FileReader();
+        reader.readAsBinaryString(file);
+        reader.onload = function(){
+            var result = document.getElementById('img_preview'+i);
+            var src = "data:" + file.type + ";base64," + window.btoa(this.result);
+            result.innerHTML = '<img style="max-width: 580px;" src ="'+src+'"/>';
+        }
+    }
+</script>

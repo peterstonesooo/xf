@@ -1,0 +1,154 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['user_name']??''}" name="user_name" placeholder="搜索姓名" class="form-control">
+        <input type="text" value="{$req['phone']??''}" name="phone" placeholder="注册手机号" class="form-control">
+        <input type="text" value="{$req['user_phone']??''}" name="user_phone" placeholder="登记手机号" class="form-control">
+        <select name="yuanmeng_id" class="form-control">
+            <option value="">搜索通道</option>
+            <?php foreach($yuanmengList as $v) {?>
+            <option <?php if (isset($req['yuanmeng_id']) && $req['yuanmeng_id'] == $v['id']){echo 'selected = "selected"';} ?> value="{$v['id']}">{$v['title']}</option>
+            <?php }?>
+        </select>
+        <select name="pay_status" class="form-control">
+            <option value="">支付状态</option>
+            <option <?php if (isset($req['pay_status']) && $req['pay_status'] === '0'){echo 'selected = "selected"';} ?> value="0">未支付</option>
+            <option <?php if (isset($req['pay_status']) && $req['pay_status'] === '1'){echo 'selected = "selected"';} ?> value="1">已支付</option>
+        </select>
+        <input placeholder="开始时间" autocomplete="off" value="{$req['start_date']??''}" name="start_date" class="form-control layer-date" id="start">
+        ～
+        <input placeholder="结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
+        <input placeholder="实名认证开始时间" autocomplete="off" value="{$req['auth1_start_date']??''}" name="auth1_start_date" class="form-control layer-date" id="auth1_start">
+        ～
+        <input placeholder="实名认证结束时间" autocomplete="off" value="{$req['auth1_end_date']??''}" name="auth1_end_date" class="form-control layer-date" id="auth1_end">
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;共 {$count} 条记录</span>
+        <!-- <a {:auth_show_judge('AdminUser/addAdminUser')} class="btn btn-flat btn-success m_10 f_r" href="{:url('admin/AdminUser/showAdminUser')}"><i class="fa fa-plus m-r-10"></i>添 加</a> -->
+    </form>
+</div>
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>圆梦通道</th>
+                            <th>圆梦补贴</th>
+                            <th>姓名</th>
+                            <th>注册手机号</th>
+                            <th>登记手机号</th>
+                            <th>身份证号</th>
+                            <th>收货地址</th>
+                            <th>手持身份证人像面照片</th>
+                            <th>手持身份证国徽面照片</th>
+                            <th>同名银行卡照片</th>
+                            <!-- <th>同名微信收款照片</th>
+                            <th>同名支付宝收款码</th> -->
+                            <th style="width: 12%;">审核流程</th>
+                            <th>实名认证金</th>
+                            <th>实名认证支付状态</th>
+                            <th>实名认证开始时间</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>{$v['title']}</td>
+                                <td>{$v['name']}</td>
+                                <td>{$v['user_name']}</td>
+                                <td>{$v['phone']}</td>
+                                <td>{$v['user_phone']}</td>
+                                <td>{$v['user_idcard']}</td>
+                                <td>{$v['user_address']}</td>
+                                <td><img src="{$v['user_idcard_photo_front']}" onclick="seePhoto('{$v['user_idcard_photo_front']}')" style="max-width: 80px;"></td>
+                                <td><img src="{$v['user_idcard_photo_back']}" onclick="seePhoto('{$v['user_idcard_photo_back']}')" style="max-width: 80px;"></td>
+                                <td><img src="{$v['user_bankcard_photo']}" onclick="seePhoto('{$v['user_bankcard_photo']}')" style="max-width: 80px;"></td>
+                                <!-- <td>{$v['user_wechat_photo']}</td>
+                                <td>{$v['user_alipay_photo']}</td> -->
+                                <td style="font-size: 1rem;">
+                                    个人信息认证：<?php if ($v['auth1_status'] == 0) { echo '待审核';} else if ($v['auth1_status'] == 1) { echo '审核中';} else if ($v['auth1_status'] == 2) { echo '审核完成';}?><br>
+                                    补贴金额认证：<?php if ($v['auth2_status'] == 0) { echo '待审核';} else if ($v['auth2_status'] == 1) { echo '审核中';} else if ($v['auth2_status'] == 2) { echo '审核完成';}?><br>
+                                    金融监管审核：<?php if ($v['auth3_status'] == 0) { echo '待审核';} else if ($v['auth3_status'] == 1) { echo '审核中';} else if ($v['auth3_status'] == 2) { echo '审核完成';}?><br>
+                                    符合同名审核：<?php if ($v['auth4_status'] == 0) { echo '待审核';} else if ($v['auth4_status'] == 1) { echo '审核中';} else if ($v['auth4_status'] == 2) { echo '审核完成';}?><br>
+                                    财务部门打款：<?php if ($v['auth5_status'] == 0) { echo '待审核';} else if ($v['auth5_status'] == 1) { echo '审核中';} else if ($v['auth5_status'] == 2) { echo '审核完成';}?><br>
+                                </td>
+                                <td>{$v['auth_price']}</td>
+                                <td>
+                                    <?php switch($v){
+                                        case $v['pay_status'] == 0:
+                                            echo '未支付';
+                                            break;
+                                        case $v['pay_status'] == 1:
+                                            echo '已支付';
+                                            break;
+                                    }
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php 
+                                        if($v['auth1_start_time']) {
+                                            echo date('Y-m-d H:i:s', $v['auth1_start_time']);
+                                        }
+                                        ?>
+                                </td>
+                                <td>{$v['created_at']}</td>
+                                <td>
+                                    <a {:auth_show_judge('Yuanmeng/orderChangeTongdao')} class="btn btn-flat btn-info btn-xs" href="{:url('admin/Yuanmeng/yuanmengUserChange', ['id' => $v['id']])}"><i class="fa fa-edit"></i> 修改</a>
+                                    <?php if ($v['pay_status'] == 0) {?>
+                                    <a {:auth_show_judge('Yuanmeng/orderChangeTongdao')} class="btn btn-flat btn-info btn-xs" href="{:url('admin/Yuanmeng/orderChangeTongdao', ['id' => $v['id']])}"><i class="fa fa-edit"></i> 修改通道</a>
+                                    <a {:auth_show_judge('Yuanmeng/orderChangeTongdao/del')} class="btn btn-flat btn-danger btn-xs" href="javascript:;" onclick="del({$v['id']})"><i class="fa fa-trash-o"></i> 删除</a>
+                                    <?php }?>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+        $(function () {
+        //日期范围限制
+        var start = {
+            elem: '#start',
+            format: 'yyyy-MM-dd',
+        };
+        var end = {
+            elem: '#end',
+            format: 'yyyy-MM-dd',
+        };
+        var auth1_start = {
+            elem: '#auth1_start',
+            format: 'yyyy-MM-dd',
+        };
+        var auth1_end = {
+            elem: '#auth1_end',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(start);
+        laydate.render(end);
+        laydate.render(auth1_start);
+        laydate.render(auth1_end);
+    });
+    function del(id)
+    {
+        //确认框
+        layer.confirm('确定删除吗？', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("admin/Yuanmeng/delOrder")}', {id: id}, function (res) {
+                if (res.code == '200') {
+                    location.reload(true);
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+</script>

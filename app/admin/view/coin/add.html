@@ -1,0 +1,144 @@
+<div class="row">
+    <div class="col-sm-12 col-xs-12">
+        <form id="commentForm">
+            <?php if (!empty($data)) { ?>
+                <input type="hidden" class="form-control" value="{$data['id']}" name="id">
+            <?php } ?>
+            <div class="box box-body">
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">图标</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <div id="img_preview1">
+                                <?php if (!empty($data)){ ?>
+                                    <img style="max-width: 580px;" src ="{$data['icon']}"/>
+                                <?php } ?>
+                            </div>
+                            <input type="file" class="form-control" name="icon" id="img_url1" accept="image/gif,image/jpeg,image/jpg,image/png" onchange="selectFile(1)">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">币种代码</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="code" class="form-control"
+                                   placeholder="音文字母，例：BTC">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">一级返佣比例</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="number" name="layer1" class="form-control"
+                                   placeholder="一级返佣比例">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">二级返佣比例</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="number" name="layer2" class="form-control"
+                                   placeholder="二级返佣比例">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">项目简介</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <textarea name="description" id="" cols="30" rows="10" class="form-control"></textarea>
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <div class="col-xs-12 col-sm-8 col-md-6 col-lg-5 text-center">
+                            <button type="button" class="btn btn-flat btn-primary" onclick="sub()">提 交</button>
+                            <button type="button" class="btn btn-flat btn-default"
+                                    onclick="javascript:history.back(-1)">返 回
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        <?php if (!empty($data['type'])) { if ($data['type'] == 4) { ?>
+            $('.bank').show();
+        <?php } else { ?>
+            $('.notbank').show();
+        <?php } } ?>
+
+        var url = "{:url('admin/Coin/list')}";
+        $('a[href="' + url + '"]').parents('.menu-li').addClass('active');
+        var headerText = $('a[href="' + url + '"]').children('span').text();
+        var is_add = "<?php echo !empty($data) ? '0' : '1';?>";
+        var headerTitle = is_add == "1" ? headerText + '-添加' : headerText + '-编辑';
+        $('#content-header-title').text(headerTitle);
+    });
+
+    function sub()
+    {
+        $.post('<?php echo url("admin/Coin/addSubmit");?>', new FormData($('#commentForm')[0]), function (res) {
+            if (res.code == '200') {
+                window.location.href = document.referrer;
+            } else {
+                layer.msg(res.msg, {icon: 5, time: 3000});
+            }
+        });
+    }
+
+    function sub()
+    {
+        var formData = new FormData($('#commentForm')[0]);
+        $.ajax({
+            url: '<?php echo !empty($data) ? url("admin/Coin/addSubmit") : url("admin/Coin/addSubmit");?>',
+            type: 'POST',
+            data: formData,
+            async: false,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function (res) {
+                if (res.code == '200'){
+                    window.location.href = document.referrer;
+                }
+                else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            },
+            error: function (res) {
+                layer.msg(res.msg, {icon: 5, time: 3000});
+            }
+        });
+    }
+
+    function selectFile(i)
+    {
+        $('#img_preview'+i).html('');
+        var files = document.getElementById('img_url'+i).files;
+        if(files.length == 0){
+            return;
+        }
+        var file = files[0]; //把上传的图片显示出来
+        var reader = new FileReader();
+        reader.readAsBinaryString(file);
+        reader.onload = function(){
+            var result = document.getElementById('img_preview'+i);
+            var src = "data:" + file.type + ";base64," + window.btoa(this.result);
+            result.innerHTML = '<img style="max-width: 580px;" src ="'+src+'"/>';
+        }
+    }
+</script>

@@ -1,0 +1,72 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['realname']??''}" name="realname" placeholder="搜索用户姓名"
+               class="form-control">
+        <input type="text" value="{$req['phone']??''}" name="phone" placeholder="搜索用户手机号"
+               class="form-control">
+        <input placeholder="开始时间" autocomplete="off" value="{$req['created_at']??''}" name="created_at" class="form-control layer-date" id="start">
+        <input placeholder="结束时间" autocomplete="off" value="{$req['end']??''}" name="end" class="form-control layer-date" id="end">
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">        
+        <a class="btn btn-flat btn-info m_10" href="{:url('admin/Cert/order')}">重置</a>
+        &nbsp;&nbsp;&nbsp;<span>共 <?php echo $count;?> 条数据</span>
+    </form>
+</div>
+<div class="row">
+<div class="col-xs-12">
+    <div class="box">
+        <div class="box-header">
+            <div class="box-body table-responsive no-padding">
+                <table class="table table-bordered table-hover table-striped">
+                    <tbody>
+                    <tr>
+                        <th>ID</th>
+                        <th>手机号</th>
+                        <th>金额</th>
+                        <th>姓名</th>
+                        <th>身份证</th>
+                        <th>取款系列号</th>
+                        <th>创建时间</th>
+                    </tr>
+                    <?php foreach ($data as $k => $v) { ?>
+                        <tr>
+                            <td>{$v['id']}</td>
+                            <td>{$v['user']['phone'] ?? ''}</td>
+                            <td>{$v['amount']}</td>
+                            <td>{$v['user']['realname']}</td>
+                            <td>{$v['user']['ic_number']}</td>
+                            <td>{$v['sn_no'] ?? ''}</td>
+                            <td>{$v['created_at']}</td>
+                        </tr>
+                    <?php } ?>
+                    <tr>
+                        <td><strong>总计：</strong></td>
+                        <td></td>
+                        <td></td>
+                        <td><strong>{$total_amount}</strong></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+    $(function () {
+        //日期范围限制
+        var start = {
+            elem: '#start',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(start);
+        var end = {
+            elem: '#end',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(end);
+    });
+</script>

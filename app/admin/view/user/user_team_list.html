@@ -1,0 +1,70 @@
+<div class="search">
+    <form class="form-inline">
+        <a class="btn btn-flat btn-primary m_10_l_0" href="{:url('admin/User/userList')}">显示全部</a>
+        <a class="btn btn-flat btn-success m_10 f_r" onclick="javascript:history.back(-1)"><i class="fa fa-undo m-r-10"></i>返 回</a>
+
+        <input placeholder="开始时间" autocomplete="off" value="{$req['start_date']??''}" name="start_date" class="form-control layer-date" id="start">
+        ～
+        <input placeholder="结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
+        <input type="hidden" name="user_id" value="{$data['user_id']}" />
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+    </form>
+</div>
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>会员ID</th>
+                            <th>会员手机号</th>
+                            <th>团队总人数</th>
+                            <th>团队总激活人数</th>
+                            <th>LV1总人数</th>
+                            <th>LV1激活人数</th>
+                            <th>LV2总人数</th>
+                            <th>LV2激活人数</th>
+                            <th>LV3总人数</th>
+                            <th>LV3激活人数</th>
+                        </tr>
+                        <tr>
+                            <td>{$data['user_id']}</td>
+                            <td>{$data['phone']}</td>
+                            <td>{$data['total_num']}</td>
+                            <td>{$data['active_num']}</td>
+                            <td>{$data['total_num1']}</td>
+                            <td>{$data['active_num1']}</td>
+                            <td>{$data['total_num2']}</td>
+                            <td>{$data['active_num2']}</td>
+                            <td>{$data['total_num3']}</td>
+                            <td>{$data['active_num3']}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        var url = "{:url('admin/User/userList')}";
+        $('a[href="' + url + '"]').parents('.menu-li').addClass('active');
+        $('#content-header-title').text('会员团队人数');
+
+        //日期范围限制
+        var start = {
+            elem: '#start',
+            format: 'yyyy-MM-dd',
+        };
+        var end = {
+            elem: '#end',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(start);
+        laydate.render(end);
+    });
+</script>

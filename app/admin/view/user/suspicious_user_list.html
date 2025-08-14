@@ -1,0 +1,170 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['inviter_phone']??''}" name="inviter_phone" placeholder="搜索邀请人手机号" class="form-control">
+        <input type="text" value="{$req['invite_code']??''}" name="invite_code" placeholder="搜索邀请码" class="form-control">
+        <input type="text" value="{$req['inviter_realname']??''}" name="inviter_realname" placeholder="搜索邀请人姓名" class="form-control">
+        <input placeholder="开始时间" autocomplete="off" value="{$req['start_date']??''}" name="start_date" class="form-control layer-date" id="start">
+        ～
+        <input placeholder="结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;共 {$count} 条记录</span>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <h3 class="box-title">可疑用户列表</h3>
+                <div class="box-tools pull-right">
+                    <span class="label label-warning">说明：显示在5秒内注册多个用户的邀请人</span>
+                </div>
+            </div>
+            <div class="box-body table-responsive no-padding">
+                <table class="table table-bordered table-hover table-striped">
+                    <thead>
+                    <tr>
+                        <!-- <th>邀请人ID</th> -->
+                        <th>手机号</th>
+                        <th>邀请码</th>
+                        <th>姓名</th>
+                        <th>注册时间</th>
+                        <th>下级数</th>
+                        <th>实名下级数</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($data as $k => $v) { ?>
+                        <tr>
+                            <!-- <td>{$v['inviter_id']}</td> -->
+                            <td>{$v['inviter_phone']}</td>
+                            <td>{$v['invite_code']}</td>
+                            <td>{$v['inviter_realname']}</td>
+                            <td>{$v['inviter_created_at']}</td>
+                            <td>{$v['sub_users_num']}</td>
+                            <td>{$v['sub_users_shiming']}</td>
+                            <td>
+                                <a class="btn btn-flat btn-xs btn-warning" href="{:url('admin/User/userList', ['up_user' => $v['inviter_id']])}">查看下级</a>
+                                <button class="btn btn-flat btn-xs btn-danger" onclick="showDeleteModal( '{$v['inviter_phone']}', '{$v['inviter_realname']}')">删除用户及下级</button>
+                            </td>
+                        </tr>
+                    <?php } ?>
+                    </tbody>
+                </table>
+            </div>
+            <div style="text-align:center;font-size: 14px;">{$data->render()}</div>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认弹框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <h4 class="modal-title">删除用户及下级确认</h4>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <strong>警告：</strong>此操作将永久删除该用户及其所有下级用户，包括所有相关数据（订单、资金、认证信息等），此操作不可恢复！
+                </div>
+                <form id="deleteForm">
+                    <input type="hidden" id="deleteUserId" name="id">
+                    <div class="form-group">
+                        <label>用户ID：</label>
+                        <span id="deleteUserIdText"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>手机号：</label>
+                        <span id="deleteUserPhone"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>姓名：</label>
+                        <span id="deleteUserRealname"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmId">请输入用户ID确认：</label>
+                        <input type="text" class="form-control" id="confirmId" name="id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPhone">请输入手机号确认：</label>
+                        <input type="text" class="form-control" id="confirmPhone" name="phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmRealname">请输入姓名确认：</label>
+                        <input type="text" class="form-control" id="confirmRealname" name="realname" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">确认删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showDeleteModal(userId, phone, realname) {
+    $('#deleteUserId').val(userId);
+    $('#deleteUserIdText').text(userId);
+    $('#deleteUserPhone').text(phone);
+    $('#deleteUserRealname').text(realname);
+    $('#confirmId').val('');
+    $('#confirmPhone').val('');
+    $('#confirmRealname').val('');
+    $('#deleteModal').modal('show');
+}
+
+function confirmDelete() {
+    var id = $('#confirmId').val();
+    var phone = $('#confirmPhone').val();
+    var realname = $('#confirmRealname').val();
+    var expectedUserId = $('#deleteUserId').val();
+    var expectedPhone = $('#deleteUserPhone').text();
+    var expectedRealname = $('#deleteUserRealname').text();
+    
+    if (id !== expectedUserId) {
+        alert('用户ID不匹配，请重新输入！');
+        return;
+    }
+    
+    if (phone !== expectedPhone) {
+        alert('手机号不匹配，请重新输入！');
+        return;
+    }
+    
+    if (realname !== expectedRealname) {
+        alert('姓名不匹配，请重新输入！');
+        return;
+    }
+    
+    if (!confirm('最终确认：您确定要删除该用户及其所有下级用户吗？此操作不可恢复！')) {
+        return;
+    }
+    
+    // 提交删除请求
+    $.ajax({
+        url: '{:url("admin/User/deleteUserAndSub")}',
+        type: 'POST',
+        data: $('#deleteForm').serialize(),
+        dataType: 'json',
+        success: function(res) {
+            if (res.code === 200) {
+                alert('删除成功！');
+                location.reload();
+            } else {
+                alert('删除失败：' + res.msg);
+            }
+        },
+        error: function() {
+            alert('删除失败，请重试！');
+        }
+    });
+    
+    $('#deleteModal').modal('hide');
+}
+</script>
+

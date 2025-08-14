@@ -1,0 +1,103 @@
+<div class="box">
+    <div class="box-header with-border">
+        <h3 class="box-title">中国传承基金设置【设置完成建议不要修改】</h3>
+    </div>
+    <form class="form-horizontal" id="form">
+        <?php if (!empty($data)) { ?>
+            <input type="hidden" name="id" value="{$data['id']}">
+        <?php } ?>
+        <div class="box-body">
+            <div class="form-group">
+                <label class="col-sm-2 control-label">基金名称</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" name="name" value="{$data['name']??'中国传承基金'}" placeholder="请输入基金名称">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">每次投资金额</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" name="single_amount" value="{$data['single_amount']??''}" placeholder="请输入每次投资金额">
+                </div>
+            </div>
+             <div class="form-group">
+                <label class="col-sm-2 control-label">每次投资周期【天】</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" name="period" value="7" readonly placeholder="请输入每次投资周期">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">需要投资次数</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" name="sham_buy_num" value="{$data['sham_buy_num']??''}" placeholder="请输入每个阶段需要投资的次数">
+                </div>
+            </div>
+            <!-- <div class="form-group">
+                <label class="col-sm-2 control-label">分红总次数</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" name="total_num" value="{$data['total_num']??''}" placeholder="请输入分红总次数">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">分红周期【天】</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" name="dividend_cycle" value="{$data['dividend_cycle']??''}" placeholder="请输入分红周期">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">总计分红金额</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" name="sum_amount" value="{$data['sum_amount']??''}" placeholder="请输入总计分红金额">
+                </div>
+            </div> -->
+        </div>
+        <div class="box-footer">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="button" class="btn btn-primary" onclick="sub()">保存</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+function selectFile() {
+    $('#img_preview').html('');
+    var files = document.getElementById('img_url').files;
+    if(files.length == 0){
+        return;
+    }
+    var file = files[0];
+    var reader = new FileReader();
+    reader.readAsBinaryString(file);
+    reader.onload = function(){
+        var result = document.getElementById('img_preview');
+        var src = "data:" + file.type + ";base64," + window.btoa(this.result);
+        result.innerHTML = '<img style="max-width: 580px;" src ="'+src+'"/>';
+    }
+}
+
+function sub() {
+    var formData = new FormData($('#form')[0]);
+    
+    $.ajax({
+        url: '{:url("admin/HeritageFund/save")}',
+        type: 'POST',
+        data: formData,
+        async: false,
+        cache: false,
+        contentType: false,
+        processData: false,
+        success: function(res) {
+            if(res.code == '200') {
+                layer.msg(res.msg, {icon: 1, time: 2000}, function(){
+                    window.location.href = window.location.href + '?t=' + new Date().getTime();
+                });
+            } else {
+                layer.msg(res.msg, {icon: 2, time: 2000});
+            }
+        },
+        error: function(res) {
+            layer.msg(res.msg, {icon: 2, time: 2000});
+        }
+    });
+}
+</script> 

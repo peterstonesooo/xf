@@ -1,0 +1,74 @@
+<div class="search">
+    <form class="form-inline">
+        <a class="btn btn-flat btn-primary m_10_l_0" href="{:url('admin/UserDelivery/userDeliveryList')}">显示全部</a>
+        <input class="btn btn-flat btn-info m_10" name="export" type="submit" value="地址导出">
+        <a class="btn btn-flat btn-success m_10 f_r" href="{:url('admin/User/userList')}"><i
+                    class="fa fa-undo m-r-10"></i>返 回</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>会员</th>
+                            <th>收货人名称</th>
+                            <th>手机号</th>
+                            <th>详细地址</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>{if(isset($v['user']))}  {$v['user']['phone']} {else/}-{/if}</td>
+                                <td>{$v['name']}</td>
+                                <td>{$v['phone']}</td>
+                                <td>{$v['address']}</td>
+                                <td>{$v['created_at']}</td>
+                                <td>
+                                    <a {:auth_show_judge('UserDelivery/editUserDelivery')} class="btn btn-flat btn-info
+                                    btn-xs" href="{:url('admin/UserDelivery/showUserDelivery', ['id' => $v['id']])}"><i
+                                            class="fa fa-edit"></i> 编辑</a>
+                                    <a {:auth_show_judge('UserDelivery/delUserDelivery')} class="btn btn-flat btn-danger
+                                    btn-xs" href="javascript:;" onclick="delUserDelivery({$v['id']})"><i
+                                            class="fa fa-trash-o"></i> 删除</a>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        var url = "{:url('admin/User/userList')}";
+        $('a[href="' + url + '"]').parents('.menu-li').addClass('active');
+        $('#content-header-title').text('会员收货地址');
+    });
+
+    function delUserDelivery(id)
+    {
+        //确认框
+        layer.confirm('确定删除吗？', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("admin/UserDelivery/delUserDelivery")}', {id: id}, function (res) {
+                if (res.code == '200') {
+                    location.reload(true);
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+</script>

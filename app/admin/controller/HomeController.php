@@ -1,0 +1,189 @@
+<?php
+
+namespace app\admin\controller;
+
+use app\model\Capital;
+use app\model\Order;
+use app\model\User;
+use app\model\UserBalanceLog;
+use app\model\UserSignin;
+use app\model\OrderTiyan;
+use app\model\YuanmengUser;
+use app\model\OrderDailyBonus;
+use app\model\Project;
+
+class HomeController extends AuthController
+{
+    public function index()
+    {
+        // 检查用户是否有控制台权限，如果有就显示数据
+        $adminUser = session('admin_user');
+        if(!$adminUser){
+            $this->assign('data', []);
+            return $this->fetch();
+        }
+
+        $today = date("Y-m-d 00:00:00", time());
+        $yesterday = date("Y-m-d 00:00:00", strtotime("-1 day"));
+        $yesterday_end = date("Y-m-d 23:59:59", strtotime("-1 day"));
+
+        $data = $arr = [];
+
+        $arr['title'] = '注册总会员数';
+        $arr['value'] = User::count();
+        $arr['title1'] = '今日注册会员数';
+        $arr['value1'] = User::where('created_at', '>=', $today)->count();
+        $arr['title2'] = '昨日注册会员数';
+        $arr['value2'] = User::where('created_at', '>=', $yesterday)->where('created_at', '<=', $yesterday_end)->count();
+        $arr['url'] = '';
+        $data[] = $arr;
+
+        $arr['title'] = '激活总人数';
+        $arr['value'] = User::where('is_active', 1)->count();
+        $arr['title1'] = '今日激活人数';
+        $arr['value1'] = User::where('is_active', 1)->where('active_time', '>=', strtotime($today))->count();
+        $arr['title2'] = '昨日激活人数';
+        $arr['value2'] = User::where('is_active', 1)->where('active_time', '>=', strtotime($yesterday))->where('active_time', '<=', strtotime($yesterday_end))->count();
+        $arr['url'] = '';
+        $data[] = $arr;
+
+        $arr['title'] = '申领总人数';
+        $order_users = Order::where('status', '>', 1)->column('user_id');
+        $daily_bonus_users = OrderDailyBonus::where('status', '>', 1)->column('user_id');
+        $arr['value'] = count(array_unique(array_merge($order_users, $daily_bonus_users)));
+
+        $arr['title1'] = '今日申领人数';
+        $today_order_users = Order::where('status', '>', 1)->where('pay_time', '>=', strtotime($today))->column('user_id');
+        $today_daily_bonus_users = OrderDailyBonus::where('status', '>', 1)->where('pay_time', '>=', strtotime($today))->column('user_id');
+        $arr['value1'] = count(array_unique(array_merge($today_order_users, $today_daily_bonus_users)));
+        
+        $arr['title2'] = '昨日申领人数';
+        $yesterday_order_users = Order::where('status', '>', 1)->where('pay_time', '>=', strtotime($yesterday))->where('pay_time', '<=', strtotime($yesterday_end))->column('user_id');
+        $yesterday_daily_bonus_users = OrderDailyBonus::where('status', '>', 1)->where('pay_time', '>=', strtotime($yesterday))->where('pay_time', '<=', strtotime($yesterday_end))->column('user_id');
+        $arr['value2'] = count(array_unique(array_merge($yesterday_order_users, $yesterday_daily_bonus_users)));
+        $arr['url'] = '';
+        $data[] = $arr;
+
+        $arr['title'] = '申领总份额';
+        $order_users = Order::where('status', '>', 1)->column('user_id');
+        $daily_bonus_users = OrderDailyBonus::where('status', '>', 1)->column('user_id');
+        $arr['value'] = count(array_merge($order_users, $daily_bonus_users));
+        
+        $arr['title1'] = '今日申领份额';
+        $today_order_users = Order::where('status', '>', 1)->where('pay_time', '>=', strtotime($today))->column('user_id');
+        $today_daily_bonus_users = OrderDailyBonus::where('status', '>', 1)->where('pay_time', '>=', strtotime($today))->column('user_id');
+        $arr['value1'] = count(array_merge($today_order_users, $today_daily_bonus_users));
+        
+        $arr['title2'] = '昨日申领份额';
+        $yesterday_order_users = Order::where('status', '>', 1)->where('pay_time', '>=', strtotime($yesterday))->where('pay_time', '<=', strtotime($yesterday_end))->column('user_id');
+        $yesterday_daily_bonus_users = OrderDailyBonus::where('status', '>', 1)->where('pay_time', '>=', strtotime($yesterday))->where('pay_time', '<=', strtotime($yesterday_end))->column('user_id');
+        $arr['value2'] = count(array_merge($yesterday_order_users, $yesterday_daily_bonus_users));
+        $arr['url'] = '';
+        $data[] = $arr;
+
+        
+
+        $arr['title'] = '充值总金额';
+        $arr['value'] = round(Capital::where('status', 2)->whereIn('type', [1, 3])->sum('amount'), 2);
+        $arr['title1'] = '今日充值总金额';
+        $arr['value1'] = round(Capital::where('status', 2)->whereIn('type', [1, 3])->where('created_at', '>=', $today)->sum('amount'), 2);
+        $arr['title2'] = '昨日充值总金额';
+        $arr['value2'] = round(Capital::where('status', 2)->whereIn('type', [1, 3])->where('created_at', '>=', $yesterday)->where('created_at', '<=', $yesterday_end)->sum('amount'), 2);
+        $arr['url'] = '';
+        $data[] = $arr;
+
+        $arr['title'] = '充值总次数';
+        $arr['value'] = Capital::where('status', 2)->whereIn('type', [1, 3])->count();
+        $arr['title1'] = '今日充值总次数';
+        $arr['value1'] = Capital::where('status', 2)->whereIn('type', [1, 3])->where('created_at', '>=', $today)->count();
+        $arr['title2'] = '昨日充值总次数';
+        $arr['value2'] = Capital::where('status', 2)->whereIn('type', [1, 3])->where('created_at', '>=', $yesterday)->where('created_at', '<=', $yesterday_end)->count();
+        $arr['url'] = '';
+        $data[] = $arr;
+
+        $arr['title'] = '体验总会员数';
+        $arr['value'] = OrderTiyan::count();
+        $arr['title1'] = '今日体验会员数';
+        $arr['value1'] = OrderTiyan::where('pay_time', '>=', strtotime($today))->count();
+        $arr['title2'] = '昨日体验会员数';
+        $arr['value2'] = OrderTiyan::where('pay_time', '>=', strtotime($yesterday))->where('pay_time', '<=', strtotime($yesterday_end))->count();
+        $arr['url'] = '';
+        $data[] = $arr;
+
+        $signin_date = date('Y-m-d');
+        $yesterday_signin_date = date('Y-m-d', strtotime("-1 day"));
+        $arr['title'] = '签到记录数量';
+        $arr['value'] = UserSignin::count();
+        $arr['title1'] = '今日签到记录数';
+        $arr['value1'] = UserSignin::where('signin_date', $signin_date)->count();
+        $arr['title2'] = '昨日签到记录数';
+        $arr['value2'] = UserSignin::where('signin_date', $yesterday_signin_date)->count();
+        $arr['url'] = '';
+        $data[] = $arr;
+
+        $arr['title'] = '提现总金额';
+        $arr['value'] = round(0 - Capital::where('status', 2)->where('type', 2)->sum('amount'), 2);
+        $arr['title1'] = '今日提现总金额';
+        $arr['value1'] = round(0 - Capital::where('status', 2)->where('type', 2)->where('created_at', '>=', $today)->sum('amount'), 2);
+        $arr['title2'] = '昨日提现总金额';
+        $arr['value2'] = round(0 - Capital::where('status', 2)->where('type', 2)->where('created_at', '>=', $yesterday)->where('created_at', '<=', $yesterday_end)->sum('amount'), 2);
+        $arr['url'] = '';
+        $data[] = $arr;
+
+        $arr['title'] = '提现总次数';
+        $arr['value'] = Capital::where('status', 2)->where('type', 2)->count();
+        $arr['title1'] = '今日提现总次数';
+        $arr['value1'] = Capital::where('status', 2)->where('type', 2)->where('created_at', '>=', $today)->count();
+        $arr['title2'] = '昨日提现总次数';
+        $arr['value2'] = Capital::where('status', 2)->where('type', 2)->where('created_at', '>=', $yesterday)->where('created_at', '<=', $yesterday_end)->count();
+        $arr['url'] = '';
+        $data[] = $arr;
+
+        $arr['title'] = '投资总金额';
+        $arr['value'] = round(abs(UserBalanceLog::whereIn('type', [3,62])->where('log_type', 1)->sum('change_balance')), 2);
+        $arr['title1'] = '今日投资总金额';
+        $arr['value1'] = round(abs(UserBalanceLog::whereIn('type', [3,62])->where('log_type', 1)->where('created_at', '>=', $today)->sum('change_balance')), 2);
+        $arr['title2'] = '昨日投资总金额';
+        $arr['value2'] = round(abs(UserBalanceLog::whereIn('type', [3,62])->where('log_type', 1)->where('created_at', '>=', $yesterday)->where('created_at', '<=', $yesterday_end)->sum('change_balance')), 2);
+        $arr['url'] = '';
+        $data[] = $arr;
+
+        // $weekday = date('w');
+        // $allowed_group_id = $weekday + 6;
+        // if ($weekday >= 1 && $weekday <= 5 ) {
+        //     $today_projescs = Project::where('project_group_id', $allowed_group_id)->where('status', 1)->column('id');
+        // }else{
+        //     $today_projescs = Project::where('status', 1)->column('id');
+        // }
+        
+        $project_ids = Project::where('status', 1)->where('class', 'in',[6,7,8,9])->column('id');
+
+        $arr['title'] = '本期产品总人数';
+        $user_ids1 = Order::whereIn('project_id', $project_ids)->where('status', '>', 1)->column('user_id');
+        $user_ids2 = OrderDailyBonus::whereIn('project_id', $project_ids)->where('status', '>', 1)->column('user_id');
+        $arr['value'] = count(array_unique(array_merge($user_ids1, $user_ids2)));
+
+        $arr['title1'] = '本期产品总份额';
+        $orders1 = Order::whereIn('project_id', $project_ids)->where('status', '>', 1)->count();
+        $orders2 = OrderDailyBonus::whereIn('project_id', $project_ids)->where('status', '>', 1)->count();
+        $arr['value1'] = $orders1 + $orders2;
+
+        $arr['title2'] = '本期产品总金额';
+        $amount1 = Order::whereIn('project_id', $project_ids)->where('status', '>', 1)->sum('single_amount');
+        $amount2 = OrderDailyBonus::whereIn('project_id', $project_ids)->where('status', '>', 1)->sum('single_amount');
+        $arr['value2'] = $amount1+$amount2;
+        $arr['url'] = '';
+        $data[] = $arr;
+
+        $this->assign('data', $data);
+
+        return $this->fetch();
+    }
+
+    public function uploadSummernoteImg()
+    {
+        $img_url = upload_file2('img_url',true,false);
+
+        return out(['img_url' => env('app.img_host').$img_url, 'filename' => md5(time()).'.jpg']);
+    }
+}

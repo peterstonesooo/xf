@@ -1,0 +1,182 @@
+<script src="__ADMIN__/dist/js/echarts.min.js"></script>
+<div class="search">
+    <form class="form-inline">
+        <a class="btn btn-flat btn-primary m_10_l_0" href="{:url('admin/KlineChart/klineChart')}">显示全部</a>
+        <a class="btn btn-flat btn-success m_10 f_r" onclick="javascript:history.back(-1)"><i
+                    class="fa fa-undo m-r-10"></i>返 回</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-sm-12 col-xs-12">
+        <form id="commentForm">
+            <?php if (!empty($data)) { ?>
+                <input type="hidden" class="form-control" value="{$data['id']}" name="id">
+            <?php } ?>
+            <div class="box box-body">
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">日期</label>
+                        <div class="left-box" style="margin-right: 20px;">
+                            <div class="max-box">
+                                <input type="date" v-model="date" name="date" class="date-input" v-on:change="selectDate()" value="{$data['date']??''}" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">时间/价格</label>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            9:30<input type="text" name="price1" class="form-control" placeholder=""
+                                   value="{$data['price1']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            9:40<input type="text" name="price2" class="form-control" placeholder="9:40"
+                                   value="{$data['price2']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            9:50<input type="text" name="price3" class="form-control" placeholder="9:50"
+                                   value="{$data['price3']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            10:00<input type="text" name="price4" class="form-control" placeholder="10:00"
+                                   value="{$data['price4']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            10:10<input type="text" name="price5" class="form-control" placeholder="10:10"
+                                   value="{$data['price5']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            10:20<input type="text" name="price6" class="form-control" placeholder="10:20"
+                                   value="{$data['price6']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            10:30<input type="text" name="price7" class="form-control" placeholder="10:30"
+                                   value="{$data['price7']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            10:40<input type="text" name="price8" class="form-control" placeholder="10:40"
+                                   value="{$data['price8']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            10:50<input type="text" name="price9" class="form-control" placeholder="10:50"
+                                   value="{$data['price9']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            11:00<input type="text" name="price10" class="form-control" placeholder="11:00"
+                                   value="{$data['price10']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            11:10<input type="text" name="price11" class="form-control" placeholder="11:10"
+                                   value="{$data['price11']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            11:20<input type="text" name="price12" class="form-control" placeholder="11:20"
+                                   value="{$data['price12']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            11:30<input type="text" name="price13" class="form-control" placeholder="11:30"
+                                   value="{$data['price13']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            13:10<input type="text" name="price14" class="form-control" placeholder="13:10"
+                                   value="{$data['price14']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            13:20<input type="text" name="price15" class="form-control" placeholder="13:20"
+                                   value="{$data['price15']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            13:30<input type="text" name="price16" class="form-control" placeholder="13:30"
+                                   value="{$data['price16']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            13:40<input type="text" name="price17" class="form-control" placeholder="13:40"
+                                   value="{$data['price17']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            13:50<input type="text" name="price18" class="form-control" placeholder="13:50"
+                                   value="{$data['price18']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            14:00<input type="text" name="price19" class="form-control" placeholder="14:00"
+                                   value="{$data['price19']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            14:10<input type="text" name="price20" class="form-control" placeholder="14:10"
+                                   value="{$data['price20']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            14:20<input type="text" name="price21" class="form-control" placeholder="14:20"
+                                   value="{$data['price21']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            14:30<input type="text" name="price22" class="form-control" placeholder="14:30"
+                                   value="{$data['price22']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            14:40<input type="text" name="price23" class="form-control" placeholder="14:40"
+                                   value="{$data['price23']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            14:50<input type="text" name="price24" class="form-control" placeholder="14:50"
+                                   value="{$data['price24']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
+                            15:00<input type="text" name="price25" class="form-control" placeholder="15:00"
+                                   value="{$data['price25']??''}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <div class="col-xs-12 col-sm-8 col-md-6 col-lg-5 text-center">
+                            <button type="button" class="btn btn-flat btn-primary" onclick="sub()">提 交</button>
+                            <button type="button" class="btn btn-flat btn-default"
+                                    onclick="javascript:history.back(-1)">返 回
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        var url = "{:url('admin/KlineChart/klineChart')}";
+        $('a[href="' + url + '"]').parents('.menu-li').addClass('active');
+        var headerText = $('a[href="' + url + '"]').children('span').text();
+        var is_add = "<?php echo !empty($data) ? '0' : '1';?>";
+        var headerTitle = is_add == "1" ? headerText + '-添加' : headerText + '-编辑';
+        $('#content-header-title').text(headerTitle);
+    });
+
+    function sub()
+    {
+        var formData = new FormData($('#commentForm')[0]);
+        $.ajax({
+            url: '<?php echo !empty($data) ? url("admin/KlineChart/editKline") : url("admin/KlineChart/addKline");?>',
+            type: 'POST',
+            data: formData,
+            async: false,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function (res) {
+                if (res.code == '200'){
+                    window.location.href = document.referrer;
+                }
+                else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            },
+            error: function (res) {
+                layer.msg(res.msg, {icon: 5, time: 3000});
+            }
+        });
+    }
+</script>

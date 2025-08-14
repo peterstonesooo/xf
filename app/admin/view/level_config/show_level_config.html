@@ -1,0 +1,121 @@
+<div class="search">
+    <form class="form-inline">
+        <a class="btn btn-flat btn-primary m_10_l_0" href="{:url('admin/LevelConfig/levelConfigList')}">显示全部</a>
+        <a class="btn btn-flat btn-success m_10 f_r" onclick="javascript:history.back(-1)"><i
+                    class="fa fa-undo m-r-10"></i>返 回</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-sm-12 col-xs-12">
+        <form id="commentForm">
+            <?php if (!empty($data)) { ?>
+                <input type="hidden" class="form-control" value="{$data['id']}" name="id">
+            <?php } ?>
+            <div class="box box-body">
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">等级</label>
+                        <div class="col-xs-8 col-sm-6 col-md-4 col-lg-4">
+                            <select disabled name="level" class="form-control">
+                                <?php foreach (config('map.level_config')['level_map'] as $k => $v) { ?>
+                                    <option <?php if (isset($data['level']) && $data['level'] == $k) { ?> selected="selected" <?php } ?>
+                                            value="{$k}">{$v}
+                                    </option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                        <div class="col-xs-12 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">最小充值金额</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="min_topup_amount" class="form-control" placeholder="请输入最小充值金额"
+                                   value="{$data['min_topup_amount']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">直属下级激活人数</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="min_direct_sub_active_num" class="form-control"
+                                   placeholder="请输入直属下级激活人数" value="{$data['min_direct_sub_active_num']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">充值奖励</label>
+                        <div class="col-xs-6 col-sm-5 col-md-3 col-lg-3">
+                            <input type="text" name="topup_reward_ratio" class="form-control" placeholder="请输入充值奖励"
+                                   value="{$data['topup_reward_ratio']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1" style="margin-top: 0.5%;font-size: 20px;">
+                            <strong>%</strong>
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">数字生活补贴</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="cash_reward_amount" class="form-control" placeholder="请输入数字生活补贴"
+                                   value="{$data['cash_reward_amount']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">直属推荐奖</label>
+                        <div class="col-xs-6 col-sm-5 col-md-3 col-lg-3">
+                            <input type="text" name="direct_recommend_reward_ratio" class="form-control"
+                                   placeholder="请输入直属推荐奖" value="{$data['direct_recommend_reward_ratio']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-1 col-md-1 col-lg-1" style="margin-top: 0.5%;font-size: 20px;">
+                            <strong>%</strong>
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <div class="col-xs-12 col-sm-8 col-md-6 col-lg-5 text-center">
+                            <button type="button" class="btn btn-flat btn-primary" onclick="sub()">提 交</button>
+                            <button type="button" class="btn btn-flat btn-default"
+                                    onclick="javascript:history.back(-1)">返 回
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        var url = "{:url('admin/LevelConfig/levelConfigList')}";
+        $('a[href="' + url + '"]').parents('.menu-li').addClass('active');
+        var headerText = $('a[href="' + url + '"]').children('span').text();
+        var is_add = "<?php echo !empty($data) ? '0' : '1';?>";
+        var headerTitle = is_add == "1" ? headerText + '-添加' : headerText + '-编辑';
+        $('#content-header-title').text(headerTitle);
+    });
+
+    function sub() {
+        $.post('<?php echo !empty($data) ? url("admin/LevelConfig/editLevelConfig") : url("admin/LevelConfig/addLevelConfig");?>', $('#commentForm').serialize(), function (res) {
+            if (res.code == '200') {
+                window.location.href = document.referrer;
+            } else {
+                layer.msg(res.msg, {icon: 5, time: 3000});
+            }
+        });
+    }
+</script>

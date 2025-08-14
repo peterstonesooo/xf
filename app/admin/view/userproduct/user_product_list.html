@@ -1,0 +1,142 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['user']??''}" name="user" placeholder="搜索用户ID/手机号" class="form-control">
+        <input type="text" value="{$req['trade_sn']??''}" name="trade_sn" placeholder="搜索订单号" class="form-control">
+        <input type="text" value="{$req['up_user']??''}" name="up_user" placeholder="上级手机号" class="form-control">
+
+        <select name="is_use" class="form-control">
+            <option value="">搜索订单状态</option>
+            <?php foreach ($is_use_arr as $k => $v) { ?>
+                <option <?php if (isset($req['is_use']) && is_numeric($req['is_use']) && $req['is_use'] == $k) {
+                    echo 'selected = "selected"';
+                } ?> value="{$k}">{$v}
+                </option>
+            <?php } ?>
+        </select>
+
+        <select name="product_id" class="form-control">
+            <option value="">搜索产品</option>
+            <?php foreach ($product as $k => $v) { ?>
+            <option <?php if (isset($req['product_id']) && is_numeric($req['product_id']) && $req['product_id'] == $v['id']) {
+                    echo 'selected = "selected"';
+                } ?> value="{$v['id']}">{$v['name']}-{$v['id']}
+            </option>
+            <?php } ?>
+        </select>
+
+        <select name="trade_sn_like" class="form-control">
+            <option value="">支付方式类型</option>
+            <option <?php if (isset($req['trade_sn_like']) && $req['trade_sn_like'] == 'O') {
+                    echo 'selected = "selected"';
+                } ?> value="O">直接购买</option>
+            <option <?php if (isset($req['trade_sn_like']) && $req['trade_sn_like'] == 'D') {
+                    echo 'selected = "selected"';
+                } ?> value="D">现金购买</option>
+            <option <?php if (isset($req['trade_sn_like']) && $req['trade_sn_like'] == 'G') {
+                    echo 'selected = "selected"';
+                } ?> value="G">直接赠送</option>
+        </select>
+
+        <input placeholder="购买开始时间" autocomplete="off" value="{$req['start_date']??''}" name="start_date" class="form-control layer-date" id="start">
+        ～
+        <input placeholder="购买结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
+
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+
+        <!--右边添加栏-->
+        <!-- <input class="btn btn-flat btn-info m_10 f_r" name="export" type="submit" value="导出"> -->
+        <!-- <a class="btn btn-flat btn-success m_10 f_r"
+        href="{:url('admin/userproduct/addUserProduct')}"><i class="fa fa-plus m-r-10"></i>赠送产品</a> -->
+
+    </form>
+    <div>
+        购买总数：{$total} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;购买人数去重：{$unique_user_num}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户信息</th>
+                            <th>支付订单号</th>
+                            <th>产品名</th>
+                            <th>单份购买金额</th>
+                            <th>周期返现金</th>
+                            <th>单份生育补贴</th>
+                            <th>生育津贴</th>
+                            <th>购买份数</th>
+                            <th>发放状态</th>
+                            <th>发放类型</th>
+                            <th>开始时间</th>
+                            <th>结束时间</th>
+                            <!-- <th>操作</th> -->
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>{$v['user']['realname'] ?? ''}（{$v['user']['phone'] ?? ''}）</td>
+                                <td>{$v['trade_sn']}</td>
+                                <td>{$v['name']}</td>
+                                <td>{$v['single_amount']}</td>
+                                <td>{$v['invite_bonus']}</td>
+                                <td>{$v['digital_yuan_amount']}</td>
+                                <td>{$v['team_bonus_balance']}</td>
+                                <td>{$v['num']}</td>
+                                <td>{$v['is_use_txt']}</td>
+                                <td>{$v['type_txt']}</td>
+                                <td>{$v['start_time']}</td>
+                                <td>{$v['end_time']}</td>
+                                <!-- <td>
+                                    {if $admin_auth && $v['user_id'] > 0}
+                                        <a {:auth_show_judge('Userproduct/cancel')} class="btn btn-flat btn-danger btn-xs"
+                                        href="javascript:;" onclick="cancel({$v['id']})"><i class="fa fa-trash-o"></i>
+                                        撤销</a>
+                                    {/if}
+                                </td> -->
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+    $(function () {
+        //日期范围限制
+        var start = {
+            elem: '#start',
+            format: 'yyyy-MM-dd',
+        };
+        var end = {
+            elem: '#end',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(start);
+        laydate.render(end);
+    });
+
+    function cancel(id)
+    {
+        //确认框
+        layer.confirm('确定撤销吗？', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("admin/Userproduct/cancel")}', {id: id}, function (res) {
+                if (res.code == '200') {
+                    location.reload(true);
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+</script>

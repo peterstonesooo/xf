@@ -1,0 +1,108 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['id']??''}" name="id" placeholder="搜索ID" class="form-control">
+        <input type="text" value="{$req['name']??''}" name="name" placeholder="搜索名称" class="form-control">
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <a {:auth_show_judge('ProjectTongxing/addProject')} class="btn btn-flat btn-success m_10 f_r"
+        href="{:url('admin/ProjectTongxing/showProject')}"><i class="fa fa-plus m-r-10"></i>添 加</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>封面图</th>
+                            <th>名称</th>
+                            <th>简介</th>
+                            <th>视频链接</th>
+                            <th>金额配置</th>
+                            <th>创建时间</th>
+                            <th>修改时间</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>
+                                    <?php if (!empty($v['cover_img'])) { ?>
+                                        <img src="{$v['cover_img']}" onclick="seePhoto('{$v['cover_img']}')" style="max-width: 80px;">
+                                    <?php } else { ?>
+                                        <span class="text-muted">无图片</span>
+                                    <?php } ?>
+                                </td>
+                                <td>{$v['name']}</td>
+                                <td>
+                                    <?php if (!empty($v['intro'])) { ?>
+                                        <span title="{$v['intro']}"><?php echo mb_substr($v['intro'], 0, 20) . (mb_strlen($v['intro']) > 20 ? '...' : ''); ?></span>
+                                    <?php } else { ?>
+                                        <span class="text-muted">无简介</span>
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <?php if (!empty($v['video_url'])) { ?>
+                                        <a href="{$v['video_url']}" target="_blank" class="btn btn-xs btn-info">查看视频</a>
+                                    <?php } else { ?>
+                                        <span class="text-muted">无视频</span>
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <?php 
+                                    if (!empty($v['amounts'])) {
+                                        $amounts = is_array($v['amounts']) ? $v['amounts'] : json_decode($v['amounts'], true);
+                                        if (is_array($amounts)) {
+                                            foreach ($amounts as $amount) {
+                                                echo '<div><strong>' . $amount['value'] . '</strong>';
+                                                if (!empty($amount['description'])) {
+                                                    echo ': ' . $amount['description'];
+                                                }
+                                                echo '</div>';
+                                            }
+                                        }
+                                    } else {
+                                        echo '<span class="text-muted">无配置</span>';
+                                    }
+                                    ?>
+                                </td>
+                                <td>{$v['creat_at']}</td>
+                                <td>{$v['updated_at']}</td>
+                                <td>
+                                    <a {:auth_show_judge('ProjectTongxing/editProject')} class="btn btn-flat btn-info btn-xs"
+                                    href="{:url('admin/ProjectTongxing/showProject', ['id' => $v['id']])}"><i
+                                            class="fa fa-edit"></i> 编辑</a>
+                                    <a {:auth_show_judge('ProjectTongxing/delProject')} class="btn btn-flat btn-danger btn-xs"
+                                    href="javascript:;" onclick="delProject({$v['id']})"><i class="fa fa-trash-o"></i>
+                                    删除</a>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function delProject(id)
+    {
+        //确认框
+        layer.confirm('确定删除吗？', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("admin/ProjectTongxing/delProject")}', {id: id}, function (res) {
+                if (res.code == '200') {
+                    location.reload(true);
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+</script>

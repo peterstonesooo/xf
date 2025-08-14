@@ -1,0 +1,92 @@
+<div class="search">
+    <form class="form-inline">
+        <a class="btn btn-flat btn-primary m_10_l_0" href="{:url('admin/User/userList')}">显示全部</a>
+        <a class="btn btn-flat btn-success m_10 f_r" onclick="javascript:history.back(-1)"><i
+                    class="fa fa-undo m-r-10"></i>返 回</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-sm-12 col-xs-12">
+        <form id="commentForm">
+            <div class="box box-body">
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">用户手机号</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <textarea  name="users" class="form-control" placeholder="请填写用户手机号，一行一个"
+                                   value=""></textarea>
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">金额</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="number" name="money" class="form-control" placeholder="请输入金额"
+                                   value="">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">类别</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <select name="type">
+                                <option value="1">余额</option>
+                                <option value="2">收益</option>
+                                <option value="3">生育津贴</option>
+                                <option value="4">宣传奖励</option>
+                                <option value="5">生育补贴</option>
+                            </select>
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div> 
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">备注</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="remark" class="form-control" placeholder="请输入备注"
+                                   value="">
+                        </div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <div class="col-xs-12 col-sm-8 col-md-6 col-lg-5 text-center">
+                            <button type="button" class="btn btn-flat btn-primary" onclick="sub()">提 交</button>
+                            <button type="button" class="btn btn-flat btn-default"
+                                    onclick="javascript:history.back(-1)">返 回
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        var url = "{:url('admin/User/userList')}";
+        $('a[href="' + url + '"]').parents('.menu-li').addClass('active');
+        var headerText = $('a[href="' + url + '"]').children('span').text();
+
+   
+    });
+
+    function sub()
+    {
+        var subUrl = "<?php echo url('admin/User/batchBalance'); ?>";
+        $.post(subUrl, $('#commentForm').serialize(), function (res) {
+            if (res.code == '200') {
+                window.location.href = document.referrer;
+            } else {
+                layer.msg(res.message, {icon: 5, time: 3000});
+            }
+        });
+    }
+</script>

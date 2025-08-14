@@ -1,0 +1,140 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['capital_id']??''}" name="capital_id" placeholder="搜索ID" class="form-control">
+        <input type="text" value="{$req['user']??''}" name="user" placeholder="搜索用户ID/手机号" class="form-control">
+        <input type="text" value="{$req['capital_sn']??''}" name="capital_sn" placeholder="搜索单号" class="form-control">
+        <select name="status" class="form-control">
+            <option value="">搜索状态</option>
+            <?php foreach (config('map.capital')['topup_status_map'] as $k => $v) { ?>
+                <option <?php if (isset($req['status']) && $req['status'] == $k) {
+                    echo 'selected = "selected"';
+                } ?> value="{$k}">{$v}
+                </option>
+            <?php } ?>
+        </select>
+        <select name="pay_channel" class="form-control">
+            <option value="">搜索支付方式</option>
+            <?php foreach (config('map.capital')['pay_channel_map'] as $k => $v) { if (in_array($k, [2,3,4,5])) { ?>
+                <option <?php if (isset($req['pay_channel']) && $req['pay_channel'] == $k) {
+                    echo 'selected = "selected"';
+                } ?> value="{$k}">{$v}
+                </option>
+            <?php } } ?>
+        </select>
+        <select name="channel" class="form-control">
+            <option value="">搜索支付渠道</option>
+            <?php foreach (config('map.payment_config')['channel_map'] as $k => $v) { if ($k > 0) { ?>
+                <option <?php if (isset($req['channel']) && $req['channel'] == $k) {
+                    echo 'selected = "selected"';
+                } ?> value="{$k}">{$v}
+                </option>
+            <?php } } ?>
+        </select>
+        <input type="text" value="{$req['mark']??''}" name="mark" placeholder="搜索渠道标识"
+               class="form-control">
+        <input placeholder="开始时间" autocomplete="off" value="{$req['start_date']??''}" name="start_date" class="form-control layer-date" id="start">
+        ～
+        <input placeholder="结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <input class="btn btn-flat btn-info m_10" name="export" type="submit" value="导出">
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户</th>
+                            <th>单号</th>
+                            <th>充值类型</th>
+                            <th>充值状态</th>
+                            <th>支付状态</th>
+                            <th>支付渠道</th>
+                            <th>收款卡信息</th>
+                            <th>支付凭证</th>
+                            <th>充值金额</th>
+                            <th>支付时间</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>{$v['user']['realname'] ?? ''}（{$v['user']['phone'] ?? ''}）</td>
+                                <td>{$v['capital_sn']}</td>
+                                <td>{$v['topup_type_text']}</td>
+                                <td>{$v['topup_status_text']}</td>
+                                <td>{$v['topup_pay_status_text']}</td>
+                                <td>{$v['pay_channel_text']} ({$v['chanel_text']})-{$v['pay_type']}</td>
+                                <td><?php if ($v['pay_channel'] == 5) { ?> 银行：{$v['payment']['card_info']['bank_name']??''}<br>卡号：{$v['payment']['card_info']['card_number']??''}<br>分行：{$v['payment']['card_info']['bank_branch']??''}<br>持卡人：{$v['payment']['card_info']['realname']??''} <?php } ?></td>
+                                <td><?php if (!empty($v['payment']['pay_voucher_img_url'])) { ?><img src="{$v['payment']['pay_voucher_img_url']}" onclick="seePhoto('{$v["payment"]["pay_voucher_img_url"]}')" style="max-width: 80px;"> <?php } ?></td>
+                                <td>{$v['amount']}</td>
+                                <td>{$v['audit_date']}</td>
+                                <td>{$v['created_at']}</td>
+                                <td>
+                                    <?php if ($v['status'] == 1) { ?>
+                                        <button {:auth_show_judge('Capital/auditTopup')} class="btn btn-flat btn-success btn-xs" onclick="auditCapital({$v['id']}, 2)">确认支付成功</button>
+                                    <?php } ?>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        <?php if($auth_check == '超级管理员') {?>
+                        <tr>
+                            <td><strong>总计：</strong></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><strong>{$total_amount}</strong></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        //日期范围限制
+        var start = {
+            elem: '#start',
+            format: 'yyyy-MM-dd',
+        };
+        var end = {
+            elem: '#end',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(start);
+        laydate.render(end);
+    });
+
+    function auditCapital(id, status)
+    {
+        layer.confirm('确定操作吗？', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("admin/Capital/auditTopup")}', {id: id, status: status}, function (res) {
+                if (res.code == '200') {
+                    location.reload(true);
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+</script>

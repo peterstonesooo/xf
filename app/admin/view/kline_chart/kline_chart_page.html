@@ -1,0 +1,639 @@
+<script src="__ADMIN__/dist/js/echarts.min.js"></script>
+<script src="__ADMIN__/dist/js/vue.js"></script>
+<link rel="stylesheet" href="__ADMIN__/css/index.css?v=1.1.1">
+
+<div id="app">
+    <div class="pageBox">
+        <!-- <p class="title">控盘机器人</p> -->
+        <div class="echarts-box">
+            <div class="echarts-top">
+
+                <div class="item-right">
+                    <div class="left-box" style="margin-right: 20px;">
+                        <p class="chooseTitle">选择日期：</p>
+                        <div class="max-box">
+                            <input type="date" v-model="date" class="date-input" v-on:change="selectDate()" />
+                        </div>
+                    </div>
+                    <div class="left-box" style="margin-right: 20px;">
+                        <p class="chooseTitle">今日最高价：</p>
+                        <div class="max-box">
+                            <input type="text" v-model="max_price" class="max-input" />
+                            <div class="max-button" v-on:click="setMaxPrice()">确定</div>
+                        </div>
+                    </div>
+                    <div class="left-box" style="margin-right: 20px;">
+                        <p class="chooseTitle">今日最低价：</p>
+                        <div class="max-box">
+                            <input type="text" v-model="min_price" class="max-input" />
+                            <div class="max-button" v-on:click="setMinPrice()">确定</div>
+                        </div>
+                    </div>
+                    <div class="left-box" style="margin-right: 20px;">
+                        <p class="chooseTitle">开盘价：</p>
+                        <div class="max-box">
+                            <input type="text" v-model="open_price" class="max-input" />
+                            <!-- <div class="max-button" v-on:click="setMaxPrice()">确定</div> -->
+                        </div>
+                    </div>
+                    <div class="left-box" style="margin-right: 20px;">
+                        <p class="chooseTitle">收盘价：</p>
+                        <div class="max-box">
+                            <input type="text" v-model="close_price" class="max-input" />
+                            <!-- <div class="max-button" v-on:click="setMaxPrice()">确定</div> -->
+                        </div>
+                    </div>
+                    <div class="left-box" style="margin-right: 20px;">
+                        <p class="chooseTitle">浮动价格比例：</p>
+                        <div class="max-box">
+                            <input type="text" v-model="float_ratio" class="max-input" />
+                            <div class="max-button">%</div>
+                        </div>
+                    </div>
+                    <!-- 	<div class="left-box">
+                        <p class="chooseTitle">控制粒度：</p>
+                        <div class="control-box">
+                            <div class="control-item" v-for="item in controlList" v-on:click="tapControl(item)"
+                                :class="{'controlActive':period==item.id}">
+                                {% item.value %}
+                            </div>
+                        </div>
+                    </div> -->
+                </div>
+                <div class="item-left">
+                    <!-- <div class="left-box">
+                        <p class="chooseTitle">选择控盘交易对：</p>
+                        <select v-model="coinPair" v-on:change="selectCoinSymbol(this.value)"
+                            style="height: 24px;border: 1px solid #dddee1;">
+                            <option v-for="item in coinPairList" :value="item.value">{% item.label %}</option>
+                        </select>
+                    </div> -->
+                </div>
+            </div>
+            <div style="width: 100%;height:200px;" ref="dom" id="canvasLine" class="charts chart-bar"></div>
+            <div class="drow-tips">
+                <p class="drow-k" v-on:click="generateKLine()">绘制预览K线图</p>
+                <p class="k-tips">以下生成的是模拟K线，仅供参考，实际运行结果与下图相似而不完全相同</p>
+            </div>
+            <div style="width: 100%;height:200px;" ref="klineDom" id="canvaskLine" class="charts chart-bar">
+            </div>
+            <div class="scale">
+                <div class="scale-set">
+                    <!-- <p class="set-tips">允许价格浮动比例：</p>
+                    <div class="set-box">
+                        <input type="text" v-model="float_ratio" class="set-input">
+                        <div class="set-con">%</div>
+                    </div> -->
+                </div>
+                <div class="save-box" v-on:click="commitRobot()">保存K线数据</div>
+            </div>
+        </div>
+    </div>
+    <div class="page-table">
+        <!-- <div class="table-title">BTC/USDT 交易对机器人趋势数据</div> -->
+        <div class="table-box">
+            <div class="table-out">
+                <div class="table-head">
+                    <div style="width:7%">ID</div>
+                    <div style="width:10%">日期</div>
+                    <div style="width:10%">今日最高价格</div>
+                    <div style="width:10%">今日最低价</div>
+                    <div style="width:10%">开盘价</div>
+                    <div style="width:10%">收盘价</div>
+                    <div style="width:10%">价格浮动比</div>
+                    <div style="width:18%">添加时间</div>
+                    <div style="width:15%">操作</div>
+                </div>
+                <div class="table-item" v-for="item in kLineTable" v-if="kLineTable.length!=0">
+                    <div style="width:7%">{% item.id %}</div>
+                    <div style="width:10%">{% item.date %}</div>
+                    <div style="width:10%">{% item.max_price %}</div>
+                    <div style="width:10%">{% item.min_price %}</div>
+                    <div style="width:10%">{% item.open_price %}</div>
+                    <div style="width:10%">{% item.close_price %}</div>
+                    <div style="width:10%">{% item.float_ratio %}</div>
+                    <div style="width:18%">{% item.created_at %}</div>
+                    <div style="width:15%">
+                        <div class="LookIt" v-on:click="seeKLine(item)">查看/修改</div>
+                    </div>
+                </div>
+                <div class="noData" v-if="kLineTable.length==0">
+                    暂无数据
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<script>
+    new Vue({
+        el: '#app',
+        delimiters: ['{%', '%}'],
+        data: {
+            KLineUrl: "https://admin.qoenurv.com/klineChart/klineChartList", //K线列表
+            saveKLineUrl: "https://admin.qoenurv.com/klineChart/saveKlineChart", //保存机器人趋势数据
+            robotParams: {}, //交易对的选择事件
+            kLineTable: [], //k线Table
+            period: 5, // 1:15分钟  2:30分钟  3:1小时  4:2小时 5:4小时
+            dom: null,
+            klineDom: null,
+            max_price: 20, //当日最高限价
+            min_price: 0, //当日最低限价
+            open_price: '', //开盘价
+            close_price: '', //收盘价
+            storeData: [], // 存储最后写入数据库的数据
+            yName: '价格', //Y轴name
+            symbolSize: 6, //标记的大小
+            date: "2022-07-14", //日期选择
+            klineData: [], //单个数据项的数值
+            float_ratio: 15, //允许价格浮动比例
+            XData: ['09:30', '09:35', '09:40', '09:45', '09:50', '09:55', '10:00', '10:05', '10:10', '10:15',
+                '10:20', '10:25', '10:30', '10:35', '10:40', '10:45', '10:50', '10:55', '11:00', '11:05',
+                '11:10', '11:15', '11:20', '11:25', '11:30',
+                '13:05', '13:10', '13:15', '13:20', '13:25', '13:30', '13:35', '13:40', '13:45',
+                '13:50', '13:55', '14:00',
+                '14:05', '14:10', '14:15', '14:20', '14:25', '14:30', '14:35', '14:40', '14:45', '14:50',
+                '14:55', '15:00'
+            ],
+            XDataValue: ['09:30', '09:35', '09:40', '09:45', '09:50', '09:55', '10:00', '10:05', '10:10',
+                '10:15',
+                '10:20', '10:25', '10:30', '10:35', '10:40', '10:45', '10:50', '10:55', '11:00', '11:05',
+                '11:10', '11:15', '11:20', '11:25', '11:30/13:00',
+                '13:05', '13:10', '13:15', '13:20', '13:25', '13:30', '13:35', '13:40', '13:45',
+                '13:50', '13:55', '14:00',
+                '14:05', '14:10', '14:15', '14:20', '14:25', '14:30', '14:35', '14:40', '14:45', '14:50',
+                '14:55', '15:00'
+            ],
+            klineList: []
+        },
+        methods: {
+            getAllTable() { //获取所有的保存列表
+                $.post(this.KLineUrl, {}, (result) => {
+                    this.kLineTable = result.data.data
+                });
+            },
+            getKlineList() { //调用K线接口   获取k线数据
+                $.post(this.KLineUrl, {
+                    date: this.date
+                }, (result) => {
+                    if (result.data.data.length > 0 && JSON.parse(result.data.data[0].chart_data)
+                        .length == 49) {
+                        this.klineList = []
+                        let KlineRecord = JSON.parse(result.data.data[0].chart_data)
+                        KlineRecord.forEach((item, index) => {
+                            this.klineList.push(
+                                [index, parseFloat(item.value)]
+                            )
+                        })
+                        this.float_ratio = result.data.data[0].float_ratio;
+                        this.max_price = result.data.data[0].max_price;
+                        this.min_price = result.data.data[0].min_price;
+                        this.open_price = result.data.data[0].open_price;
+                        this.close_price = result.data.data[0].close_price;
+                        this.date = result.data.data[0].date;
+                        this.storeData = this.klineList;
+                        this.generateKLine();
+                        this.generateLine(this.period);
+                        this.setMaxPrice();
+                        this.setMinPrice(1);
+                    } else {
+                        this.gitInit()
+                    }
+                    this.getAllTable()
+                });
+            },
+            commitRobot() { //保存机器人趋势数据
+                for (var i = 0; i <= 48; i++) {
+                    this.storeData[i][1] = JSON.parse(this.storeData[i][1]).toFixed(8);
+                }
+                // let sendData=JSON.parse(JSON.stringify(this.storeData))
+                let sendData = []
+                this.storeData.forEach((item, index) => {
+                    sendData.push({
+                        time: this.XData[index],
+                        value: this.storeData[index][1]
+                    })
+                })
+                let params = {
+                    date: this.date,
+                    max_price: this.max_price,
+                    min_price: this.min_price,
+                    float_ratio: this.float_ratio,
+                    open_price: this.open_price ? this.open_price : sendData[0].value,
+                    close_price: this.close_price ? this.close_price : sendData[48].value,
+                    chart_data: JSON.stringify(sendData)
+                }
+
+                $.post(this.saveKLineUrl, params, res => {
+                    if (res.code == 200) {
+                        alert('成功')
+                    } else {
+                        alert('res.msg')
+                    }
+                    this.getKlineList();
+                });
+
+            },
+            selectDate() {
+                this.max_price = 20;
+                this.min_price = 0;
+                this.open_price = '';
+                this.close_price = '';
+                this.getKlineList()
+            },
+            seeKLine(item) {
+                this.date = item.date
+                this.getKlineList()
+            },
+            // tapControl(item) {
+            // 	this.period = item.id
+            // 	this.generateLine(this.period);
+            // 	this.setLineOption();
+            // },
+            setMaxPrice() { //设置最高价
+                this.dom.setOption({
+                    yAxis: {
+                        max: this.max_price
+                    }
+                });
+                this.setLineOption();
+            },
+            setMinPrice(ios) {
+                if (ios == 1) {
+                    this.dom.setOption({
+                        yAxis: {
+                            min: this.min_price
+                        }
+                    });
+                    this.setLineOption();
+                    return
+                }
+                this.klineData.forEach((item, index) => {
+                    if (this.klineData[index][1] < this.min_price) {
+                        console.log(this.klineData[index][1])
+                        this.klineData[index][1] = this.min_price
+                    }
+                })
+                this.dom.setOption({
+                    series: [{
+                        data: this.klineData
+                    }],
+                    yAxis: {
+                        min: this.min_price
+                    }
+                });
+                this.setLineOption();
+            },
+            setLineOption() {
+                this.dom.setOption({
+                    graphic: echarts.util.map(this.klineData, (dataItem, dataIndex) => {
+                        const that =
+                            this // 因为ondrag函数必须在回调内使用this.position获取实时坐标，此处必须用that替换this
+                        return {
+                            // 'circle' 表示这个 graphic element 的类型是圆点。
+                            type: 'circle',
+                            shape: {
+                                // 圆点的半径。
+                                r: this.symbolSize
+                            },
+                            // 用 transform 的方式对圆点进行定位。position: [x, y] 表示将圆点平移到 [x, y] 位置。
+                            // 这里使用了 convertToPixel 这个 API 来得到每个圆点的位置
+                            position: this.dom.convertToPixel('grid', dataItem),
+                            // 这个属性让圆点不可见（但是不影响他响应鼠标事件）。
+                            invisible: true,
+                            // 这个属性让圆点可以被拖拽。
+                            draggable: true,
+                            // 把 z 值设得比较大，表示这个圆点在最上方，能覆盖住已有的折线图的圆点。
+                            z: 100,
+                            ondrag: echarts.util.curry(function(
+                                dataIndex) { // 此处必须用匿名函数，不能用箭头函数，否则拿不到拖动的坐标
+                                let origin = that.dom.convertToPixel('grid', that
+                                    .klineData[dataIndex]) // 得到每个圆点原始位置
+                                // let maxY = that.dom.convertToPixel('grid', [40, 36]) // 最高温度为36摄氏度，暂未做封装
+                                // 超过最高温度36将不能拖动,写死的最低点高度为240，最高点为40
+                                this.position[0] = origin[0] // 控制每个点位只能在y轴方向移动
+                                // this.position[1] = origin[1] // 控制每个点位只能在x轴方向移动
+                                // 实时获取拖动的点位信息并根据此信息重新画图
+                                that.klineData[dataIndex] = that.dom.convertFromPixel(
+                                    'grid', this.position);
+                                if (that.period == 5) {
+                                    for (var i = 0; i < 24; i++) {
+                                        for (var j = i * 2; j <= (i + 1) * 2; j++) {
+                                            that.storeData[j][1] = that.klineData[i][1] -
+                                                ((that.klineData[i][1] - that.klineData[
+                                                i + 1][1]) / 2) * (j - i * 2) *
+                                                Math.sin(Math.PI / 2 * (j - i * 2) /
+                                                    2);
+                                        }
+                                    }
+                                }
+
+                                that.dom.setOption({
+                                    series: [{
+                                        id: 'a',
+                                        data: that.klineData
+                                    }]
+                                });
+                            }, dataIndex)
+                        }
+                    })
+                });
+            },
+            generateLine(period) {
+                this.klineData = new Array();
+                for (var i = 0; i <= 24; i++) {
+                    this.klineData[i] = new Array();
+                    this.klineData[i][0] = i * 2;
+                    if (this.storeData[i * 2][1] == 0) {
+                        this.klineData[i][1] = this.max_price / 2;
+                        this.storeData[i * 2][1] = this.max_price / 2;
+                    } else {
+                        this.klineData[i][1] = this.storeData[i * 2][1];
+                    }
+                }
+                this.dom.setOption({
+                    series: [{
+                        id: 'a',
+                        data: this.klineData
+                    }]
+                });
+
+                this.generateKLine();
+            },
+            initKline() { //kline初始化
+                this.klineDom = echarts.init(document.querySelector("#canvaskLine"), '')
+                var that = this;
+                this.klineDom.setOption({
+                    backgroundColor: '#EDEDED',
+                    xAxis: {
+                        data: that.XDataValue,
+                        axisLabel: {
+                            fontSize: 8
+                        }
+                    },
+                    yAxis: {
+                        axisLabel: {
+                            fontSize: 8
+                        },
+                        splitLine: {
+                            show: true,
+                            lineStyle: {
+                                color: ['#CCC'],
+                                width: 1,
+                                type: 'dashed'
+                            }
+                        }
+                    },
+                    series: [{
+                        type: 'k',
+                        data: [],
+                        itemStyle: {
+                            normal: {
+                                color: '#ec0000',
+                                color0: '#00da3c',
+                                borderColor: '#ec0000',
+                                borderColor0: '#00da3c'
+                            }
+                        }
+                    }],
+                    grid: {
+                        left: 30,
+                        right: 20,
+                        top: 10,
+                        bottom: 30
+                    },
+                });
+            },
+            initStoreData() { //初始化 storeData数据
+                this.storeData = new Array();
+                for (var i = 0; i <= 48; i++) {
+                    this.storeData[i] = new Array();
+                    this.storeData[i][0] = i;
+                    this.storeData[i][1] = 1;
+                }
+            },
+            setLineOption() {
+                this.dom.setOption({
+                    graphic: echarts.util.map(this.klineData, (dataItem, dataIndex) => {
+                        const that =
+                            this // 因为ondrag函数必须在回调内使用this.position获取实时坐标，此处必须用that替换this
+                        return {
+                            // 'circle' 表示这个 graphic element 的类型是圆点。
+                            type: 'circle',
+                            shape: {
+                                // 圆点的半径。
+                                r: this.symbolSize
+                            },
+                            // 用 transform 的方式对圆点进行定位。position: [x, y] 表示将圆点平移到 [x, y] 位置。
+                            // 这里使用了 convertToPixel 这个 API 来得到每个圆点的位置
+                            position: this.dom.convertToPixel('grid', dataItem),
+                            // 这个属性让圆点不可见（但是不影响他响应鼠标事件）。
+                            invisible: true,
+                            // 这个属性让圆点可以被拖拽。
+                            draggable: true,
+                            // 把 z 值设得比较大，表示这个圆点在最上方，能覆盖住已有的折线图的圆点。
+                            z: 100,
+                            ondrag: echarts.util.curry(function(
+                                dataIndex) { // 此处必须用匿名函数，不能用箭头函数，否则拿不到拖动的坐标
+                                let origin = that.dom.convertToPixel('grid', that
+                                    .klineData[dataIndex]) // 得到每个圆点原始位置
+                                // let maxY = that.dom.convertToPixel('grid', [40, 36]) // 最高温度为36摄氏度，暂未做封装
+                                // 超过最高温度36将不能拖动,写死的最低点高度为240，最高点为40
+                                this.position[0] = origin[0] // 控制每个点位只能在y轴方向移动
+                                // this.position[1] = origin[1] // 控制每个点位只能在x轴方向移动
+                                // 实时获取拖动的点位信息并根据此信息重新画图
+                                that.klineData[dataIndex] = that.dom.convertFromPixel(
+                                    'grid', this.position);
+                                for (var i = 0; i < 24; i++) {
+                                    for (var j = i * 2; j <= (i + 1) * 2; j++) {
+                                        that.storeData[j][1] = that.klineData[i][1] -
+                                            ((that.klineData[i][1] - that.klineData[
+                                            i + 1][1]) / 2) * (j - i * 2) *
+                                            Math.sin(Math.PI / 2 * (j - i * 2) /
+                                                2);
+                                    }
+                                }
+
+                                that.dom.setOption({
+                                    series: [{
+                                        id: 'a',
+                                        data: that.klineData
+                                    }]
+                                });
+                            }, dataIndex)
+                        }
+                    })
+                });
+            },
+
+
+            generateKLine() {
+                this.klineMockXData = new Array();
+                this.klineMockYData = new Array();
+                for (var i = 0; i <= 48; i++) {
+                    this.klineMockXData[i] = i;
+                    this.klineMockYData[i] = new Array();
+                    // 随机生成开盘价、收盘价、最高价、最低价
+                    var rand = Math.ceil(Math.random() * 10);
+                    var priceRandClose = Math.ceil(Math.random() * this.float_ratio); // 收盘价格
+                    var priceRandHight = Math.ceil(Math.random() * this.float_ratio);
+                    var priceRandLow = Math.ceil(Math.random() * this.float_ratio);
+                    this.klineMockYData[i][0] = i > 0 ? this.klineMockYData[i - 1][1] : this.storeData[i][
+                        1
+                        ]; // 取前一收盘价
+                    this.klineMockYData[i][1] = rand > 5 ? this.storeData[i][1] + this.storeData[i][1] * (
+                        priceRandClose / 100) : this.storeData[i][1] - this.storeData[i][1] * (
+                        priceRandClose /
+                        100);
+                    if (this.klineMockYData[i][0] > this.klineMockYData[i][1]) { // 开盘价大于收盘价
+                        this.klineMockYData[i][2] = this.klineMockYData[i][0] + this.klineMockYData[i][0] * (
+                            priceRandHight / 100);
+                        this.klineMockYData[i][3] = this.klineMockYData[i][1] - this.klineMockYData[i][1] * (
+                            priceRandLow / 100);
+                    } else { // 开盘价小于收盘价
+                        this.klineMockYData[i][2] = this.klineMockYData[i][1] + this.klineMockYData[i][1] * (
+                            priceRandHight / 100);
+                        this.klineMockYData[i][3] = this.klineMockYData[i][0] - this.klineMockYData[i][0] * (
+                            priceRandLow / 100);
+                    }
+                }
+                // console.log(this.klineMockXData)
+                // console.log(this.klineMockYData)
+                this.klineDom.setOption({
+                    xAxis: {
+                        data: this.XDataValue
+                    },
+                    series: [{
+                        type: 'k',
+                        data: this.klineMockYData
+                    }]
+                });
+            },
+            gitInit() {
+                this.initKline() //Kline初始化
+                this.initStoreData() //初始化 StoreData   49个点
+                this.getAllTable() //获取所有的k线列表
+                this.dom = echarts.init(document.querySelector("#canvasLine"), '')
+                var that = this;
+                this.dom.setOption({
+                    backgroundColor: '#FFE',
+                    title: {
+                        text: "", //主标题
+                        subtext: '', //副标题
+                        x: 'center'
+                    },
+                    grid: {
+                        left: 30,
+                        right: 20,
+                        top: 10,
+                        bottom: 30
+                    },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'cross',
+                            label: {
+                                formatter: function(params) {
+                                    return params.value.toFixed(6);
+                                }
+                            }
+                        }
+                    },
+                    xAxis: {
+                        name: '',
+                        type: 'category',
+                        boundaryGap: false, // 不留白，从原点开始
+                        // interval: 6,
+                        data: this.XDataValue,
+                        axisLabel: {
+                            show: true, //这里的show用于设置是否显示x轴下的字体 默认为true　　　　　　　
+                            interval: 1, //可以设置成 0 强制显示所有标签。如果设置为 1，表示『隔一个标签显示一个标签』，如果值为 2，表示隔两个标签显示一个标签，以此类推。　　　　　　　　　
+                            fontSize: 8
+                        },
+                        axisLine: {
+                            onZero: false
+                        },
+                        splitLine: {
+                            show: true,
+                            lineStyle: {
+                                color: ['#CCC'],
+                                width: 1,
+                                type: 'dashed'
+                            }
+                        },
+                        axisPointer: {
+                            label: {
+                                formatter: function(params) {
+                                    return '时间：' + that.date + " " + params.value;
+                                }
+                            }
+                        }
+                    },
+                    yAxis: {
+                        min: 0,
+                        max: that.max_price,
+                        name: '价格',
+                        type: 'value',
+                        // name: this.yName,
+                        axisLine: {
+                            onZero: false
+                        },
+                        axisLabel: {
+                            fontSize: 8
+                        },
+                        splitLine: {
+                            show: true,
+                            lineStyle: {
+                                color: ['#CCC'],
+                                width: 1,
+                                type: 'dashed'
+                            }
+                        }
+                    },
+                    series: [{
+                        id: 'a',
+                        type: 'line',
+                        smooth: true,
+                        symbolSize: this.symbolSize, // 为了方便拖拽，把 symbolSize 尺寸设大了。
+                        data: this.klineData
+                    }]
+                });
+                this.generateLine(this.period); //初始化k线数据和144个点的数据
+                this.setLineOption(); //根据k线数据计算绘制折线图
+            },
+            arrayToJson(o) {
+                var r = [];
+                if (typeof o == "string") return "\"" + o.replace(/([\'\"\\])/g, "\\$1").replace(/(\n)/g, "\\n")
+                    .replace(/(\r)/g, "\\r").replace(/(\t)/g, "\\t") + "\"";
+                if (typeof o == "object") {
+                    if (!o.sort) {
+                        for (var i in o)
+                            r.push(i + ":" + this.arrayToJson(o[i]));
+                        if (!!document.all && !/^\n?function\s*toString\s*\{\n?\s*\[native code\]\n?\s*\}\n?\s*$/
+                            .test(o.toString)) {
+                            r.push("toString:" + o.toString.toString());
+                        }
+                        r = "{" + r.join() + "}";
+                    } else {
+                        for (var i = 0; i < o.length; i++) {
+                            r.push(this.arrayToJson(o[i]));
+                        }
+                        r = "[" + r.join() + "]";
+                    }
+                    return r;
+                }
+                return o.toString();
+            }
+        },
+        ready: function() {
+            var nowDate = new Date();
+            var year = nowDate.getFullYear();
+            var month = nowDate.getMonth() + 1
+            month = '0' + month
+            var day = '0' + nowDate.getDate()
+            this.date = year + '-' + month.slice(-2) + '-' + day.slice(-2);
+            this.gitInit()
+            this.getKlineList()
+        }
+    })
+</script>

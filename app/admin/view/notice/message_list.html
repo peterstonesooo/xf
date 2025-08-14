@@ -1,0 +1,142 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['title']??''}" name="title" placeholder="搜索标题" class="form-control">
+        <select name="type" class="form-control">
+            <option value="">消息类型</option>
+            <option value="1" <?php if(isset($req['type']) && $req['type'] == 1) echo 'selected'; ?>>系统通知</option>
+            <option value="2" <?php if(isset($req['type']) && $req['type'] == 2) echo 'selected'; ?>>重要公告</option>
+            <option value="3" <?php if(isset($req['type']) && $req['type'] == 3) echo 'selected'; ?>>活动消息</option>
+            <option value="4" <?php if(isset($req['type']) && $req['type'] == 4) echo 'selected'; ?>>站内信</option>
+        </select>
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <a class="btn btn-flat btn-success m_10 f_r" href="{:url('admin/Notice/showMessage')}"><i class="fa fa-plus m-r-10"></i>添加消息</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>标题</th>
+                            <th>类型</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                        <tr>
+                            <td>{$v['id']}</td>
+                            <td>{$v['title']}</td>
+                            <td>
+                                <?php
+                                switch($v['type']) {
+                                    case 1:
+                                        echo '系统通知';
+                                        break;
+                                    case 2:
+                                        echo '重要公告';
+                                        break;
+                                    case 3:
+                                        echo '活动消息';
+                                        break;  
+                                    case 4:
+                                        echo '站内信';
+                                        break;
+                                }
+                                ?>
+                            </td>
+                            <td>{$v['create_time']}</td>
+                            <td>
+                                <a class="btn btn-flat btn-xs btn-info" href="{:url('admin/Notice/showMessage',['id'=>$v['id']])}">编辑</a>
+                                <a class="btn btn-flat btn-xs btn-success" onclick="sendMessage({$v['id']})">发送</a>
+                                <a class="btn btn-flat btn-xs btn-danger" onclick="delMessage({$v['id']})">删除</a>
+                            </td>
+                        </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function delMessage(id) {
+    layer.confirm('确定要删除这条消息吗？', {icon: 3, title:'提示'}, function(index){
+        layer.close(index);
+        $.post('{:url("admin/Notice/delMessage")}', {id: id}, function(res) {
+            if(res.code == '200') {
+                layer.msg(res.msg, {icon: 6, time: 2000}, function(){
+                    window.location.reload();
+                });
+            } else {
+                layer.msg(res.msg, {icon: 2, time: 2000});
+            }
+        });
+    });
+}
+
+function sendMessage(id) {
+    layer.open({
+        type: 1,
+        title: '发送消息',
+        area: ['500px', '300px'],
+        content: `
+            <div class="box-body" style="padding: 20px;">
+                <div class="form-group">
+                    <label>发送方式</label>
+                    <select class="form-control" id="send_type">
+                        <option value="1">所有用户</option>
+                        <option value="2">指定用户</option>
+                    </select>
+                </div>
+                <div class="form-group" id="phones_group" style="display:none;">
+                    <label>用户手机号（多个用逗号分隔）</label>
+                    <input type="text" class="form-control" id="phones" placeholder="请输入手机号，多个用逗号分隔">
+                </div>
+            </div>
+            <div class="box-footer" style="padding: 10px 20px;">
+                <button type="button" class="btn btn-primary" onclick="submitSend(${id})">确定发送</button>
+            </div>
+        `
+    });
+    
+    $('#send_type').change(function() {
+        if($(this).val() == 2) {
+            $('#phones_group').show();
+        } else {
+            $('#phones_group').hide();
+        }
+    });
+}
+
+function submitSend(id) {
+    var sendType = $('#send_type').val();
+    var phones = $('#phones').val();
+    
+    if(sendType == 2 && !phones) {
+        layer.msg('请输入用户手机号', {icon: 2});
+        return;
+    }
+    
+    $.post('{:url("admin/Notice/sendMessage")}', {
+        id: id,
+        send_type: sendType,
+        phones: phones
+    }, function(res) {
+        if(res.code == '200') {
+            layer.msg(res.msg, {icon: 1, time: 2000}, function(){
+                layer.closeAll();
+            });
+        } else {
+            layer.msg(res.msg, {icon: 2, time: 2000});
+        }
+    });
+}
+</script> 

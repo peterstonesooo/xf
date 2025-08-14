@@ -1,0 +1,4 @@
+<?php
+//000000000300
+ exit();?>
+a:9:{s:13:"chat_group_id";s:11:"42005730267";s:9:"video_url";s:36:"http://7niuniu.himxx.cn/mp4/llhh.mp4";s:13:"video_img_url";s:92:"https://rscn.iprcc.org.cn/dp/api/files/imageDir/3b5b8257502d3f7be852a843b318c81eu1.png?w=550";s:12:"download_url";s:21:"http://152.32.239.182";s:8:"kefu_url";s:40:"https://cxht.toqzh.cn/kefu/chatlink.html";s:11:"home_notice";s:336:"为深入贯彻落实“幸福中国”总体部署，响应党中央、国务院关于教育、医疗、养老、住房、就业五大民生政策的号召，我们将统筹推进、精准发力、全民共享、创新治理。让我们共同见证国家发展带来的民生福祉，用实干与担当书写幸福中国的新篇章！";s:13:"is_req_encypt";s:1:"0";s:20:"chat_group_id_qrcode";s:69:"http://7niuniu.himxx.cn/20250618/81780044e609f4ef7d58b91509b22edd.png";s:19:"download_url_qrcode";s:3:"222";}

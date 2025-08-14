@@ -1,0 +1,123 @@
+<div class="search">
+    <form class="form-inline">
+        <a class="btn btn-flat btn-primary m_10_l_0" href="{:url('admin/Banner/bannerList')}">显示全部</a>
+        <a class="btn btn-flat btn-success m_10 f_r" onclick="javascript:history.back(-1)"><i
+                    class="fa fa-undo m-r-10"></i>返 回</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-sm-12 col-xs-12">
+        <form id="commentForm">
+            <?php if (!empty($data)) { ?>
+                <input type="hidden" class="form-control" value="{$data['id']}" name="id">
+            <?php } ?>
+            <div class="box box-body">
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">标题</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="title" class="form-control" placeholder="请输入标题"
+                                   value="{$data['title']??''}">
+                        </div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">轮播图</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <div id="img_preview1">
+                                <?php if (!empty($data)){ ?>
+                                    <img style="max-width: 580px;" src ="{$data['img_url']}"/>
+                                <?php } ?>
+                            </div>
+                            <input type="file" class="form-control" name="img_url" id="img_url1" accept="image/gif,image/jpeg,image/jpg,image/png" onchange="selectFile(1)">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">跳转链接</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="jump_url" class="form-control" placeholder="请输入跳转链接"
+                                   value="{$data['jump_url']??''}">
+                        </div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">排序号</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="sort" class="form-control" placeholder="请输入排序号，从小到大排序"
+                                   value="{$data['sort']??''}">
+                        </div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <div class="col-xs-12 col-sm-8 col-md-6 col-lg-5 text-center">
+                            <button type="button" class="btn btn-flat btn-primary" onclick="sub()">提 交</button>
+                            <button type="button" class="btn btn-flat btn-default"
+                                    onclick="javascript:history.back(-1)">返 回
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        var url = "{:url('admin/Banner/bannerList')}";
+        $('a[href="' + url + '"]').parents('.menu-li').addClass('active');
+        var headerText = $('a[href="' + url + '"]').children('span').text();
+        var is_add = "<?php echo !empty($data) ? '0' : '1';?>";
+        var headerTitle = is_add == "1" ? headerText + '-添加' : headerText + '-编辑';
+        $('#content-header-title').text(headerTitle);
+    });
+
+    function selectFile(i)
+    {
+        $('#img_preview'+i).html('');
+        var files = document.getElementById('img_url'+i).files;
+        if(files.length == 0){
+            return;
+        }
+        var file = files[0]; //把上传的图片显示出来
+        var reader = new FileReader();
+        reader.readAsBinaryString(file);
+        reader.onload = function(){
+            var result = document.getElementById('img_preview'+i);
+            var src = "data:" + file.type + ";base64," + window.btoa(this.result);
+            result.innerHTML = '<img style="max-width: 580px;" src ="'+src+'"/>';
+        }
+    }
+
+    function sub()
+    {
+        var formData = new FormData($('#commentForm')[0]);
+        $.ajax({
+            url: '<?php echo !empty($data) ? url("admin/Banner/editBanner") : url("admin/Banner/addBanner");?>',
+            type: 'POST',
+            data: formData,
+            async: false,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function (res) {
+                if (res.code == '200'){
+                    window.location.href = document.referrer;
+                }
+                else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            },
+            error: function (res) {
+                layer.msg(res.msg, {icon: 5, time: 3000});
+            }
+        });
+    }
+</script>

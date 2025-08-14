@@ -1,0 +1,313 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['user_id']??''}" name="user_id" placeholder="搜索用户ID" class="form-control">
+        <!-- <input type="text" value="{$req['up_user']??''}" name="up_user" placeholder="搜索上级用户ID/手机号"
+               class="form-control"> -->
+        <input type="text" value="{$req['phone']??''}" name="phone" placeholder="搜索手机号" class="form-control">
+        <input type="text" value="{$req['realname']??''}" name="realname" placeholder="搜索实名姓名" class="form-control">
+        <!-- <select name="level" class="form-control">
+            <option value="">搜索等级</option>
+            <?php foreach (config('map.user')['level_map'] as $k => $v) { ?>
+                <option <?php if (isset($req['level']) && $req['level'] !== '' && $req['level'] == $k) {
+                    echo 'selected = "selected"';
+                } ?> value="{$k}">{$v}
+                </option>
+            <?php } ?>
+        </select> -->
+        <select name="status" class="form-control">
+            <option value="">搜索状态</option>
+            <option <?php if (isset($req['status']) && $req['status'] !== '' && $req['status'] == 0) {
+                echo 'selected = "selected"';
+            } ?> value="0">待审核
+            </option>
+            <option <?php if (isset($req['status']) && $req['status'] !== '' && $req['status'] == 1) {
+                echo 'selected = "selected"';
+            } ?> value="1">审核通过
+            </option>
+            <option <?php if (isset($req['status']) && $req['status'] !== '' && $req['status'] == 2) {
+                echo 'selected = "selected"';
+            } ?> value="2">审核拒绝
+            </option>
+        </select>
+        <?php if(isset($req['user_id']) && $data->isEmpty()){ ?>
+        <a  class="btn btn-flat btn-success m_10 f_r"
+            href="{:url('admin/User/showUserNum',['user_id' => $req['user_id']])}"> <i class="fa fa-plus m-r-10"></i>添 加</a>
+        <?php } ?>
+        <button type="submit" class="btn btn-flat btn-primary">搜索</button>
+        <div class="btn-group m_10_l_0">
+            <button type="button" class="btn btn-flat btn-success" onclick="batchPass()">批量通过</button>
+            <button type="button" class="btn btn-flat btn-danger" onclick="batchReject()">批量拒绝</button>
+            <button type="button" class="btn btn-flat btn-danger" onclick="batchDelete()">批量删除</button>
+        </div>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th><input type="checkbox" id="checkAll"></th>
+                            <th>ID</th>
+                            <th>姓名</th>
+                            <th>性别</th>
+                            <th>手机号</th>
+                            <th>身份证正面</th>
+                            <th>身份证反面</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                            <th>审核时间</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td><input type="checkbox" class="checkItem" value="{$v['id']}"></td>
+                                <td>{$v['id']}</td>
+                                <td>{$v['realname']}</td>
+                                <td>{$v['gender']}</td>
+                                <td>{$v['phone']??''}</td>
+                                <td><a href="{$v['card_front']}" target="_blank"><img src="{$v['card_front']}" alt="" width="50" height="50"></a></td>
+                                <td><a href="{$v['card_back']}" target="_blank"><img src="{$v['card_back']}" alt="" width="50" height="50"></a></td>
+                                <td><?php if ($v['status'] == 0) {?>
+                                    <span class="label label-warning">待审核</span>
+                                    <?php }elseif($v['status'] == 1){ ?>
+                                    <span class="label label-success">已通过</span>
+                                    <?php }elseif($v['status'] == 2){ ?>
+                                    <span class="label label-danger">已拒绝</span>
+                                    <?php if(!empty($v['remark'])){ ?>
+                                    <br><small class="text-muted">原因：{$v['remark']}</small>
+                                    <?php } ?>
+                                    <?php }?>
+                                </td>
+                                <td>{$v['created_at']}</td>
+                                <td>{$v['checked_at']}</td>
+                                <td>
+                                    <?php if ($v['status'] == 0) {?>
+                                    <button {:auth_show_judge('User/pass')} class="btn btn-flat btn-success btn-xs" href="{:url('admin/User/pass', ['id' => $v['id']])}" onclick="pass({$v['id']})">审核通过</button>
+                                    <button {:auth_show_judge('User/reject')} class="btn btn-flat btn-danger btn-xs" href="{:url('admin/User/reject', ['id' => $v['id']])}" onclick="reject({$v['id']})">审核拒绝</button>
+                                    <?php }?>
+                                    <button {:auth_show_judge('User/deleteAuth')} class="btn btn-flat btn-danger btn-xs" onclick="deleteAuth({$v['id']})">删除</button>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;">
+                    <div class="pull-left" style="margin: 20px 0;">
+                        <select class="form-control" id="pageSize" onchange="changePageSize(this.value)">
+                            <option value="10" <?php if(isset($req['limit']) && $req['limit'] == 10) echo 'selected'; ?>>10条/页</option>
+                            <option value="50" <?php if(isset($req['limit']) && $req['limit'] == 50) echo 'selected'; ?>>50条/页</option>
+                            <option value="100" <?php if(isset($req['limit']) && $req['limit'] == 100) echo 'selected'; ?>>100条/页</option>
+                            <option value="200" <?php if(isset($req['limit']) && $req['limit'] == 200) echo 'selected'; ?>>200条/页</option>
+                        </select>
+                    </div>
+                    <?php echo $data->render(); ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function(){
+        // 全选/取消全选
+        $("#checkAll").click(function(){
+            $(".checkItem").prop("checked", $(this).prop("checked"));
+        });
+
+        // 监听分页链接点击
+        $('.pagination a').click(function(e) {
+            // 清除所有选择
+            $(".checkItem").prop("checked", false);
+            $("#checkAll").prop("checked", false);
+        });
+    });
+
+    // 改变每页显示数量
+    function changePageSize(size) {
+        var url = new URL(window.location.href);
+        url.searchParams.set('limit', size);
+        url.searchParams.set('page', 1); // 切换每页数量时重置到第一页
+        window.location.href = url.toString();
+    }
+
+    function batchPass()
+    {
+        var ids = [];
+        $(".checkItem:checked").each(function(){
+            ids.push($(this).val());
+        });
+        if(ids.length == 0){
+            layer.msg('请选择要审核的记录', {icon: 5, time: 2000});
+            return;
+        }
+        layer.confirm('确定要通过选中的实名认证吗？', {
+            btn: ['确定','取消']
+        }, function(){
+            $.post('<?php echo url("admin/User/batchPass") ?>', {ids: ids}, function (res) {
+                if (res.code == '200') {
+                    layer.msg('批量审核通过成功', {icon: 1, time: 2000}, function(){
+                        window.location.reload();
+                    });
+                } else {
+                    layer.msg(res.msg || '操作失败', {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+
+    function batchReject()
+    {
+        var ids = [];
+        $(".checkItem:checked").each(function(){
+            ids.push($(this).val());
+        });
+        if(ids.length == 0){
+            layer.msg('请选择要审核的记录', {icon: 5, time: 2000});
+            return;
+        }
+        layer.prompt({
+            formType: 2,
+            title: '请输入拒绝原因',
+            area: ['300px', '150px']
+        }, function(reason, index){
+            if(!reason.trim()) {
+                layer.msg('拒绝原因不能为空', {icon: 5, time: 2000});
+                return;
+            }
+            $.post('<?php echo url("admin/User/batchReject") ?>', {ids: ids, reason: reason}, function (res) {
+                if (res.code == '200') {
+                    layer.msg('批量审核拒绝成功', {icon: 1, time: 2000}, function(){
+                        window.location.reload();
+                    });
+                } else {
+                    layer.msg(res.msg || '操作失败', {icon: 5, time: 3000});
+                }
+            });
+            layer.close(index);
+        });
+    }
+
+    function batchDelete()
+    {
+        var ids = [];
+        $(".checkItem:checked").each(function(){
+            ids.push($(this).val());
+        });
+        if(ids.length == 0){
+            layer.msg('请选择要删除的记录', {icon: 5, time: 2000});
+            return;
+        }
+        layer.confirm('确定要删除选中的记录吗？此操作不可恢复！', {
+            btn: ['确定','取消']
+        }, function(){
+            $.post('<?php echo url("admin/User/batchDeleteAuth") ?>', {ids: ids}, function (res) {
+                if (res.code == '200') {
+                    layer.msg('批量删除成功', {icon: 1, time: 2000}, function(){
+                        window.location.reload();
+                    });
+                } else {
+                    layer.msg(res.msg || '操作失败', {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+
+    function deleteAuth(id)
+    {
+        layer.confirm('确定要删除该记录吗？此操作不可恢复！', {
+            btn: ['确定','取消']
+        }, function(){
+            $.post('<?php echo url("admin/User/deleteAuth") ?>', {id: id}, function (res) {
+                if (res.code == '200') {
+                    layer.msg('删除成功', {icon: 1, time: 2000}, function(){
+                        window.location.reload();
+                    });
+                } else {
+                    layer.msg(res.msg || '操作失败', {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+
+    function pass(id)
+    {
+        layer.confirm('确定要通过该用户的实名认证吗？', {
+            btn: ['确定','取消']
+        }, function(){
+            $.post('<?php echo url("admin/User/pass") ?>', {id: id}, function (res) {
+                if (res.code == '200') {
+                    layer.msg('审核通过成功', {icon: 1, time: 2000}, function(){
+                        window.location.reload();
+                    });
+                } else {
+                    layer.msg(res.msg || '操作失败', {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+
+    function reject(id)
+    {
+        layer.prompt({
+            formType: 2,
+            title: '请输入拒绝原因',
+            area: ['300px', '150px']
+        }, function(reason, index){
+            if(!reason.trim()) {
+                layer.msg('拒绝原因不能为空', {icon: 5, time: 2000});
+                return;
+            }
+            $.post('<?php echo url("admin/User/reject") ?>', {id: id, reason: reason}, function (res) {
+                if (res.code == '200') {
+                    layer.msg('已拒绝该认证', {icon: 1, time: 2000}, function(){
+                        window.location.reload();
+                    });
+                } else {
+                    layer.msg(res.msg || '操作失败', {icon: 5, time: 3000});
+                }
+            });
+            layer.close(index);
+        });
+    }
+
+    function changeUser(id, field)
+    {
+        var value = 0;
+        if ($('#' + field + id).is(':checked')) {
+            value = 0;
+        } else {
+            value = 1;
+        }
+
+        //确认框
+        layer.confirm('确定操作吗', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("admin/User/changeUser")}', {"id": id, "value": value, "field": field}, function (res) {
+                if (res.code != 200) {
+                    if (value == 1) {
+                        $('#' + field + id).prop('checked', false);
+                    } else {
+                        $('#' + field + id).prop('checked', true);
+                    }
+                    layer.msg(res.msg, {icon: 5, time: 2500, offset: '80px'});
+                }
+            });
+        }, function (index2) {
+            if (value == 1) {
+                $('#' + field + id).prop('checked', false);
+            } else {
+                $('#' + field + id).prop('checked', true);
+            }
+        });
+    }
+</script>
+<style>
+    th{
+        font-size: 14px;
+    }
+</style>

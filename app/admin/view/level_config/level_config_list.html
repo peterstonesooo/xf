@@ -1,0 +1,49 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['level_config_id']??''}" name="level_config_id" placeholder="搜索ID"
+               class="form-control">
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>等级</th>
+                            <th>最小投资金额</th>
+                            <th>直属下级激活人数</th>
+                            <th>充值奖励</th>
+                            <th>数字生活补贴</th>
+                            <th>直属推荐奖</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>{$v['level_text']}</td>
+                                <td>{$v['min_topup_amount']}</td>
+                                <td>{$v['min_direct_sub_active_num']}</td>
+                                <td>{$v['topup_reward_ratio']}%</td>
+                                <td>{$v['cash_reward_amount']}</td>
+                                <td>{$v['direct_recommend_reward_ratio']}%</td>
+                                <td>
+                                    <a {:auth_show_judge('LevelConfig/editLevelConfig')} class="btn btn-flat btn-info
+                                    btn-xs" href="{:url('admin/LevelConfig/showLevelConfig', ['id' => $v['id']])}"><i
+                                            class="fa fa-edit"></i> 编辑</a>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>

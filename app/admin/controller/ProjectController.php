@@ -1,0 +1,335 @@
+<?php
+
+namespace app\admin\controller;
+
+use app\model\NoticeMessage;
+use app\model\NoticeMessageUser;
+use app\model\Project;
+use app\model\User;
+use think\facade\Cache;
+use think\facade\Db;
+
+class ProjectController extends AuthController
+{
+    /**
+     * 处理周期返利数据格式转换
+     * @param array $data 原始数据
+     * @return array|null 转换后的数据
+     */
+    private function processReturnData($data)
+    {
+        if (empty($data)) {
+            return null;
+        }
+        
+        $result = [];
+        $daysData = [];
+        $amountData = [];
+        
+        // 检查是否是新的格式（days_ 和 amount_ 前缀）
+        $hasNewFormat = false;
+        foreach ($data as $key => $value) {
+            if (strpos($key, 'days_') === 0 || strpos($key, 'amount_') === 0) {
+                $hasNewFormat = true;
+                break;
+            }
+        }
+        
+        if ($hasNewFormat) {
+            // 新格式：days_ 和 amount_ 前缀
+            foreach ($data as $key => $value) {
+                if (strpos($key, 'days_') === 0) {
+                    $daysData[$key] = $value;
+                } elseif (strpos($key, 'amount_') === 0) {
+                    $amountData[$key] = $value;
+                }
+            }
+            
+            // 匹配天数和金额，转换为新格式
+            $index = 0;
+            foreach ($daysData as $daysKey => $days) {
+                $timestamp = str_replace('days_', '', $daysKey);
+                $amountKey = 'amount_' . $timestamp;
+                if (isset($amountData[$amountKey]) && !empty($days) && !empty($amountData[$amountKey])) {
+                    $result[$index] = [
+                        'day' => (int)$days,
+                        'huimin' => (float)$amountData[$amountKey]
+                    ];
+                    $index++;
+                }
+            }
+        } else {
+            // 旧格式：直接是天数和金额的键值对，转换为新格式
+            $index = 0;
+            foreach ($data as $key => $value) {
+                if (is_numeric($key) && is_numeric($value)) {
+                    $result[$index] = [
+                        'day' => (int)$key,
+                        'huimin' => (float)$value
+                    ];
+                    $index++;
+                }
+            }
+        }
+        
+        return !empty($result) ? $result : null;
+    }
+    
+    public function projectList()
+    {
+        $req = request()->param();
+
+        $builder = Project::order(['sort' => 'desc', 'id' => 'desc']);
+        if (isset($req['project_id']) && $req['project_id'] !== '') {
+            $builder->where('id', $req['project_id']);
+        }
+        if (isset($req['project_group_id']) && $req['project_group_id'] !== '') {
+            $builder->where('project_group_id', $req['project_group_id']);
+        }
+        if (isset($req['name']) && $req['name'] !== '') {
+            $builder->where('name', $req['name']);
+        }
+        if (isset($req['status']) && $req['status'] !== '') {
+            $builder->where('status', $req['status']);
+        }
+        if (isset($req['is_recommend']) && $req['is_recommend'] !== '') {
+            $builder->where('is_recommend', $req['is_recommend']);
+        }
+        if (isset($req['class']) && $req['class'] !== '') {
+            $builder->where('class', $req['class']);
+        }
+        $builder->where('project_group_id' ,'<>',17);
+        $data = $builder->paginate(['query' => $req]);
+        $groups = config('map.project.group');
+        $this->assign('groups',$groups);
+
+        $this->assign('req', $req);
+        $this->assign('data', $data);
+
+        return $this->fetch();
+    }
+
+    public function showProject()
+    {
+        $req = request()->param();
+        $data = [];
+        if (!empty($req['id'])) {
+            $data = Project::where('id', $req['id'])->find();
+        }
+        //赠送项目
+        $give = Project::select();
+        if(!empty($data['give'])){
+            $data['give'] = json_decode($data['give'],true);
+        }
+        $groups = config('map.project.group');
+        $this->assign('groups',$groups);
+        $this->assign('give',$give);
+        $this->assign('data', $data);
+
+        return $this->fetch();
+    }
+
+    public function addProject()
+    {
+        $req = $this->validate(request(), [
+            'project_group_id|项目分组ID' => 'require|integer',
+            'name|项目名称' => 'require|max:100',
+            // 'name_background|项目背景名称' => 'max:100',
+            'single_amount|单份金额' => 'float',
+            // 'min_amount|最小购买金额' => 'float',
+            // 'max_amount|最大购买金额' => 'float',
+            // 'daily_bonus_ratio|单份日分红金额' => 'float',
+            // 'dividend_cycle|分红周期' => 'max:32',
+            'status|状态' => 'require|integer',
+            'period|周期' => 'number',
+            'is_recommend|是否推荐' => 'require|integer',
+            'support_pay_methods|支付方式' => 'require|max:100',
+            'sort|排序号' => 'integer',
+            'sum_amount|总补贴金额' => 'float',
+            'huimin_amount|惠民金' => 'float',
+            'gongfu_amount|共富金' => 'float',
+            'minsheng_amount|民生金' => 'float',
+            'rebate_rate|返佣比例' => 'float',
+            // 'virtually_progress|虚拟进度' => 'integer',
+            'total_quota|总名额' => 'max:32',
+            'remaining_quota|剩余名额' => 'max:32',
+            // 'quota_level|限购等级' => 'max:32',
+            'sale_status|销售状态' => 'max:32',
+            'is_daily_bonus|是否每日返利' => 'max:32',
+            'daily_bonus_ratio|每日返利比例' => 'max:32',
+            'sale_time|预售时间' => 'max:32',
+            'open_date|发行开始日' => 'max:32',
+            'end_date|发行开始日' => 'max:32',
+            'year_income|年收益' => 'float',
+            'huimin_days_return|惠民金周期返利' => 'array',
+        ]);
+        if(Cache::get('project_addProject')){
+            return out(null, 10001, '操作过于频繁，请稍后再试');
+        }
+        Cache::set('project_addProject', 1, 5);
+        $req['intro'] = request()->param('intro', '');
+        $methods = explode(',', $req['support_pay_methods']);
+        $req['support_pay_methods'] = json_encode($methods);
+        if(empty($req['sale_time'])) {
+            $req['sale_time'] = null;
+        }
+        if(empty($req['open_date'])) {
+            $req['open_date'] = '';
+        }
+        if(empty($req['end_date'])) {
+            $req['end_date'] = '';
+        }
+        if(isset($req['is_daily_bonus']) && $req['is_daily_bonus'] == 1){
+            $req['rebate_rate'] = 0;
+        }else{
+            $req['daily_bonus_ratio'] = 0;
+        }
+        
+        // 处理惠民金周期返利数据
+        $req['huimin_days_return'] = $this->processReturnData($req['huimin_days_return'] ?? []);
+        
+        $req['cover_img'] = upload_file('cover_img');
+        // $req['details_img'] = upload_file('details_img');
+        $req['details_img'] = '';
+        $project = Project::create($req);
+
+        return out(['id' => $project->id]);
+    }
+
+    public function editProject()
+    {
+        $req = $this->validate(request(), [
+            'id' => 'require|number',
+            'project_group_id|项目分组ID' => 'require|integer',
+            'name|项目名称' => 'require|max:100',
+            // 'name_background|项目背景名称' => 'max:100',
+            'single_amount|单份金额' => 'float',
+            'status|状态' => 'require|integer',
+            'is_daily_bonus|是否每日返利' => 'max:32',
+            'daily_bonus_ratio|每日返利比例' => 'max:32',
+            // 'min_amount|最小购买金额' => 'float',
+            // 'max_amount|最大购买金额' => 'float',
+            // 'daily_bonus_ratio|单份日分红金额' => 'float',
+            // 'dividend_cycle|分红周期' => 'max:32',
+            'period|周期' => 'number',
+            // 'single_gift_digital_yuan|单份赠送国家津贴' => 'integer',
+            'is_recommend|是否推荐' => 'require|integer',
+            'support_pay_methods|支持的支付方式' => 'require|max:100',
+            'sort|排序号' => 'integer',
+            'sum_amount|总补贴金额' => 'float',
+            'huimin_amount|惠民金' => 'float',
+            'gongfu_amount|共富金' => 'float',
+            'minsheng_amount|民生金' => 'float',
+            'rebate_rate|返佣比例' => 'float',
+            // 'virtually_progress|虚拟进度' => 'integer',
+            'total_quota|总名额' => 'max:32',
+            'remaining_quota|剩余名额' => 'max:32',
+            // 'quota_level|限购等级' => 'max:32',
+            'sale_status|销售状态' => 'max:32',
+            'sale_time|预售时间' => 'max:32',
+            'open_date|发行开始日' => 'max:32',
+            'end_date|发行开始日' => 'max:32',
+            'year_income|年收益' => 'float',
+            'huimin_days_return|惠民金周期返利' => 'array',
+        ]);
+        $req['intro'] = request()->param('intro', '');
+        $methods = explode(',', $req['support_pay_methods']);
+        $req['support_pay_methods'] = json_encode($methods);
+
+        if(empty($req['sale_time'])) {
+            $req['sale_time'] = null;
+        }
+        if(empty($req['open_date'])) {
+            $req['open_date'] = '';
+        }
+        if(empty($req['end_date'])) {
+            $req['end_date'] = '';
+        }
+        if(isset($req['is_daily_bonus']) && $req['is_daily_bonus'] == 1){
+            $req['rebate_rate'] = 0;
+        }else{
+            $req['daily_bonus_ratio'] = 0;
+        }
+        
+        // 处理惠民金周期返利数据
+        $req['huimin_days_return'] = $this->processReturnData($req['huimin_days_return'] ?? []);
+        
+        if ($img = upload_file('cover_img', false,false)) {
+            $req['cover_img'] = $img;
+        }
+        // if($img = upload_file('details_img', false,false)){
+        //     $req['details_img'] = $img;
+        // }
+        Project::where('id', $req['id'])->update($req);
+
+        return out(['id' => $req['id']]);
+    }
+
+    public function changeProject()
+    {
+        $req = $this->validate(request(), [
+            'id' => 'require|number',
+            'field' => 'require',
+            'value' => 'require',
+        ]);
+
+        Project::where('id', $req['id'])->update([$req['field'] => $req['value']]);
+
+        return out();
+    }
+
+    public function delProject()
+    {
+        $req = $this->validate(request(), [
+            'id' => 'require|number'
+        ]);
+
+        Project::destroy($req['id']);
+
+        return out();
+    }
+
+    /**
+     * 发送项目通知
+     */
+    public function sendProjectNotice()
+    {
+        $req = $this->validate(request(), [
+            'project_id' => 'require|number',
+            'project_name' => 'require|max:100'
+        ]);
+        Db::startTrans();
+        try {
+            // 获取所有用户ID
+            $userIds = User::where('status', 1)->column('id');
+            
+            // 创建消息
+            $message = NoticeMessage::create([
+                'title' => '新项目上线通知',
+                'content' => "新项目【{$req['project_name']}】已上线，请及时查看！",
+                'type' => NoticeMessage::TYPE_SYSTEM,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+
+            // 为每个用户创建消息记录
+            $data = [];
+            foreach ($userIds as $userId) {
+                $data[] = [
+                    'user_id' => $userId,
+                    'message_id' => $message->id,
+                    'is_read' => 0,
+                    'read_time' => null
+                ];
+            }
+            
+            // 批量插入消息记录
+            NoticeMessageUser::insertAll($data);
+            Db::commit();
+            return out(['message_id' => $message->id]);
+        } catch (\Exception $e) {
+            Db::rollback();
+            return out(null, 10001, '发送通知失败：' . $e->getMessage());
+        }
+    }
+}

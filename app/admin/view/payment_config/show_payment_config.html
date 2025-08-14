@@ -1,0 +1,219 @@
+<div class="search">
+    <form class="form-inline">
+        <a class="btn btn-flat btn-primary m_10_l_0" href="{:url('admin/PaymentConfig/paymentConfigList')}">显示全部</a>
+        <a class="btn btn-flat btn-success m_10 f_r" onclick="javascript:history.back(-1)"><i
+                    class="fa fa-undo m-r-10"></i>返 回</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-sm-12 col-xs-12">
+        <form id="commentForm">
+            <?php if (!empty($data)) { ?>
+                <input type="hidden" class="form-control" value="{$data['id']}" name="id">
+            <?php } ?>
+            <div class="box box-body">
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">支付名称</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="name" class="form-control"
+                                   placeholder="请输入支付名称" value="{$data['name']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">支付类型</label>
+                        <div class="col-xs-8 col-sm-6 col-md-4 col-lg-4">
+                            <select <?php if (!empty($data)) { ?> readonly <?php } ?> name="type" class="form-control" onchange="changeType(this)">
+                                <option value="">请选择</option>
+                                <?php foreach (config('map.payment_config')['type_map'] as $k => $v) { ?>
+                                    <option <?php if (isset($data['type']) && $data['type'] == $k) { ?> selected="selected" <?php } ?>
+                                            value="{$k}">{$v}
+                                    </option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                        <div class="col-xs-12 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div style="display: none" class="row dd_input_group bank">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">收款银行</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="card_info[bank_name]" class="form-control"
+                                   placeholder="请输入收款银行名称" value="{$data['card_info']['bank_name']??''}">
+                        </div>
+                        <div class="col-xs-12 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div style="display: none" class="row dd_input_group bank">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">银行卡号</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="card_info[card_number]" class="form-control"
+                                   placeholder="请输入银行卡号" value="{$data['card_info']['card_number']??''}">
+                        </div>
+                        <div class="col-xs-12 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div style="display: none" class="row dd_input_group bank">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">持卡人</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="card_info[realname]" class="form-control"
+                                   placeholder="请输入持卡人姓名" value="{$data['card_info']['realname']??''}">
+                        </div>
+                        <div class="col-xs-12 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div style="display: none" class="row dd_input_group bank">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">银行分行</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="card_info[bank_branch]" class="form-control"
+                                   placeholder="请输入银行分行" value="{$data['card_info']['bank_branch']??''}">
+                        </div>
+                        <div class="col-xs-12 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div style="display: none" class="row dd_input_group notbank">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">支付渠道</label>
+                        <div class="col-xs-8 col-sm-6 col-md-4 col-lg-4">
+                            <select <?php if (!empty($data)) { ?> readonly <?php } ?> name="channel" class="form-control">
+                                <option value="">请选择</option>
+                                <?php foreach (config('map.payment_config')['channel_map'] as $k => $v) { if ($k > 0) { ?>
+                                    <option <?php if (isset($data['channel']) && $data['channel'] == $k) { ?> selected="selected" <?php } ?>
+                                            value="{$k}">{$v}
+                                    </option>
+                                <?php } } ?>
+                            </select>
+                        </div>
+                        <div class="col-xs-12 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div style="display: none" class="row dd_input_group notbank">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">通道标识</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="mark" class="form-control"
+                                   placeholder="请输入通道标识" value="{$data['mark']??''}">
+                        </div>
+                        <div class="col-xs-12 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">单笔支付最小金额</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="single_topup_min_amount" class="form-control"
+                                   placeholder="请输入单笔支付最小金额" value="{$data['single_topup_min_amount']??''}">
+                        </div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">单笔支付最大金额</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="single_topup_max_amount" class="form-control"
+                                   placeholder="请输入单笔支付最大金额" value="{$data['single_topup_max_amount']??''}">
+                        </div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">固定支付金额</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="fixed_topup_limit" class="form-control"
+                                   placeholder="请输入固定支付金额，多个金额逗号,分隔" value="{$data['fixed_topup_limit']??''}">
+                        </div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">总支付金额上限</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="topup_max_limit" class="form-control"
+                                   placeholder="请输入总支付金额上限" value="{$data['topup_max_limit']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">用户分层</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="start_topup_limit" class="form-control"
+                                   placeholder="请输入用户分层金额" value="{$data['start_topup_limit']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">排序</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="sort" class="form-control"
+                                   placeholder="排序" value="{$data['sort']??'0'}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">数字越大越排在前</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <div class="col-xs-12 col-sm-8 col-md-6 col-lg-5 text-center">
+                            <button type="button" class="btn btn-flat btn-primary" onclick="sub()">提 交</button>
+                            <button type="button" class="btn btn-flat btn-default"
+                                    onclick="javascript:history.back(-1)">返 回
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        <?php if (!empty($data['type'])) { if ($data['type'] == 4) { ?>
+            $('.bank').show();
+        <?php } else { ?>
+            $('.notbank').show();
+        <?php } } ?>
+
+        var url = "{:url('admin/PaymentConfig/paymentConfigList')}";
+        $('a[href="' + url + '"]').parents('.menu-li').addClass('active');
+        var headerText = $('a[href="' + url + '"]').children('span').text();
+        var is_add = "<?php echo !empty($data) ? '0' : '1';?>";
+        var headerTitle = is_add == "1" ? headerText + '-添加' : headerText + '-编辑';
+        $('#content-header-title').text(headerTitle);
+    });
+
+    function sub()
+    {
+        $.post('<?php echo !empty($data) ? url("admin/PaymentConfig/editPaymentConfig") : url("admin/PaymentConfig/addPaymentConfig");?>', $('#commentForm').serialize(), function (res) {
+            if (res.code == '200') {
+                window.location.href = document.referrer;
+            } else {
+                layer.msg(res.msg, {icon: 5, time: 3000});
+            }
+        });
+    }
+
+    function changeType(obj)
+    {
+        let type = $(obj).val();
+        $('.bank').hide();
+        $('.notbank').hide();
+        if (type == 4) {
+            $('.bank').show();
+        }
+        else {
+            $('.notbank').show();
+        }
+    }
+</script>

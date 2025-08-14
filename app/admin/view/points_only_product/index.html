@@ -1,0 +1,158 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['product_name']??''}" name="product_name" placeholder="搜索商品名称" class="form-control">
+        <select name="product_status" class="form-control">
+            <option value="">搜索商品状态</option>
+            <option value="1" {if(isset($req['product_status']) && $req['product_status']==1)} selected {/if}>上架</option>
+            <option value="0" {if(isset($req['product_status']) && $req['product_status']==0)} selected {/if}>下架</option>
+        </select>
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <a {:auth_show_judge('PointsOnlyProduct/add')} class="btn btn-flat btn-success m_10 f_r"
+        href="{:url('admin/PointsOnlyProduct/add')}"><i class="fa fa-plus m-r-10"></i>添 加</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>商品名称</th>
+                            <th>商品图片</th>
+                            <th>
+                                <a href="javascript:;" onclick="sortByPoints('{$req['sort'] ?? ''}')" style="color: inherit; text-decoration: none;">
+                                    积分价格
+                                    <i class="fa fa-sort" id="pointsSortIcon"></i>
+                                </a>
+                            </th>
+                            <th>
+                                <a href="javascript:;" onclick="sortByStock('{$req['sort'] ?? ''}')" style="color: inherit; text-decoration: none;">
+                                    库存数量
+                                    <i class="fa fa-sort" id="stockSortIcon"></i>
+                                </a>
+                            </th>
+                            <th>商品状态</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td><?php echo $v['id']; ?></td>
+                                <td><?php echo $v['product_name']; ?></td>
+                                <td><img src="<?php echo $v['product_image_url']; ?>" onclick="seePhoto('<?php echo $v['product_image_url']; ?>')" style="max-width: 80px;"></td>
+                                <td><?php echo $v['points_price']; ?></td>
+                                <td><?php echo $v['stock_quantity']; ?></td>
+                                <td>
+                                    <div class="switch">
+                                        <div class="onoffswitch">
+                                            <input type="checkbox" <?php echo $v['product_status'] == 1 ? 'checked' : ''; ?>
+                                                   class="onoffswitch-checkbox" id="product_status<?php echo $v['id']; ?>">
+                                            <label class="onoffswitch-label" for="product_status<?php echo $v['id']; ?>"
+                                                   onclick="changeStatus(<?php echo $v['id']; ?>, 'product_status')">
+                                                <span class="onoffswitch-inner"></span>
+                                                <span class="onoffswitch-switch"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><?php echo $v['create_time']; ?></td>
+                                <td>
+                                    <a {:auth_show_judge('PointsOnlyProduct/edit')} class="btn btn-flat btn-info btn-xs"
+                                    href="{:url('admin/PointsOnlyProduct/edit', ['id' => $v['id']])}"><i
+                                            class="fa fa-edit"></i> 编辑</a>
+                                    <a {:auth_show_judge('PointsOnlyProduct/del')} class="btn btn-flat btn-danger btn-xs"
+                                    href="javascript:;" onclick="delProduct(<?php echo $v['id']; ?>)"><i class="fa fa-trash-o"></i>
+                                    删除</a>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function delProduct(id)
+    {
+        //确认框
+        layer.confirm('确定删除吗？', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("admin/PointsOnlyProduct/del")}', {id: id}, function (res) {
+                if (res.code == 0) {
+                    location.reload(true);
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+
+    function changeStatus(id, field)
+    {
+        var value = 0;
+        if ($('#' + field + id).is(':checked')) {
+            value = 0;
+        } else {
+            value = 1;
+        }
+
+        //确认框
+        layer.confirm('确定操作吗', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("admin/PointsOnlyProduct/status")}', {"id": id, "status": value}, function (res) {
+                if (res.code != 0) {
+                    if (value == 1) {
+                        $('#' + field + id).prop('checked', false);
+                    } else {
+                        $('#' + field + id).prop('checked', true);
+                    }
+                    layer.msg(res.msg, {icon: 5, time: 2500, offset: '80px'});
+                }
+            });
+        }, function (index2) {
+            if (value == 1) {
+                $('#' + field + id).prop('checked', false);
+            } else {
+                $('#' + field + id).prop('checked', true);
+            }
+        });
+    }
+
+    function sortByPoints(currentSort) {
+        var newSort = currentSort === 'points_asc' ? 'points_desc' : 'points_asc';
+        var url = new URL(window.location.href);
+        url.searchParams.set('sort', newSort);
+        window.location.href = url.toString();
+    }
+
+    function sortByStock(currentSort) {
+        var newSort = currentSort === 'stock_asc' ? 'stock_desc' : 'stock_asc';
+        var url = new URL(window.location.href);
+        url.searchParams.set('sort', newSort);
+        window.location.href = url.toString();
+    }
+
+    // 页面加载时设置排序图标
+    $(document).ready(function() {
+        var currentSort = '{$req['sort'] ?? ''}';
+        if (currentSort === 'points_asc') {
+            $('#pointsSortIcon').removeClass('fa-sort').addClass('fa-sort-up');
+        } else if (currentSort === 'points_desc') {
+            $('#pointsSortIcon').removeClass('fa-sort').addClass('fa-sort-down');
+        }
+        
+        if (currentSort === 'stock_asc') {
+            $('#stockSortIcon').removeClass('fa-sort').addClass('fa-sort-up');
+        } else if (currentSort === 'stock_desc') {
+            $('#stockSortIcon').removeClass('fa-sort').addClass('fa-sort-down');
+        }
+    });
+</script>

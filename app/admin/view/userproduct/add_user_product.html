@@ -1,0 +1,116 @@
+<div class="search">
+    <form class="form-inline">
+        <a class="btn btn-flat btn-primary m_10_l_0" href="{:url('admin/userproduct/userProductList')}">显示全部</a>
+        <a class="btn btn-flat btn-success m_10 f_r" onclick="javascript:history.back(-1)"><i class="fa fa-undo m-r-10"></i>返 回</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-sm-12 col-xs-12">
+        <form id="commentForm">
+
+            <div class="box box-body">
+
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">手机号</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="phone" class="form-control" placeholder="请输入手机号" value="">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+
+                <div class="row dd_input_group">
+                    <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">选择赠送产品</label>
+                    <div class="col-xs-8 col-sm-6 col-md-4 col-lg-4">
+                        <select name="product_id" class="form-control">
+                            <option value="">请选择产品</option>
+                            <?php foreach ($product as $k => $v) { ?>
+                                <option  value="{$v.id}">{$v.name}-{$v.single_amount}</option>
+                            <?php } ?>
+                        </select>
+                    </div>
+                    <div class="col-xs-12 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                </div>
+
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">是否返佣</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <div class="dd_radio_lable_left">
+                                <label class="dd_radio_lable">
+                                    <input type="radio" checked name="is_team_bonus" value="0" class="dd_radio"><span>否</span>
+                                </label>
+                                <label class="dd_radio_lable">
+                                    <input type="radio" name="is_team_bonus" value="1" class="dd_radio"><span>是</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts"> *</div>
+                    </div>
+                </div>
+
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <div class="col-xs-12 col-sm-8 col-md-6 col-lg-5 text-center">
+                            <button type="button" class="btn btn-flat btn-primary js_tj" onclick="sub()">提 交</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+
+<link rel="stylesheet" href="__ADMIN__/bower_components/select2/dist/css/select2.min.css">
+<script src="__ADMIN__/bower_components/select2/dist/js/select2.min.js"></script>
+<script>
+    $(function () {
+        $(".select2").select2();
+
+        <?php if (!empty($data['support_pay_methods'])) { ?>
+        $("#select_support_pay_methods").val({:json_encode($data['support_pay_methods'])}).trigger("change");
+        <?php } ?>
+
+        var url = "{:url('admin/Userproduct/userProductList')}";
+        $('a[href="' + url + '"]').parents('.menu-li').addClass('active');
+        var headerText = $('a[href="' + url + '"]').children('span').text();
+        var is_add = "<?php echo !empty($data) ? '0' : '1';?>";
+        var headerTitle = is_add == "1" ? headerText + '-添加' : headerText + '-编辑';
+        $('#content-header-title').text(headerTitle);
+    });
+
+
+
+    function sub()
+    {
+        $('.js_tj').hide();
+        var support_pay_methods = $("#select_support_pay_methods").val();
+        $('#support_pay_methods').val(support_pay_methods);
+        var formData = new FormData($('#commentForm')[0]);
+        $.ajax({
+            url: '<?php echo  url("admin/Userproduct/doUserProduct") ?>',
+            type: 'POST',
+            data: formData,
+            async: true,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function (res) {
+                if (res.code == '200'){
+                    window.location.href = document.referrer;
+                }
+                else {
+                    $('.js_tj').show();
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            },
+            error: function (res) {
+                $('.js_tj').show();
+                layer.msg(res.msg, {icon: 5, time: 3000});
+            }
+        });
+    }
+</script>

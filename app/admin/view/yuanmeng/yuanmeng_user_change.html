@@ -1,0 +1,156 @@
+<div class="row">
+    <div class="col-sm-12 col-xs-12">
+        <form id="commentForm">
+            <?php if (!empty($data)) { ?>
+                <input type="hidden" class="form-control" value="{$data['id']}" name="id">
+            <?php } ?>
+            <div class="box box-body">
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">姓名</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="user_name" class="form-control" placeholder="请输入姓名"
+                                   value="{$data['user_name']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">登记手机号</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="user_phone" class="form-control" placeholder="请输入登记手机号"
+                                   value="{$data['user_phone']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">身份证号</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="user_idcard" class="form-control" placeholder="请输入身份证号"
+                                   value="{$data['user_idcard']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">收货地址</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="user_address" class="form-control" placeholder="请输入收货地址"
+                                   value="{$data['user_address']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">手持身份证人像面照片</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <div id="img_preview1">
+                                <?php if (!empty($data['user_idcard_photo_front'])){ ?>
+                                    <img style="max-width: 580px;" src ="{$data['user_idcard_photo_front']}"/>
+                                <?php } ?>
+                            </div>
+                            <input type="file" class="form-control" name="user_idcard_photo_front" id="img_url1" accept="image/gif,image/jpeg,image/jpg,image/png" onchange="selectFile(1)">
+                        </div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">手持身份证国徽面照片</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <div id="img_preview2">
+                                <?php if (!empty($data['user_idcard_photo_back'])){ ?>
+                                    <img style="max-width: 580px;" src ="{$data['user_idcard_photo_back']}"/>
+                                <?php } ?>
+                            </div>
+                            <input type="file" class="form-control" name="user_idcard_photo_back" id="img_url2" accept="image/gif,image/jpeg,image/jpg,image/png" onchange="selectFile(2)">
+                        </div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">同名银行卡照片</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <div id="img_preview3">
+                                <?php if (!empty($data['user_bankcard_photo'])){ ?>
+                                    <img style="max-width: 580px;" src ="{$data['user_bankcard_photo']}"/>
+                                <?php } ?>
+                            </div>
+                            <input type="file" class="form-control" name="user_bankcard_photo" id="img_url3" accept="image/gif,image/jpeg,image/jpg,image/png" onchange="selectFile(3)">
+                        </div>
+                    </div>
+                </div>
+               
+
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <div class="col-xs-12 col-sm-8 col-md-6 col-lg-5 text-center">
+                            <button type="button" class="btn btn-flat btn-primary" onclick="sub()">提 交</button>
+                            <button type="button" class="btn btn-flat btn-default"
+                                    onclick="javascript:history.back(-1)">返 回
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        var url = "{:url('admin/LevelConfig/levelConfigList')}";
+        $('a[href="' + url + '"]').parents('.menu-li').addClass('active');
+        var headerText = $('a[href="' + url + '"]').children('span').text();
+        var is_add = "<?php echo !empty($data) ? '0' : '1';?>";
+        var headerTitle = is_add == "1" ? headerText + '-添加' : headerText + '-编辑';
+        $('#content-header-title').text(headerTitle);
+    });
+
+    function sub()
+    {
+        var formData = new FormData($('#commentForm')[0]);
+        $.ajax({
+            url: '<?php echo url("admin/Yuanmeng/yuanmengUserChangeSubmit")?>',
+            type: 'POST',
+            data: formData,
+            async: false,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function (res) {
+                if (res.code == '200'){
+                    window.location.href = document.referrer;
+                }
+                else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            },
+            error: function (res) {
+                layer.msg(res.msg, {icon: 5, time: 3000});
+            }
+        });
+        
+    }
+
+    function selectFile(i)
+    {
+        $('#img_preview'+i).html('');
+        var files = document.getElementById('img_url'+i).files;
+        if(files.length == 0){
+            return;
+        }
+        var file = files[0]; //把上传的图片显示出来
+        var reader = new FileReader();
+        reader.readAsBinaryString(file);
+        reader.onload = function(){
+            var result = document.getElementById('img_preview'+i);
+            var src = "data:" + file.type + ";base64," + window.btoa(this.result);
+            result.innerHTML = '<img style="max-width: 580px;" src ="'+src+'"/>';
+        }
+    }
+</script>

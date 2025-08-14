@@ -1,0 +1,118 @@
+<div class="search">
+    <form class="form-inline">
+        <select name="type" class="form-control">
+            <option value="">--全部类型--</option>
+            <option value="1" <?php echo isset($req['type']) && $req['type'] == 1 ? 'selected' : ''; ?>>积分抽奖</option>
+            <option value="2" <?php echo isset($req['type']) && $req['type'] == 2 ? 'selected' : ''; ?>>产品抽奖</option>
+        </select>
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <a {:auth_show_judge('PaymentConfig/addPaymentConfig')} class="btn btn-flat btn-success m_10 f_r"
+        href="{:url('admin/Signin/signinPrizeAdd')}"><i class="fa fa-plus m-r-10"></i>添 加</a>
+        <!-- <a class="btn btn-flat btn-warning m_10 f_r" href="javascript:;" onclick="updateLotteryTickets()">
+            <i class="fa fa-refresh m-r-10"></i>一键更新抽奖次数
+        </a> -->
+    </form>
+</div>
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>奖品名称</th>
+                            <th>金额【荣耀钱包】</th>
+                            <th>到账钱包</th>
+                            <th>类型</th>
+                            <th>图片</th>
+                            <th>概率</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>{$v['name']}</td>
+                                <td>{$v['cash_amount']}</td>
+                                <td>
+                                    <?php 
+                                    switch($v['cash_to_wallet']) {
+                                        case 'team_bonus_balance':
+                                            echo '荣誉金';
+                                            break;
+                                        case 'butie':
+                                            echo '共富金';
+                                            break;
+                                        case 'digit_balance':
+                                            echo '惠民金';
+                                            break;
+                                    }
+                                    ?>
+                                </td>
+                                <td>{$v['type'] == 1 ? '积分抽奖' : '产品抽奖'}</td>
+                                <td><img src="{$v['img_url']}" onclick="seePhoto('{$v['img_url']}')" style="max-width: 80px;"></td>
+                                <td>{$v['win_probability']}</td>
+                                <td>
+                                    <a {:auth_show_judge('LevelConfig/editLevelConfig')} class="btn btn-flat btn-info
+                                    btn-xs" href="{:url('admin/Signin/prizeSetting', ['id' => $v['id']])}"><i
+                                            class="fa fa-edit"></i> 编辑</a>
+                                    <a {:auth_show_judge('Signin/del')} class="btn btn-flat btn-danger
+                                            btn-xs" href="javascript:;" onclick="del({$v['id']})"><i
+                                                    class="fa fa-trash-o"></i> 删除</a>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function del(id)
+    {
+        //确认框
+        layer.confirm('确定删除吗？', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("admin/Signin/del")}', {id: id}, function (res) {
+                if (res.code == '200') {
+                    location.reload(true);
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+
+    function updateLotteryTickets()
+    {
+        //确认框
+        layer.confirm('确定要更新所有用户的订单抽奖次数吗？此操作将重新计算每个用户的order_lottery_tickets字段。<br><br>计算逻辑：<br>1. 统计用户在mp_order和mp_order_daily_bonus表中的有效订单总数<br>2. 减去用户在mp_lottery_record表中order_id>0的记录数（已使用的抽奖次数）<br>3. 更新到mp_user表的order_lottery_tickets字段', {
+            icon: 3, 
+            title: '更新抽奖次数',
+            area: ['500px', '300px']
+        }, function (index) {
+            layer.close(index);
+            
+            // 显示加载层
+            var loadIndex = layer.load(1, {
+                shade: [0.1,'#fff']
+            });
+            
+            $.post('{:url("admin/Signin/updateLotteryTickets")}', function (res) {
+                layer.close(loadIndex);
+                if (res.code == '200') {
+                    layer.msg('更新成功！共更新了 ' + res.data.updated_count + ' 个用户的抽奖次数', {icon: 1, time: 3000});
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            }).fail(function() {
+                layer.close(loadIndex);
+                layer.msg('更新失败，请稍后重试', {icon: 5, time: 3000});
+            });
+        });
+    }
+</script>

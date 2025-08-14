@@ -1,0 +1,132 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['order_id']??''}" name="order_id" placeholder="搜索订单ID" class="form-control">
+        <input type="text" value="{$req['user']??''}" name="user" placeholder="搜索用户ID/手机号" class="form-control">
+        <input type="text" value="{$req['order_sn']??''}" name="order_sn" placeholder="搜索订单号" class="form-control">
+        <!-- <select name="status" class="form-control">
+            <option value="">搜索订单状态</option>
+            <?php foreach (config('map.order')['status_map'] as $k => $v) { ?>
+                <option <?php if (isset($req['status']) && $req['status'] == $k) {
+                    echo 'selected = "selected"';
+                } ?> value="{$k}">{$v}
+                </option>
+            <?php } ?>
+        </select> -->
+        <input type="text" value="{$req['project_name']??''}" name="project_name" placeholder="搜索项目名称"
+               class="form-control">
+        <select name="project_group_id"  class="form-control">
+            <option value="">搜索项目分组</option>
+            {foreach($groups as $key=>$v})}
+            <option value="{$key}" {if(isset($req['project_group_id']) && $req['project_group_id']==$key)} selected {/if}>{$v}</option>
+            {/foreach}
+        </select>
+        <!-- <input type="text" value="{$req['mark']??''}" name="mark" placeholder="搜索渠道标识"
+               class="form-control"> -->
+        <input placeholder="开始时间" autocomplete="off" value="{$req['start_date']??''}" name="start_date" class="form-control layer-date" id="start">
+        ～
+        <input placeholder="结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <input class="btn btn-flat btn-info m_10" name="export" type="submit" value="导出">
+        &nbsp;&nbsp;&nbsp;<span>共 <?php echo $count;?> 条数据</span>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户</th>
+                            <th>订单号</th>
+                            <th>订单状态</th>
+                            <th>项目名称</th>
+                            <th>购买金额</th>
+                            <th>周期</th>
+                            <th>卡片状态</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>{$v['user']['phone']??''}</td>
+                                <td>{$v['order_sn']}</td>
+                                <td>
+                                    <?php if ($v['project_group_id'] == 1) {?>
+                                        <?php if ($v['status'] == 0) {?>
+                                            待发放
+                                        <?php }elseif ($v['status'] == 0) {?>
+                                            已发放
+                                        <?php }?>
+                                    <?php }?>
+                                </td>
+                                <td>{$v['project_name']}</td>
+                                <td>
+                                    {$v['price']}
+                                </td>
+                                <td>{$v['days']}天</td>
+                                <td>
+                                    <?php if ($v['project_group_id'] == 2) {?>
+                                        <?php echo $process_map[$v['card_process']];?>
+                                    <?php }?>
+                                </td>
+                                <td>{$v['created_at']}</td>
+                                <td>
+                                    <?php if ($v['status'] == 1 && in_array($v['pay_method'], [2,3,4,6])) { ?>
+                                        <!-- <button {:auth_show_judge('Order/auditOrder')} class="btn btn-flat btn-success btn-xs" onclick="auditOrder({$v['id']}, 2)">确认支付成功</button> -->
+                                    <?php } ?>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        <tr>
+                            <td><strong>总计：</strong></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><strong>{$total_buy_amount}</strong></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        //日期范围限制
+        var start = {
+            elem: '#start',
+            format: 'yyyy-MM-dd',
+        };
+        var end = {
+            elem: '#end',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(start);
+        laydate.render(end);
+    });
+    function auditOrder(id, status)
+    {
+        layer.confirm('确定操作吗？', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("admin/Order/auditOrder")}', {id: id, status: status}, function (res) {
+                if (res.code == '200') {
+                    location.reload(true);
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+</script>

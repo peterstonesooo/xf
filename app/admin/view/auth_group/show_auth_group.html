@@ -1,0 +1,112 @@
+<div class="search">
+    <form class="form-inline">
+        <a class="btn btn-flat btn-primary m_10_l_0" href="{:url('admin/AuthGroup/authGroupList')}"><i class="fa fa-list m-r-10"></i>角色列表</a>
+        <a class="btn btn-flat btn-success m_10 f_r" onclick="javascript:history.back(-1)"><i class="fa fa-undo m-r-10"></i>返回</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-sm-12 col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <h3 class="box-title"><?php echo !empty($data) ? '编辑角色' : '添加角色'; ?></h3>
+            </div>
+            <form id="commentForm">
+                <?php if (!empty($data)){ ?>
+                    <input type="hidden" class="form-control" value="{$data['id']}" name="id">
+                <?php } ?>
+                <div class="box-body">
+                    <div class="row dd_input_group">
+                        <div class="form-group">
+                            <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">角色名称 <span class="text-danger">*</span></label>
+                            <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                                <input type="text" name="title" class="form-control" placeholder="请输入角色名称" value="{$data['title']??''}" required>
+                            </div>
+                            <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">
+                                <small class="text-muted">角色名称不能重复</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row dd_input_group">
+                        <div class="form-group">
+                            <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">角色描述</label>
+                            <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                                <textarea name="desc" class="form-control" placeholder="请输入角色描述" rows="3">{$data['desc']??''}</textarea>
+                            </div>
+                            <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">
+                                <small class="text-muted">可选，用于说明角色用途</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="box-footer">
+                    <div class="row dd_input_group">
+                        <div class="form-group">
+                            <div class="col-xs-12 col-sm-8 col-md-6 col-lg-5 text-center">
+                                <button type="button" class="btn btn-flat btn-primary" onclick="sub()"><i class="fa fa-save m-r-10"></i>保存</button>
+                                <button type="button" class="btn btn-flat btn-default" onclick="javascript:history.back(-1)"><i class="fa fa-undo m-r-10"></i>返回</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .box-header h3 {
+        margin: 0;
+        font-size: 18px;
+        color: #333;
+    }
+    .text-danger {
+        color: #d9534f;
+    }
+    .text-muted {
+        color: #777;
+    }
+    .form-control:focus {
+        border-color: #66afe9;
+        outline: 0;
+        box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
+    }
+    .box-footer {
+        background-color: #f9f9f9;
+        border-top: 1px solid #ddd;
+        padding: 15px;
+    }
+</style>
+
+<script>
+    $(function(){
+        var url = "{:url('admin/AuthGroup/authGroupList')}";
+        $('a[href="'+url+'"]').parents('.menu-li').addClass('active');
+        var headerText = $('a[href="'+url+'"]').children('span').text();
+        var is_add = "<?php echo !empty($data) ? '0' : '1';?>";
+        var headerTitle = is_add == "1" ? headerText + '-添加' : headerText + '-编辑';
+        $('#content-header-title').text(headerTitle);
+    });
+
+    function sub()
+    {
+        // 表单验证
+        var title = $('input[name="title"]').val().trim();
+        if (!title) {
+            layer.msg('请输入角色名称', {icon: 5, time: 2000});
+            $('input[name="title"]').focus();
+            return;
+        }
+
+        $.post('<?php echo !empty($data) ? url("admin/AuthGroup/editAuthGroup") : url("admin/AuthGroup/addAuthGroup");?>', $('#commentForm').serialize(), function (res) {
+            if (res.code == '200'){
+                layer.msg('保存成功', {icon: 1, time: 2000}, function(){
+                    window.location.href = document.referrer;
+                });
+            }
+            else {
+                layer.msg(res.msg, {icon: 5, time: 3000});
+            }
+        });
+    }
+</script>

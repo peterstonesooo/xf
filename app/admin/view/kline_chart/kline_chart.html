@@ -1,0 +1,83 @@
+<script src="__ADMIN__/dist/js/echarts.min.js"></script>
+<script src="__ADMIN__/dist/js/vue.js"></script>
+<link rel="stylesheet" href="__ADMIN__/css/index.css?v=1.1.1">
+
+<div id="app">
+    <div class="search">
+        <form class="form-inline">
+            <a class="btn btn-flat btn-success m_10 f_r" href="{:url('admin/KlineChart/showKline')}"><i class="fa fa-plus m-r-10"></i>添 加</a>
+        </form>
+    </div>
+    <div class="page-table">
+        <!-- <div class="table-title">BTC/USDT 交易对机器人趋势数据</div> -->
+        <div class="table-box">
+            <div class="table-out">
+                <div class="table-head">
+                    <div style="width:5%">ID</div>
+                    <div style="width:10%">日期</div>
+                    <div style="width:3%">价格</div>
+                    <div style="width:3%">9:40</div>
+                    <div style="width:3%">9:50</div>
+                    <div style="width:3%">10:00</div>
+                    <div style="width:3%">10:10</div>
+                    <div style="width:3%">10:20</div>
+                    <div style="width:3%">10:30</div>
+                    <div style="width:3%">10:40</div>
+                    <div style="width:3%">10:50</div>
+                    <div style="width:3%">11:00</div>
+                    <div style="width:3%">11:10</div>
+                    <div style="width:3%">11:20</div>
+                    <div style="width:3%">11:30</div>
+                    <div style="width:3%">13:10</div>
+                    <div style="width:3%">13:20</div>
+                    <div style="width:3%">13:30</div>
+                    <div style="width:3%">13:40</div>
+                    <div style="width:3%">13:50</div>
+                    <div style="width:3%">14:00</div>
+                    <div style="width:3%">14:10</div>
+                    <div style="width:3%">14:20</div>
+                    <div style="width:3%">14:30</div>
+                    <div style="width:3%">14:40</div>
+                    <div style="width:3%">14:50</div>
+                    <div style="width:3%">15:00</div>
+                    <div style="width:10%">操作</div>
+                </div>
+                <?php if(!empty($data)){foreach($data as $v){?>
+                <div class="table-item" v-for="item in kLineTable" v-if="kLineTable.length!=0">
+                    <div style="width:5%">{$v['id']}</div>
+                    <div style="width:10%">{$v['date']}</div>
+                    <div style="width:3%">{$v['price1']}</div>
+                    <div style="width:3%">{$v['price2']}</div>
+                    <div style="width:3%">{$v['price3']}</div>
+                    <div style="width:3%">{$v['price4']}</div>
+                    <div style="width:3%">{$v['price5']}</div>
+                    <div style="width:3%">{$v['price6']}</div>
+                    <div style="width:3%">{$v['price7']}</div>
+                    <div style="width:3%">{$v['price8']}</div>
+                    <div style="width:3%">{$v['price9']}</div>
+                    <div style="width:3%">{$v['price10']}</div>
+                    <div style="width:3%">{$v['price11']}</div>
+                    <div style="width:3%">{$v['price12']}</div>
+                    <div style="width:3%">{$v['price13']}</div>
+                    <div style="width:3%">{$v['price14']}</div>
+                    <div style="width:3%">{$v['price15']}</div>
+                    <div style="width:3%">{$v['price16']}</div>
+                    <div style="width:3%">{$v['price17']}</div>
+                    <div style="width:3%">{$v['price18']}</div>
+                    <div style="width:3%">{$v['price19']}</div>
+                    <div style="width:3%">{$v['price20']}</div>
+                    <div style="width:3%">{$v['price21']}</div>
+                    <div style="width:3%">{$v['price22']}</div>
+                    <div style="width:3%">{$v['price23']}</div>
+                    <div style="width:3%">{$v['price24']}</div>
+                    <div style="width:3%">{$v['price25']}</div>
+                    <div style="width:10%">
+                        <a class="btn btn-flat btn-info btn-xs" href="{:url('admin/KlineChart/showKline', ['id' => $v['id']])}"><i class="fa fa-edit"></i>编辑</a>
+                    </div>
+                </div>
+                <?php }}?>
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,202 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['user_id']??''}" name="user_id" placeholder="用户ID" class="form-control">
+        <select name="log_type" class="form-control">
+            <option value="">搜索钱包类型</option>
+            <option value="3" <?php if (isset($req['log_type']) && $req['log_type'] == 3) echo 'selected = "selected"'; ?>>补贴钱包</option>
+            <option value="4" <?php if (isset($req['log_type']) && $req['log_type'] == 4) echo 'selected = "selected"'; ?>>数字钱包</option>
+        </select>
+        <input placeholder="开始时间" autocomplete="off" value="{$req['start_date']??''}" name="start_date" class="form-control layer-date" id="start">
+        ～
+        <input placeholder="结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <h3 class="box-title">购买商品每周分红数据列表</h3>
+                <div class="box-tools">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="batchFixRecords()">一键修复所有</button>
+                    <span class="label label-info">总记录数：{$list->total()}</span>
+                </div>
+            </div>
+            <div class="box-body table-responsive no-padding">
+                <table class="table table-bordered table-hover table-striped">
+                    <tbody>
+                    <tr>
+                        <th>ID</th>
+                        <th>用户ID</th>
+                        <th>钱包类型</th>
+                        <th>关联ID</th>
+                        <th>变动前余额</th>
+                        <th>变动金额</th>
+                        <th>变动后余额</th>
+                        <th>备注</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                    <?php if (!empty($list)) { ?>
+                        <?php foreach ($list as $item) { ?>
+                            <tr>
+                                <td>{$item.id}</td>
+                                <td>{$item.user_id}</td>
+                                <td>
+                                    <?php 
+                                    $logTypeMap = [
+                                        3 => '补贴钱包',
+                                        4 => '数字钱包'
+                                    ];
+                                    echo isset($logTypeMap[$item['log_type']]) ? $logTypeMap[$item['log_type']] : $item['log_type'];
+                                    ?>
+                                </td>
+                                <td>{$item.relation_id}</td>
+                                <td>{$item.before_balance}</td>
+                                <td class="<?php echo $item['change_balance'] > 0 ? 'text-success' : 'text-danger'; ?>">
+                                    <?php echo $item['change_balance'] > 0 ? '+' : ''; ?>{$item.change_balance}
+                                </td>
+                                <td>{$item.after_balance}</td>
+                                <td>{$item.remark}</td>
+                                <td>{$item.created_at}</td>
+                                <td>
+                                    <button type="button" class="btn btn-xs btn-info" onclick="viewDetail({$item.id})">查看详情</button>
+                                    <?php if ($item['remark'] == '购买商品每周分红') { ?>
+                                        <button type="button" class="btn btn-xs btn-warning" onclick="fixRecord({$item.id})">修复操作</button>
+                                    <?php } ?>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    <?php } else { ?>
+                        <tr>
+                            <td colspan="10" style="text-align: center;">暂无数据</td>
+                        </tr>
+                    <?php } ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php if (!empty($list) && $list->hasPages()) { ?>
+                <div style="text-align:center;font-size: 14px;"><?php echo $list->render(); ?></div>
+            <?php } ?>
+        </div>
+    </div>
+</div>
+
+<!-- 详情模态框 -->
+<div class="modal fade" id="detailModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <h4 class="modal-title">记录详情</h4>
+            </div>
+            <div class="modal-body">
+                <div id="detailContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        //日期范围限制
+        var start = {
+            elem: '#start',
+            format: 'yyyy-MM-dd',
+        };
+        var end = {
+            elem: '#end',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(start);
+        laydate.render(end);
+    });
+
+    function viewDetail(id) {
+        // 这里可以通过AJAX获取详细信息
+        // 暂时显示基本信息
+        var row = $('tr').filter(function() {
+            return $(this).find('td:first').text() == id;
+        });
+        
+        if (row.length > 0) {
+            var cells = row.find('td');
+            var html = '<table class="table table-bordered">';
+            html += '<tr><th>字段</th><th>值</th></tr>';
+            html += '<tr><td>ID</td><td>' + $(cells[0]).text() + '</td></tr>';
+            html += '<tr><td>用户ID</td><td>' + $(cells[1]).text() + '</td></tr>';
+            html += '<tr><td>钱包类型</td><td>' + $(cells[2]).text() + '</td></tr>';
+            html += '<tr><td>关联ID</td><td>' + $(cells[3]).text() + '</td></tr>';
+            html += '<tr><td>变动前余额</td><td>' + $(cells[4]).text() + '</td></tr>';
+            html += '<tr><td>变动金额</td><td>' + $(cells[5]).text() + '</td></tr>';
+            html += '<tr><td>变动后余额</td><td>' + $(cells[6]).text() + '</td></tr>';
+            html += '<tr><td>备注</td><td>' + $(cells[7]).text() + '</td></tr>';
+            html += '<tr><td>创建时间</td><td>' + $(cells[8]).text() + '</td></tr>';
+            html += '</table>';
+            
+            $('#detailContent').html(html);
+            $('#detailModal').modal('show');
+        }
+    }
+
+    function fixRecord(id) {
+        if (!confirm('确定要修复这条记录吗？此操作将：\n1. 修改备注为"购买商品每周分红-已修复"\n2. 从原钱包扣除相应金额\n3. 将金额转入对应的正确钱包\n\n此操作不可撤销！')) {
+            return;
+        }
+        
+        $.ajax({
+            url: '{:url("fixDataCorrection1")}',
+            type: 'POST',
+            data: {
+                id: id
+            },
+            success: function(res) {
+                if (res.code == 0) {
+                    alert('修复成功！');
+                    location.reload();
+                } else {
+                    alert('修复失败：' + res.msg);
+                }
+            },
+            error: function() {
+                alert('网络错误，请重试');
+            }
+        });
+    }
+
+    function batchFixRecords() {
+        if (!confirm('确定要一键修复所有记录吗？\n\n此操作将：\n1. 修复所有备注为"购买商品每周分红"的记录\n2. 修改备注为"购买商品每周分红-已修复"\n3. 从digit_balance扣除相应金额\n4. 将金额转入对应的正确钱包\n\n此操作不可撤销，且可能需要较长时间！')) {
+            return;
+        }
+        
+        // 显示加载提示
+        var loadingMsg = '正在批量修复，请稍候...';
+        var loadingDiv = $('<div id="loadingDiv" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 5px; z-index: 9999;">' + loadingMsg + '</div>');
+        $('body').append(loadingDiv);
+        
+        $.ajax({
+            url: '{:url("batchFixDataCorrection1")}',
+            type: 'POST',
+            data: {},
+            success: function(res) {
+                $('#loadingDiv').remove();
+                if (res.code == 0) {
+                    alert(res.msg);
+                    location.reload();
+                } else {
+                    alert('批量修复失败：' + res.msg);
+                }
+            },
+            error: function() {
+                $('#loadingDiv').remove();
+                alert('网络错误，请重试');
+            }
+        });
+    }
+
+
+</script> 

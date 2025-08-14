@@ -1,0 +1,243 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['capital_id']??''}" name="capital_id" placeholder="搜索ID" class="form-control">
+        <input type="text" value="{$req['user']??''}" name="user" placeholder="搜索用户ID/手机号" class="form-control">
+        <input type="text" value="{$req['capital_sn']??''}" name="capital_sn" placeholder="搜索单号" class="form-control">
+        <select name="status" class="form-control">
+            <option value="">搜索状态</option>
+            <?php foreach (config('map.capital')['withdraw_status_map'] as $k => $v) { ?>
+                <option <?php if (isset($req['status']) && $req['status'] == $k) {
+                    echo 'selected = "selected"';
+                } ?> value="{$k}">{$v}
+                </option>
+            <?php } ?>
+        </select>
+    
+        <select name="log_type" class="form-control">
+            <option value="">搜索提现类别</option>
+                {foreach($logTypeList as $k=>$v})}
+                <option  value="{$k}"<?php if(isset($req['log_type']) && $req['log_type']===strval($k)) {?> selected <?php } ?>>{$v}</option>
+                {/foreach}
+            
+        </select>
+
+        <input placeholder="开始时间" autocomplete="off" value="{$req['start_date']??''}" name="start_date" class="form-control layer-date" id="start">
+        ～
+        <input placeholder="结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <input class="btn btn-flat btn-info m_10" name="export" type="submit" value="导出">
+        <?php if (!empty($req['pay_channel']) && $req['pay_channel'] == 3) { ?>
+            <input class="btn btn-flat btn-success m_10" name="export" type="submit" value="支付宝导出">
+        <?php } ?>
+        <?php if (!empty($req['status']) && $req['status'] == 1) { ?>
+            <input class="btn btn-flat btn-success m_10" type="button" value="批量审核通过" onclick="batchAuditCapital(2)">
+            <input class="btn btn-flat btn-warning m_10" type="button" value="批量审核拒绝" onclick="batchAuditCapital(3)">
+        <?php } ?>
+        <?php if (!empty($req['status']) && $req['status'] == 4) { ?>
+            <input class="btn btn-flat btn-warning m_10" type="button" value="批量手动回调" onclick="batchAuditCapital(2)">
+        <?php } ?>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <?php if (!empty($req['status']) && in_array($req['status'], [1, 4])) { ?>
+                            <th><input id="batch_selected" type="checkbox" onclick="batch_selected()"></th>
+                            <?php } ?>
+                            <th>ID</th>
+                            <th>用户</th>
+                            <th>单号</th>
+                            <th>状态</th>
+                            <th>类别</th>
+                            <th>提现金额</th>
+                            <th>到账金额</th>
+                            <th>手续费</th>
+                            <th>收款人实名</th>
+                            <th>收款账号</th>
+                            <th>审核用户</th>
+                            <th>拒绝理由</th>
+                            <th>审核时间</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <?php if (!empty($req['status']) && in_array($req['status'], [1, 4])) { ?>
+                                <td><input id="order_id_{$v['id']}" class="order_ids" type="checkbox" value="{$v['id']}"></td>
+                                <?php } ?>
+                                <td>{$v['id']}</td>
+                                <td>{$v['user']['realname'] ?? ''}<?php if (session('is_agent') == 0) { ?>（{$v['user']['phone'] ?? ''}）<?php } ?></td>
+                                <td>{$v['capital_sn']}</td>
+                                <td>{$v['withdraw_status_text']}</td>
+                                <td>
+                                    {if($v['log_type']==1)}
+                                        余额
+                                    {elseif($v['log_type']==2)}
+                                        荣誉钱包
+                                    {elseif($v['log_type']==3)}
+                                        稳盈钱包
+                                    {elseif($v['log_type']==4)}
+                                        民生钱包
+                                    {elseif($v['log_type']==5)}
+                                        收益钱包
+                                    {elseif($v['log_type']==11)}
+                                        体验钱包
+                                    {else}
+                                        其他
+                                    {/if}
+                                </td>
+                                <td>{:round(0 - $v['amount'], 2)}</td>
+                                <td>{$v['withdraw_amount']}</td>
+                                <td>{$v['withdraw_fee']}</td>
+                                <td>{$v['realname']}</td>
+                                <td><?php if ($v['bank_name'] !='') { ?> 银行：{$v['bank_name']}<br>支行：{$v['bank_branch']}<br>卡号：{$v['account']} <?php } else { ?>{$v['account']} <?php } ?></td>
+                                <td>{$v['adminUser']['nickname'] ?? ''}</td>
+                                <td>{$v['audit_remark']}</td>
+                                <td>{$v['audit_date']}</td>
+                                <td>{$v['created_at']}</td>
+                                <td>
+                                    <?php if ($v['status'] == 1) { $success = $v['pay_channel'] == 1 ? 2 : 4;  ?>
+                                        <button {:auth_show_judge('Capital/auditWithdraw')} class="btn btn-flat btn-success btn-xs" onclick="auditCapital({$v['id']}, 4)">待打款</button>
+                                        <button {:auth_show_judge('Capital/auditWithdraw')} class="btn btn-flat btn-success btn-xs" onclick="auditCapital({$v['id']}, {$success})">审核通过</button>
+                                        <button {:auth_show_judge('Capital/auditWithdraw')} class="btn btn-flat btn-warning btn-xs" onclick="auditCapital({$v['id']}, 3)">审核拒绝</button>
+                                    <?php } elseif ($v['status'] == 4) { $success = $v['pay_channel'] == 1 ? 2 : 4;  ?>
+<!--                                        <button {:auth_show_judge('Capital/auditWithdraw')} class="btn btn-flat btn-warning btn-xs" onclick="auditCapital({$v['id']}, 2)">手动回调</button>-->
+                                    <button {:auth_show_judge('Capital/auditWithdraw')} class="btn btn-flat btn-success btn-xs" onclick="auditCapital({$v['id']}, {$success})">审核通过</button>
+                                    <button {:auth_show_judge('Capital/auditWithdraw')} class="btn btn-flat btn-warning btn-xs" onclick="auditCapital({$v['id']}, 3)">审核拒绝</button>
+                                    <?php } ?>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        <tr>
+                            <td><strong>总计：</strong></td>
+                            <?php if (!empty($req['status']) && in_array($req['status'], [1, 4])) { ?>
+                            <td></td>
+                            <?php } ?>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><strong>{:round(0 - $total_amount, 2)}</strong></td>
+                            <td><strong>{$total_withdraw_amount}</strong></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function batch_selected()
+    {
+        if ($('#batch_selected').is(':checked')) {
+            $(".order_ids").attr("checked", "true");
+        }
+        else {
+            $(".order_ids").removeAttr("checked");
+        }
+    }
+
+    $(function () {
+        //日期范围限制
+        var start = {
+            elem: '#start',
+            format: 'yyyy-MM-dd',
+        };
+        var end = {
+            elem: '#end',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(start);
+        laydate.render(end);
+    });
+
+    function batchAuditCapital(status)
+    {
+        layer.confirm('确定操作吗？', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            layer.load();
+            let order_ids = [];
+            $.each($('.order_ids'), function(){
+                if (this.checked) {
+                    order_ids.push($(this).val());
+                }
+            });
+            $.post('{:url("admin/Capital/batchAuditCapital")}', {ids: order_ids, status: status}, function (res) {
+                if (res.code == '200') {
+                    location.reload(true);
+                } else {
+                    layer.closeAll("loading");
+                    alert(res.msg);
+                    // layer.msg(res.msg, {icon: 5, time: 3000});
+                    location.reload(true);
+                }
+            });
+        });
+    }
+
+    function auditCapital(id, status)
+    {
+        if (status == 3) {
+            layer.prompt({title: '拒绝理由', formType: 2}, function(text, index){
+                layer.close(index);
+                $.post('{:url("admin/Capital/auditWithdraw")}', {id: id, status: status, audit_remark:text}, function (res) {
+                    if (res.code == '200') {
+                        location.reload(true);
+                    } else {
+                        layer.msg(res.msg, {icon: 5, time: 3000});
+                    }
+                });
+            });
+        }
+        else {
+            layer.confirm('确定操作吗？', {icon: 3, title: '提示'}, function (index) {
+                layer.close(index);
+                layer.load();
+                $.post('{:url("admin/Capital/auditWithdraw")}', {id: id, status: status}, function (res) {
+                    if (res.code == '200') {
+                        if (res.data.withdraw_sn != '') {
+                            setInterval("queryWithdrawResult('"+res.data.withdraw_sn+"')", 1000);
+                        }
+                        else {
+                            location.reload(true);
+                        }
+                    } else {
+                        layer.closeAll("loading");
+                        layer.msg(res.msg, {icon: 5, time: 3000});
+                    }
+                });
+            });
+        }
+    }
+
+    function queryWithdrawResult(withdraw_sn)
+    {
+        $.post('{:url("admin/Capital/queryWithdrawResult")}', {withdraw_sn: withdraw_sn}, function (res) {
+            if (res.code == '200') {
+                if (res.data.is_success == 1) {
+                    location.reload(true);
+                }
+            }
+            else {
+                layer.closeAll("loading");
+                layer.msg(res.msg, {icon: 5, time: 3000});
+            }
+        });
+    }
+</script>

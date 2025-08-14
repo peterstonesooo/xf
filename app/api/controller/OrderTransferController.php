@@ -18,7 +18,6 @@ class OrderTransferController extends AuthController
      */
     public function tranfserIn()
     {
-        //test git
         $req = $this->validate(request(), [
             'transfer_amount|转入金额' => 'require|number',
             'period|时间' => 'require|number|in:7,15,30',

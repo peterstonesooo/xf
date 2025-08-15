@@ -80,7 +80,7 @@ class OrderController extends AuthController
             }
         }
         //今日禁止购买
-        if(in_array($project['project_id'], [29,33,34,36,39,42])){
+        if(in_array($project['project_id'], [29,34,36])){
             return out(null, 10004, '名额已满');
         }
         

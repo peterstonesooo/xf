@@ -711,16 +711,20 @@ class ProjectController extends AuthController
         if(!$order){
             return out(null,10002,'请优先完成任一五福临门板块申领');
         }
-        $project_ids1 = ['33','38','43'];
-        $dayreturn_ids1 = ['28'];
-        $project_ids2 = ['34','39','44'];
-        $dayreturn_ids2 = ['29'];
-        $project_ids3 = ['35','40','45'];
-        $dayreturn_ids3 = ['30'];
-        $project_ids4 = ['36','41','46'];
-        $dayreturn_ids4 = ['31'];
-        $project_ids5 = ['37','42','47'];
-        $dayreturn_ids5 = ['32'];
+
+        $project_ids1 = Project::where('project_group_id',7)->where('status',1)->where('daily_bonus_ratio','=',0)->column('id');
+        $project_ids2 = Project::where('project_group_id',8)->where('status',1)->where('daily_bonus_ratio','=',0)->column('id');
+        $project_ids3 = Project::where('project_group_id',9)->where('status',1)->where('daily_bonus_ratio','=',0)->column('id');
+        $project_ids4 = Project::where('project_group_id',10)->where('status',1)->where('daily_bonus_ratio','=',0)->column('id');
+        $project_ids5 = Project::where('project_group_id',11)->where('status',1)->where('daily_bonus_ratio','=',0)->column('id');
+
+        $dayreturn_ids1 = Project::where('project_group_id',7)->where('status',1)->where('daily_bonus_ratio','>',0)->column('id');
+        $dayreturn_ids2 = Project::where('project_group_id',8)->where('status',1)->where('daily_bonus_ratio','>',0)->column('id');
+        $dayreturn_ids3 = Project::where('project_group_id',9)->where('status',1)->where('daily_bonus_ratio','>',0)->column('id');
+        $dayreturn_ids4 = Project::where('project_group_id',10)->where('status',1)->where('daily_bonus_ratio','>',0)->column('id');
+        $dayreturn_ids5 = Project::where('project_group_id',11)->where('status',1)->where('daily_bonus_ratio','>',0)->column('id');
+
+        return out($project_ids5);
         $ids = $order->column('project_id');
         
         // 判断 $ids 是否满足任何一个项目数组的条件

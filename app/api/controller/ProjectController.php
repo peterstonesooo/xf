@@ -724,7 +724,7 @@ class ProjectController extends AuthController
         $dayreturn_ids4 = Project::where('project_group_id',10)->where('status',1)->where('daily_bonus_ratio','>',0)->column('id');
         $dayreturn_ids5 = Project::where('project_group_id',11)->where('status',1)->where('daily_bonus_ratio','>',0)->column('id');
 
-        return out($project_ids5);
+        
         $ids = $order->column('project_id');
         
         // 判断 $ids 是否满足任何一个项目数组的条件

@@ -708,9 +708,11 @@ class ProjectController extends AuthController
         }
         //查看是否购买商品指定商品。
         $order = Order::where('user_id',$user['id'])->where('status','in',[2,4])->select();
-        if(!$order){
+        $order_daysreturn = OrderDailyBonus::where('user_id',$user['id'])->where('status','in',[2,4])->select();
+        if(!$order && !$order_daysreturn){
             return out(null,10002,'请优先完成任一五福临门板块申领');
         }
+        
 
         $project_ids1 = Project::where('project_group_id',7)->where('status',1)->where('daily_bonus_ratio','=',0)->column('id');
         $project_ids2 = Project::where('project_group_id',8)->where('status',1)->where('daily_bonus_ratio','=',0)->column('id');
@@ -726,6 +728,7 @@ class ProjectController extends AuthController
 
         
         $ids = $order->column('project_id');
+        $dayreturn_ids = $order_daysreturn->column('project_id');
         
         // 判断 $ids 是否满足任何一个项目数组的条件
         $satisfied = false;
@@ -733,40 +736,35 @@ class ProjectController extends AuthController
         
         // 检查 project_ids1
         if (count(array_intersect($project_ids1, $ids)) == count($project_ids1) && !$satisfied) {
-            $order_daysreturn = OrderDailyBonus::where('user_id',$user['id'])->where('project_id','in',$dayreturn_ids1)->find();
-            if($order_daysreturn){
+            if(count(array_intersect($dayreturn_ids1, $dayreturn_ids)) == count($dayreturn_ids1)){
                 $satisfied = true;
                 $satisfied_group = 1;
             }
         }
         // 检查 project_ids2
         if (count(array_intersect($project_ids2, $ids)) == count($project_ids2) && !$satisfied) {
-            $order_daysreturn = OrderDailyBonus::where('user_id',$user['id'])->where('project_id','in',$dayreturn_ids2)->find();
-            if($order_daysreturn){
+            if(count(array_intersect($dayreturn_ids2, $dayreturn_ids)) == count($dayreturn_ids2)){
                 $satisfied = true;
                 $satisfied_group = 2;
             }
         }
         // 检查 project_ids3
         if (count(array_intersect($project_ids3, $ids)) == count($project_ids3) && !$satisfied) {
-            $order_daysreturn = OrderDailyBonus::where('user_id',$user['id'])->where('project_id','in',$dayreturn_ids3)->find();
-            if($order_daysreturn){
+            if(count(array_intersect($dayreturn_ids3, $dayreturn_ids)) == count($dayreturn_ids3)){
                 $satisfied = true;
                 $satisfied_group = 3;
             }
         }
         // 检查 project_ids4
         if (count(array_intersect($project_ids4, $ids)) == count($project_ids4) && !$satisfied) {
-            $order_daysreturn = OrderDailyBonus::where('user_id',$user['id'])->where('project_id','in',$dayreturn_ids4)->find();
-            if($order_daysreturn){
+            if(count(array_intersect($dayreturn_ids4, $dayreturn_ids)) == count($dayreturn_ids4)){
                 $satisfied = true;
                 $satisfied_group = 4;
             }
         }
         // 检查 project_ids5
         if (count(array_intersect($project_ids5, $ids)) == count($project_ids5) && !$satisfied) {
-            $order_daysreturn = OrderDailyBonus::where('user_id',$user['id'])->where('project_id','in',$dayreturn_ids5)->find();
-            if($order_daysreturn){
+            if(count(array_intersect($dayreturn_ids5, $dayreturn_ids)) == count($dayreturn_ids5)){
                 $satisfied = true;
                 $satisfied_group = 5;
             }

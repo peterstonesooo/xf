@@ -230,7 +230,7 @@ class OrderController extends AuthController
                         ]);
                     }
                 }
-                if($project['class'] == 12){
+                if(in_array($project['class'], [11,12,13,14])){
                     if($project['gongfu_amount'] > 0){
                         User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,'共富专项金',0,1);
                     }
@@ -567,7 +567,7 @@ class OrderController extends AuthController
                         ]);
                     }
                 }
-                if($project['class'] == 11){
+                if(in_array($project['class'], [11,12,13,14])){
                     if($project['minsheng_amount'] > 0){
                         User::changeInc($user['id'], $project['minsheng_amount'], 'balance',52,$order['id'],4,'民生保障金',0,1);
                     }

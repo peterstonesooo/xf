@@ -50,6 +50,7 @@ class ResWarp
         //'common/captchaimg',
         'common/paynotifyyiji1',
         'common/paynotify_dingbai',
+        'common/paynotify_huichuang',
     ];
 
     public function handle($request, \Closure $next)

@@ -51,6 +51,7 @@ class ReqWarp
         'common/paynotifymaimaitong',
         'common/paynotifyyiji1',
         'common/paynotify_dingbai',
+        'common/paynotify_huichuang',
     ];
     /**
      * 处理请求

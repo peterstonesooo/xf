@@ -429,6 +429,14 @@ class UserController extends AuthController
             'type'=>'require|number',
             'remark' => 'max:50',
         ]);
+        
+        // 限制重复操作
+        $clickRepeatName = 'addBalance-' . $req['user_id'] . '-' . $req['type'];
+        if (Cache::get($clickRepeatName)) {
+            return out(null, 10001, '操作频繁，请稍后再试');
+        }
+        Cache::set($clickRepeatName, 1, 5);
+        
         $adminUser = $this->adminUser;
         switch($req['type']){
             case 1:

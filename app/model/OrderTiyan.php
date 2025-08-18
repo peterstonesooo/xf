@@ -8,6 +8,10 @@ use think\facade\Db;
 use Exception;
 class OrderTiyan extends Model
 {
+    // JSON字段
+    protected $json = ['huimin_days_return'];
+    protected $jsonAssoc = true;
+    
     public function getStatusTextAttr($value, $data)
     {
         $map = config('map.order')['status_map'];

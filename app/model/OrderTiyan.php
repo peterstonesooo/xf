@@ -63,7 +63,7 @@ class OrderTiyan extends Model
         OrderTiyan::where('id', $order['id'])->update([
             'status' => 2,
             'pay_time' => time(),
-            'end_time' => time() + $order['period'] * 86400,
+            'end_time' => time() + $period * 86400,
         ]);
 
             // //购买产品和恢复资产用户激活

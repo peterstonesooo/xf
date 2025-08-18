@@ -460,7 +460,8 @@ class UserController extends AuthController
         if (!GiftRecord::canGift($req['user_id'])) {
             $completedGroups = UserProjectGroup::getUserCompletedGroups($req['user_id']);
             $giftCount = GiftRecord::getUserGiftCount($req['user_id']);
-            return out(null, 10001, "该用户已完成{$completedGroups}个产品组，已赠送{$giftCount}次，无法继续赠送");
+            $maxAllowed = min($completedGroups, 5);
+            return out(null, 10001, "该用户已完成{$completedGroups}个产品组，已赠送{$giftCount}次，最多可赠送{$maxAllowed}次，无法继续赠送");
         }
 
         Db::startTrans();

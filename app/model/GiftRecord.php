@@ -57,8 +57,8 @@ class GiftRecord extends Model
         $giftCount = self::getUserGiftCount($user_id);
         $completedGroups = UserProjectGroup::getUserCompletedGroups($user_id);
         
-        // 赠送次数不能超过完成的产品组数量
-        return $giftCount < $completedGroups;
+        // 赠送次数不能超过完成的产品组数量，且不能超过5次
+        return $giftCount < min($completedGroups, 5);
     }
 
     /**
@@ -69,6 +69,7 @@ class GiftRecord extends Model
         $giftCount = self::getUserGiftCount($user_id);
         $completedGroups = UserProjectGroup::getUserCompletedGroups($user_id);
         
-        return max(0, $completedGroups - $giftCount);
+        // 取产品组数量和5次的最小值，再减去已赠送次数
+        return max(0, min($completedGroups, 5) - $giftCount);
     }
 }

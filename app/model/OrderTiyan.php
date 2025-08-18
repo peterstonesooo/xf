@@ -53,7 +53,13 @@ class OrderTiyan extends Model
     public static function orderPayComplete($order_id, $project, $user_id, $pay_amount)
     {
         $order = OrderTiyan::where('id', $order_id)->find();
-
+        if($project['huimin_days_return'] && $project['huimin_days_return'] != null){
+            $huimin_days_return = is_string($project['huimin_days_return']) ? json_decode($project['huimin_days_return'], true) : $project['huimin_days_return'];
+            
+            $period = $huimin_days_return[0]['day'];
+        }else{
+            $period = $order['period'];
+        }
         OrderTiyan::where('id', $order['id'])->update([
             'status' => 2,
             'pay_time' => time(),

@@ -57,17 +57,8 @@ class UserProjectGroup extends Model
      */
     public static function getUserCompletedGroups($user_id)
     {
-        // 获取所有产品组
-        $groups = [7, 8, 9, 10, 11];
-        $completedCount = 0;
-        
-        foreach ($groups as $group_id) {
-            if (self::isGroupCompleted($user_id, $group_id)) {
-                $completedCount++;
-            }
-        }
-        
-        return $completedCount;
+        // 直接统计该用户在表中的记录数量，因为只记录已完成的
+        return self::where('user_id', $user_id)->count();
     }
 
     /**

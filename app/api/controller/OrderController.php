@@ -93,7 +93,7 @@ class OrderController extends AuthController
             return $this->placeOrderTiyanDailyBonus($req,$project);
         }
         //如果是体验项目，逻辑单独处理
-        if($project['project_group_id'] == 12 && $project['daily_bonus_ratio'] == 0){
+        if($project['project_group_id'] == 12 && $project['daily_bonus_ratio'] == 0 && $project['huimin_days_return'] == null){
             return $this->placeOrder1($project);
         }
 

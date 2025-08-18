@@ -25,7 +25,10 @@ use app\model\UserBalanceLog;
 use app\model\UserBank;
 use app\model\UserProduct;
 use app\model\UserRelation;
+use app\model\GiftRecord;
+use app\model\UserProjectGroup;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Exception;
 use think\db\Fetch;
 use think\facade\Db;
 use think\paginator\driver\Bootstrap;
@@ -407,8 +410,210 @@ class UserController extends AuthController
             'type' => 'require|in:15,16',
         ]);
 
+        // 检查并更新用户的产品组完成状态
+        UserProjectGroup::checkAndUpdateUserGroups($req['user_id']);
+
         $this->assign('req', $req);
-        $this->assign('project1', Project::where('project_group_id', '<>', 17)->order('id', 'desc')->select()->toArray());
+        $this->assign('project1', Project::where('id', 70)->order('id', 'desc')->select()->toArray());
+        
+        return $this->fetch();
+    }
+
+    /**
+     * 赠送产品
+     */
+    public function giftProduct()
+    {
+        $req = request()->post();
+        $this->validate($req, [
+            'user_id' => 'require|number',
+            'project_id' => 'require|number',
+        ]);
+
+        // 限制重复操作
+        $clickRepeatName = 'giftProduct-' . $req['user_id'] . '-' . $req['project_id'];
+        if (Cache::get($clickRepeatName)) {
+            return out(null, 10001, '操作频繁，请稍后再试');
+        }
+        Cache::set($clickRepeatName, 1, 5);
+
+        $adminUser = $this->adminUser;
+        
+        // 检查用户是否存在
+        $user = User::where('id', $req['user_id'])->find();
+        if (!$user) {
+            return out(null, 10001, '用户不存在');
+        }
+        
+        // 检查用户状态
+        if ($user['status'] == 0) {
+            return out(null, 10001, '用户已被封禁');
+        }
+
+        // 检查项目是否存在
+        $project = Project::where('id', $req['project_id'])->where('status', 1)->find();
+        if (!$project) {
+            return out(null, 10001, '项目不存在或已下架');
+        }
+
+        // 检查用户赠送次数限制
+        if (!GiftRecord::canGift($req['user_id'])) {
+            $completedGroups = UserProjectGroup::getUserCompletedGroups($req['user_id']);
+            $giftCount = GiftRecord::getUserGiftCount($req['user_id']);
+            return out(null, 10001, "该用户已完成{$completedGroups}个产品组，已赠送{$giftCount}次，无法继续赠送");
+        }
+
+        Db::startTrans();
+        try {
+            // 生成订单号
+            $order_sn = 'GIFT'.build_order_sn($req['user_id']);
+            
+            // 准备订单数据
+            $orderData = [
+                'user_id' => $req['user_id'],
+                'up_user_id' => $user['up_user_id'],
+                'order_sn' => $order_sn,
+                'project_id' => $req['project_id'],
+                'project_name' => $project['name'],
+                'project_group_id' => $project['project_group_id'],
+                'class' => $project['class'],
+                'cover_img' => $project['cover_img'],
+                'single_amount' => $project['single_amount'],
+                'single_integral' => $project['single_integral'],
+                'total_num' => $project['total_num'],
+                'daily_bonus_ratio' => $project['daily_bonus_ratio'],
+                'sum_amount' => $project['sum_amount'],
+                'dividend_cycle' => $project['dividend_cycle'],
+                'period' => $project['period'],
+                'single_gift_equity' => $project['single_gift_equity'],
+                'single_gift_digital_yuan' => $project['single_gift_digital_yuan'],
+                'sham_buy_num' => $project['sham_buy_num'],
+                'progress_switch' => $project['progress_switch'],
+                'bonus_multiple' => $project['bonus_multiple'],
+                'settlement_method' => $project['settlement_method'],
+                'min_amount' => $project['min_amount'],
+                'max_amount' => $project['max_amount'],
+                'year_income' => $project['year_income'],
+                'total_quota' => $project['total_quota'],
+                'remaining_quota' => $project['remaining_quota'],
+                'gongfu_amount' => $project['gongfu_amount'],
+                'huimin_amount' => $project['huimin_amount'],
+                'minsheng_amount' => $project['minsheng_amount'],
+                'huimin_days_return' => $project['huimin_days_return'],
+                'buy_num' => 1,
+                'pay_method' => 1, // 赠送方式
+                'price' => $project['single_amount'],
+                'buy_amount' => $project['single_amount'],
+                'status' => 2, // 直接设置为已支付状态
+                'pay_time' => time(),
+                'is_admin_confirm' => 1,
+                'created_at' => date('Y-m-d H:i:s'),
+            ];
+
+            // 创建订单
+            $order = Order::create($orderData);
+
+            // 记录赠送记录
+            GiftRecord::create([
+                'user_id' => $req['user_id'],
+                'project_id' => $req['project_id'],
+                'project_name' => $project['name'],
+                'order_sn' => $order_sn,
+                'gift_amount' => $project['single_amount'],
+                'admin_user_id' => $adminUser['id'],
+                'created_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            // 完成订单支付流程（参考placeOrder方法，但不扣钱）
+            Order::orderPayComplete($order['id'], $project, $req['user_id'], $project['single_amount']);
+
+            // 给上3级团队奖
+            // $relation = UserRelation::where('sub_user_id', $req['user_id'])->select();
+            // $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
+            // foreach ($relation as $v) {
+            //     $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount'], 2);
+            //     if($reward > 0){
+            //         User::changeInc($v['user_id'],$reward,'team_bonus_balance',8,$order['id'],2,'团队奖励',0,2,'TD');
+            //     }
+            // }
+
+            // 如果项目有共富专项金，直接发放
+            if($project['gongfu_amount'] > 0){
+                User::changeInc($req['user_id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,'共富专项金',0,1);
+            }
+            
+            // 如果项目有民生保障金，直接发放
+            if($project['minsheng_amount'] > 0){
+                User::changeInc($req['user_id'], $project['minsheng_amount'], 'balance',52,$order['id'],4,'民生保障金',0,1);
+            }
+
+            Db::commit();
+            return out(['order_id' => $order['id']], 0, '产品赠送成功');
+        } catch (Exception $e) {
+            Db::rollback();
+            return out(null, 10001, '赠送失败：' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 获取用户赠送次数
+     */
+    public function getGiftCount()
+    {
+        $req = request()->get();
+        $this->validate($req, [
+            'user_id' => 'require|number',
+        ]);
+
+        $giftCount = GiftRecord::getUserGiftCount($req['user_id']);
+        $completedGroups = UserProjectGroup::getUserCompletedGroups($req['user_id']);
+        $availableCount = GiftRecord::getAvailableGiftCount($req['user_id']);
+        
+        return out([
+            'count' => $giftCount,
+            'completed_groups' => $completedGroups,
+            'available_count' => $availableCount
+        ]);
+    }
+
+    /**
+     * 赠送记录列表
+     */
+    public function giftRecordList()
+    {
+        $req = request()->param();
+
+        $builder = GiftRecord::alias('g')
+            ->leftJoin('user u', 'u.id = g.user_id')
+            ->leftJoin('project p', 'p.id = g.project_id')
+            ->leftJoin('admin_user au', 'au.id = g.admin_user_id')
+            ->field('g.*, u.phone, u.realname, p.name as project_name, au.username as admin_name')
+            ->order('g.id', 'desc');
+
+        if (isset($req['user_id']) && $req['user_id'] !== '') {
+            $builder->where('g.user_id', $req['user_id']);
+        }
+        if (isset($req['phone']) && $req['phone'] !== '') {
+            $builder->where('u.phone', 'like', '%' . $req['phone'] . '%');
+        }
+        if (isset($req['project_id']) && $req['project_id'] !== '') {
+            $builder->where('g.project_id', $req['project_id']);
+        }
+        if (!empty($req['start_date'])) {
+            $builder->where('g.created_at', '>=', $req['start_date'] . ' 00:00:00');
+        }
+        if (!empty($req['end_date'])) {
+            $builder->where('g.created_at', '<=', $req['end_date'] . ' 23:59:59');
+        }
+
+        $data = $builder->paginate(['query' => $req]);
+
+        // 获取项目列表用于筛选
+        $projects = Project::where('status', 1)->field('id,name')->select()->toArray();
+        
+        $this->assign('req', $req);
+        $this->assign('data', $data);
+        $this->assign('projects', $projects);
 
         return $this->fetch();
     }
@@ -2173,6 +2378,75 @@ class UserController extends AuthController
         }catch(\Exception $e){
             Db::rollback();
             return out(null, 10001, '删除失败：' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 用户产品组完成记录列表
+     */
+    public function userProjectGroupList()
+    {
+        $req = request()->param();
+
+        $builder = UserProjectGroup::alias('upg')
+            ->leftJoin('user u', 'u.id = upg.user_id')
+            ->field('upg.*, u.phone, u.realname')
+            ->order('upg.id', 'desc');
+
+        if (isset($req['user_id']) && $req['user_id'] !== '') {
+            $builder->where('upg.user_id', $req['user_id']);
+        }
+        if (isset($req['phone']) && $req['phone'] !== '') {
+            $builder->where('u.phone', 'like', '%' . $req['phone'] . '%');
+        }
+        if (isset($req['group_id']) && $req['group_id'] !== '') {
+            $builder->where('upg.group_id', $req['group_id']);
+        }
+
+        if (!empty($req['start_date'])) {
+            $builder->where('upg.created_at', '>=', $req['start_date'] . ' 00:00:00');
+        }
+        if (!empty($req['end_date'])) {
+            $builder->where('upg.created_at', '<=', $req['end_date'] . ' 23:59:59');
+        }
+
+        $data = $builder->paginate(['query' => $req]);
+
+        // 获取产品组列表用于筛选
+        $groups = [
+            ['id' => 7, 'name' => '五福临门板块1'],
+            ['id' => 8, 'name' => '五福临门板块2'],
+            ['id' => 9, 'name' => '五福临门板块3'],
+            ['id' => 10, 'name' => '五福临门板块4'],
+            ['id' => 11, 'name' => '五福临门板块5'],
+        ];
+        
+        $this->assign('req', $req);
+        $this->assign('data', $data);
+        $this->assign('groups', $groups);
+
+        return $this->fetch();
+    }
+
+    /**
+     * 手动更新用户产品组完成状态
+     */
+    public function updateUserProjectGroup()
+    {
+        $req = request()->post();
+        $this->validate($req, [
+            'user_id' => 'require|number',
+        ]);
+
+        try {
+            $result = UserProjectGroup::checkAndUpdateUserGroups($req['user_id']);
+            if ($result) {
+                return out(null, 0, '更新成功');
+            } else {
+                return out(null, 10001, '用户不存在');
+            }
+        } catch (Exception $e) {
+            return out(null, 10001, '更新失败：' . $e->getMessage());
         }
     }
 }

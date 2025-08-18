@@ -15,13 +15,50 @@
                         <input name="user_id" type="hidden" value="{$req['user_id']}">
                         <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">赠送产品</label>
                         <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <select name="project_id">
+                            <select name="project_id" id="project_id">
+                                <option value="">请选择要赠送的产品</option>
                                 <?php foreach($project1 as $v) { ?>
-                                <option value="<?php echo $v['id'];?>"><?php echo $v['name'];?></option>
+                                <option value="<?php echo $v['id'];?>" data-amount="<?php echo $v['single_amount'];?>"><?php echo $v['name'];?> (<?php echo $v['single_amount'];?>元)</option>
                                 <?php } ?>
                             </select>
                         </div>
                         <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">产品金额</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" class="form-control" id="project_amount" readonly value="0.00">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts"></div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">完成产品组</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <span class="form-control-static" id="completed_groups">加载中...</span>
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts"></div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">已赠送次数</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <span class="form-control-static" id="gift_count">加载中...</span>
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts"></div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">可赠送次数</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <span class="form-control-static" id="available_count">加载中...</span>
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts"></div>
                     </div>
                 </div>
                 <div class="row dd_input_group">
@@ -47,17 +84,66 @@
 
         var headerTitle = headerText + '-' + '赠送产品';
         $('#content-header-title').text(headerTitle);
+        
+        // 加载用户赠送次数
+        loadGiftCount();
+        
+        // 监听产品选择变化
+        $('#project_id').change(function() {
+            var selectedOption = $(this).find('option:selected');
+            var amount = selectedOption.data('amount') || 0;
+            $('#project_amount').val(amount.toFixed(2));
+        });
     });
+
+    function loadGiftCount() {
+        var userId = $('input[name="user_id"]').val();
+        $.get('{:url("admin/User/getGiftCount")}', {user_id: userId}, function(res) {
+            if (res.code == '200') {
+                $('#completed_groups').text(res.data.completed_groups + '个产品组');
+                $('#gift_count').text(res.data.count + '次');
+                $('#available_count').text(res.data.available_count + '次');
+                
+                if (res.data.available_count <= 0) {
+                    $('#available_count').addClass('text-danger');
+                } else {
+                    $('#available_count').removeClass('text-danger');
+                }
+            } else {
+                $('#completed_groups').text('加载失败');
+                $('#gift_count').text('加载失败');
+                $('#available_count').text('加载失败');
+            }
+        });
+    }
 
     function sub()
     {
-        var subUrl = "<?php $map = [15 => url('admin/User/addOrder'), 16 => url('admin/User/deductBalance')]; echo $map[$req['type']]; ?>";
-        $.post(subUrl, $('#commentForm').serialize(), function (res) {
-            if (res.code == '200') {
-                window.location.href = document.referrer;
-            } else {
-                layer.msg(res.msg, {icon: 5, time: 3000});
-            }
+        var projectId = $('#project_id').val();
+        if (!projectId) {
+            layer.msg('请选择要赠送的产品', {icon: 5, time: 3000});
+            return;
+        }
+        
+        var availableCount = parseInt($('#available_count').text().split('次')[0]);
+        if (availableCount <= 0) {
+            layer.msg('该用户没有可赠送次数，请先完成产品组', {icon: 5, time: 3000});
+            return;
+        }
+        
+        layer.confirm('确认要赠送该产品吗？', {
+            btn: ['确认','取消']
+        }, function(){
+            var subUrl = "{:url('admin/User/giftProduct')}";
+            $.post(subUrl, $('#commentForm').serialize(), function (res) {
+                if (res.code == '200') {
+                    layer.msg('赠送成功', {icon: 1, time: 2000}, function() {
+                        window.location.href = document.referrer;
+                    });
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
         });
     }
 </script>

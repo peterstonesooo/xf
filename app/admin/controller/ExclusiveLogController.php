@@ -93,11 +93,11 @@ class ExclusiveLogController extends AuthController
                 'creat_time' => date('Y-m-d H:i:s')
             ]);
             
-            // 给用户增加民生金
+            // 给用户增加收益金
             $user = User::find($exclusiveLog['user_id']);
             if ($user) {
-                // 增加民生金到用户余额
-                User::changeInc($exclusiveLog['user_id'], $req['minsheng_amount'], 'balance', 63, $req['id'], 4, '专属补贴民生金', 0, 1);
+                // 增加收益金到用户收益钱包
+                User::changeInc($exclusiveLog['user_id'], $req['minsheng_amount'], 'digit_balance', 63, $req['id'], 5, '专属补贴收益金', 0, 1);
             }
             
             Db::commit();

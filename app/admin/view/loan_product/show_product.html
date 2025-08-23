@@ -1,0 +1,188 @@
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <h3 class="box-title">{if condition="!empty($data)"}编辑产品{else/}添加产品{/if}</h3>
+            </div>
+            <div class="box-body">
+                <form class="form-horizontal" id="product-form">
+                    {if condition="!empty($data)"}
+                    <input type="hidden" name="id" value="{$data['id']}">
+                    {/if}
+                    
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">产品名称</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="name" value="{$data['name']??''}" placeholder="请输入产品名称" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">最小金额</label>
+                        <div class="col-sm-8">
+                            <input type="number" class="form-control" name="min_amount" value="{$data['min_amount']??''}" placeholder="请输入最小贷款金额" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">最大金额</label>
+                        <div class="col-sm-8">
+                            <input type="number" class="form-control" name="max_amount" value="{$data['max_amount']??''}" placeholder="请输入最大贷款金额" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">利息类型</label>
+                        <div class="col-sm-8">
+                            <select class="form-control" name="interest_type" required>
+                                <option value="">请选择利息类型</option>
+                                {volist name="interestTypeMap" id="v" key="k"}
+                                    <option value="{$k}" {if condition="!empty($data) && $data['interest_type'] == $k || empty($data) && $k == 1"}selected{/if}>{$v}</option>
+                                {/volist}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">逾期利息率(%)</label>
+                        <div class="col-sm-8">
+                            <input type="number" class="form-control" name="overdue_interest_rate" value="{$data['overdue_interest_rate']??'0.00'}" placeholder="请输入逾期利息率" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">最大逾期天数</label>
+                        <div class="col-sm-8">
+                            <input type="number" class="form-control" name="max_overdue_days" value="{$data['max_overdue_days']??'30'}" placeholder="请输入最大逾期天数" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">状态</label>
+                        <div class="col-sm-8">
+                            <select class="form-control" name="status" required>
+                                <option value="0" {if condition="!empty($data) && $data['status'] == 0 || empty($data) && false"}selected{/if}>禁用</option>
+                                <option value="1" {if condition="!empty($data) && $data['status'] == 1 || empty($data) && true"}selected{/if}>启用</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">排序</label>
+                        <div class="col-sm-8">
+                            <input type="number" class="form-control" name="sort" value="{$data['sort']??'0'}" placeholder="请输入排序" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">梯度设置</label>
+                        <div class="col-sm-8">
+                            <div id="gradients-container">
+                                {if condition="!empty($data) && !empty($data['gradients'])"}
+                                    {volist name="data['gradients']" id="gradient" key="index"}
+                                        <div class="gradient-item" style="margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                                            <div class="row">
+                                                <div class="col-sm-3">
+                                                    <input type="number" class="form-control" name="gradients[{$index}][loan_days]" value="{$gradient['loan_days']}" placeholder="贷款期限(天)" required>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <input type="number" class="form-control" name="gradients[{$index}][installment_count]" value="{$gradient['installment_count']}" placeholder="分期数" required>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <input type="number" class="form-control" name="gradients[{$index}][interest_rate]" value="{$gradient['interest_rate']}" placeholder="利息率(%)" step="0.01" required>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <button type="button" class="btn btn-danger btn-xs" onclick="removeGradient(this)">删除</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {/volist}
+                                {/if}
+                            </div>
+                            <button type="button" class="btn btn-success btn-xs" onclick="addGradient()">添加梯度</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-8">
+                            <button type="button" class="btn btn-primary" id="save-btn">保存</button>
+                            <a href="{:url('admin/LoanProduct/productList')}" class="btn btn-default">返回</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+var gradientIndex = {if condition="!empty($data) && !empty($data['gradients'])"}{:count($data['gradients'])}{else/}0{/if};
+
+function addGradient() {
+    var html = '<div class="gradient-item" style="margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">' +
+        '<div class="row">' +
+        '<div class="col-sm-3">' +
+        '<input type="number" class="form-control" name="gradients[' + gradientIndex + '][loan_days]" placeholder="贷款期限(天)" required>' +
+        '</div>' +
+        '<div class="col-sm-3">' +
+        '<input type="number" class="form-control" name="gradients[' + gradientIndex + '][installment_count]" placeholder="分期数" required>' +
+        '</div>' +
+        '<div class="col-sm-3">' +
+        '<input type="number" class="form-control" name="gradients[' + gradientIndex + '][interest_rate]" placeholder="利息率(%)" step="0.01" required>' +
+        '</div>' +
+        '<div class="col-sm-3">' +
+        '<button type="button" class="btn btn-danger btn-xs" onclick="removeGradient(this)">删除</button>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
+    
+    $('#gradients-container').append(html);
+    gradientIndex++;
+}
+
+function removeGradient(btn) {
+    $(btn).closest('.gradient-item').remove();
+}
+
+// Ajax提交表单
+$(document).ready(function() {
+    $('#save-btn').click(function() {
+        // 禁用保存按钮，防止重复提交
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('保存中...');
+        
+        // 收集表单数据
+        var formData = new FormData($('#product-form')[0]);
+        
+        // 发送Ajax请求
+        $.ajax({
+            url: '{:url("admin/LoanProduct/saveProduct")}',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(res) {
+                if (res.code == 200) {
+                    alert('保存成功！');
+                    // 如果是新增，跳转到列表页；如果是编辑，刷新当前页
+                    if (!$('input[name="id"]').val()) {
+                        window.location.href = '{:url("admin/LoanProduct/productList")}';
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    alert('保存失败：' + res.msg);
+                    $btn.prop('disabled', false).text('保存');
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('保存失败：' + error);
+                $btn.prop('disabled', false).text('保存');
+            }
+        });
+    });
+});
+</script>
+
+

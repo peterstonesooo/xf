@@ -1,0 +1,157 @@
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <h3 class="box-title">申请详情</h3>
+            </div>
+            <div class="box-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>基本信息</h4>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="150">申请ID</th>
+                                <td>{$data['id']}</td>
+                            </tr>
+                            <tr>
+                                <th>用户ID</th>
+                                <td>{$data['user_id']}</td>
+                            </tr>
+                            <tr>
+                                <th>手机号</th>
+                                <td>{$data['user']['phone']}</td>
+                            </tr>
+                            <tr>
+                                <th>姓名</th>
+                                <td>{$data['user']['realname']}</td>
+                            </tr>
+                            <tr>
+                                <th>申请时间</th>
+                                <td>{$data['created_at']}</td>
+                            </tr>
+                            <tr>
+                                <th>状态</th>
+                                <td>
+                                    <span class="label label-{if condition="$data['status'] eq 1"}warning{elseif condition="$data['status'] eq 2"}info{elseif condition="$data['status'] eq 3"}danger{elseif condition="$data['status'] eq 4"}success{else/}default{/if}">{$data['status_text']}</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h4>贷款信息</h4>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="150">产品名称</th>
+                                <td>{$data['product']['name']}</td>
+                            </tr>
+                            <tr>
+                                <th>贷款金额</th>
+                                <td>￥{$data['loan_amount']}</td>
+                            </tr>
+                            <tr>
+                                <th>贷款期限</th>
+                                <td>{$data['loan_days']}天</td>
+                            </tr>
+                            <tr>
+                                <th>分期数</th>
+                                <td>{$data['installment_count']}期</td>
+                            </tr>
+                            <tr>
+                                <th>利息率</th>
+                                <td>{$data['interest_rate']}%</td>
+                            </tr>
+                            <tr>
+                                <th>总利息</th>
+                                <td>￥{$data['total_interest']}</td>
+                            </tr>
+                            <tr>
+                                <th>总金额</th>
+                                <td>￥{$data['total_amount']}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                {if condition="$data['status'] neq 1"}
+                <div class="row">
+                    <div class="col-md-12">
+                        <h4>审核信息</h4>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="150">审核人</th>
+                                <td>{$data['auditUser']['username'] ?? ''}</td>
+                            </tr>
+                            <tr>
+                                <th>审核时间</th>
+                                <td>{$data['audit_time']}</td>
+                            </tr>
+                            <tr>
+                                <th>审核备注</th>
+                                <td>{$data['audit_remark']}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                {/if}
+
+                {if condition="$data['status'] eq 4"}
+                <div class="row">
+                    <div class="col-md-12">
+                        <h4>放款信息</h4>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="150">放款时间</th>
+                                <td>{$data['disburse_time']}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                {/if}
+
+                {if condition="!empty($data['repaymentPlans'])"}
+                <div class="row">
+                    <div class="col-md-12">
+                        <h4>还款计划</h4>
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>期数</th>
+                                    <th>到期日期</th>
+                                    <th>本金</th>
+                                    <th>利息</th>
+                                    <th>总金额</th>
+                                    <th>已还金额</th>
+                                    <th>剩余金额</th>
+                                    <th>状态</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($data['repaymentPlans'] as $plan) { ?>
+                                    <tr>
+                                        <td>第{$plan['period']}期</td>
+                                        <td>{$plan['due_date']}</td>
+                                        <td>￥{$plan['principal']}</td>
+                                        <td>￥{$plan['interest']}</td>
+                                        <td>￥{$plan['total_amount']}</td>
+                                        <td>￥{$plan['paid_amount']}</td>
+                                        <td>￥{$plan['remaining_amount']}</td>
+                                        <td>
+                                            <span class="label label-{if condition="$plan['status'] eq 1"}warning{elseif condition="$plan['status'] eq 2"}success{else/}danger{/if}">{$plan['status_text']}</span>
+                                        </td>
+                                    </tr>
+                                <?php } ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {/if}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <a href="{:url('admin/LoanApplication/applicationList')}" class="btn btn-default">返回列表</a>
+    </div>
+</div>

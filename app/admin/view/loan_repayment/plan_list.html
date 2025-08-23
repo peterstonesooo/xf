@@ -1,0 +1,167 @@
+
+                            <div class="search">
+                                <form class="form-inline">
+                                    <input type="text" value="{$req['user_id']??''}" name="user_id" placeholder="搜索用户ID" class="form-control">
+                                    <input type="text" value="{$req['phone']??''}" name="phone" placeholder="搜索手机号" class="form-control">
+                                    <select name="status" class="form-control">
+                                        <option value="">搜索状态</option>
+                                        <?php foreach ($statusMap as $k => $v) { ?>
+                                            <option <?php if (isset($req['status']) && $req['status'] == $k) {
+                                                echo 'selected = "selected"';
+                                            } ?> value="{$k}">{$v}
+                                            </option>
+                                        <?php } ?>
+                                    </select>
+                                    <input type="date" value="{$req['due_date_start']??''}" name="due_date_start" placeholder="到期开始日期" class="form-control">
+                                    <input type="date" value="{$req['due_date_end']??''}" name="due_date_end" placeholder="到期结束日期" class="form-control">
+                                    <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+                                    <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;共 {$data->total()} 条记录</span>
+                                </form>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-xs-12">
+                                    <div class="box">
+                                        <div class="box-header">
+                                            <div class="box-body table-responsive no-padding">
+                                                <table class="table table-bordered table-hover table-striped">
+                                                    <tbody>
+                                                    <tr>
+                                                        <th>ID</th>
+                                                        <th>用户信息</th>
+                                                        <th>申请信息</th>
+                                                        <th>期数</th>
+                                                        <th>到期日期</th>
+                                                        <th>本金</th>
+                                                        <th>利息</th>
+                                                        <th>总金额</th>
+                                                        <th>已还金额</th>
+                                                        <th>剩余金额</th>
+                                                        <th>状态</th>
+                                                        <th>逾期天数</th>
+                                                        <th>逾期利息</th>
+                                                        <th>操作</th>
+                                                    </tr>
+                                                    <?php foreach ($data as $k => $v) { ?>
+                                                        <tr>
+                                                            <td>{$v['id']}</td>
+                                                            <td>
+                                                                用户ID：{$v['user_id']}<br>
+                                                                手机号：{$v['user']['phone']}<br>
+                                                                姓名：{$v['user']['realname']}
+                                                            </td>
+                                                            <td>
+                                                                申请ID：{$v['application_id']}<br>
+                                                                贷款金额：￥{$v['application']['loan_amount']}
+                                                            </td>
+                                                            <td>第{$v['period']}期</td>
+                                                            <td>{$v['due_date']}</td>
+                                                            <td>￥{$v['principal']}</td>
+                                                            <td>￥{$v['interest']}</td>
+                                                            <td>￥{$v['total_amount']}</td>
+                                                            <td>￥{$v['paid_amount']}</td>
+                                                            <td>￥{$v['remaining_amount']}</td>
+                                                            <td>
+                                                                <span class="label label-{if condition="$v['status'] eq 1"}warning{elseif condition="$v['status'] eq 2"}success{else/}danger{/if}">{$v['status_text']}</span>
+                                                            </td>
+                                                            <td>
+                                                                {if condition="$v['overdue_days'] gt 0"}
+                                                                <span class="label label-danger">{$v['overdue_days']}天</span>
+                                                                {else/}
+                                                                -
+                                                                {/if}
+                                                            </td>
+                                                            <td>
+                                                                {if condition="$v['overdue_interest'] gt 0"}
+                                                                ￥{$v['overdue_interest']}
+                                                                {else/}
+                                                                -
+                                                                {/if}
+                                                            </td>
+                                                            <td>
+                                                                <a href="{:url('admin/LoanRepayment/showPlan', ['id' => $v['id']])}" class="btn btn-flat btn-info btn-xs">详情</a>
+                                                                {if condition="$v['status'] neq 2"}
+                                                                <button class="btn btn-flat btn-primary btn-xs" onclick="manualRepay({$v['id']})">手动还款</button>
+                                                                {/if}
+                                                            </td>
+                                                        </tr>
+                                                    <?php } ?>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 分页 -->
+                            <div class="text-center">
+                                {$data->render()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 手动还款模态框 -->
+<div class="modal fade" id="repayModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <h4 class="modal-title">手动还款</h4>
+            </div>
+            <div class="modal-body">
+                <form id="repay-form">
+                    <input type="hidden" id="repay-plan-id" name="plan_id">
+                    <div class="form-group">
+                        <label>还款金额</label>
+                        <input type="number" class="form-control" name="repayment_amount" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>还款方式</label>
+                        <select class="form-control" name="repayment_method" required>
+                            <option value="1">自动扣款</option>
+                            <option value="2">手动还款</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>备注</label>
+                        <textarea class="form-control" name="remark" rows="3" placeholder="请输入备注"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="submit-repay">提交</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function manualRepay(planId) {
+    $('#repay-plan-id').val(planId);
+    $('#repayModal').modal('show');
+}
+
+$(document).ready(function() {
+    $('#submit-repay').click(function() {
+        var formData = $('#repay-form').serialize();
+        $.post('{:url("admin/LoanRepayment/manualRepay")}', formData, function(res) {
+            if (res.code == 0) {
+                alert('还款成功');
+                $('#repayModal').modal('hide');
+                location.reload();
+            } else {
+                alert(res.msg);
+            }
+        });
+    });
+});
+</script>
+
+

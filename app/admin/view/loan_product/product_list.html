@@ -1,0 +1,104 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['name']??''}" name="name" placeholder="搜索产品名称" class="form-control">
+        <select name="status" class="form-control">
+            <option value="">搜索状态</option>
+            <?php foreach ($statusMap as $k => $v) { ?>
+                <option <?php if (isset($req['status']) && $req['status'] == $k) {
+                    echo 'selected = "selected"';
+                } ?> value="{$k}">{$v}
+                </option>
+            <?php } ?>
+        </select>
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <a href="{:url('admin/LoanProduct/showProduct')}" class="btn btn-flat btn-success m_10">添加产品</a>
+        <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;共 {$data->total()} 条记录</span>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>产品名称</th>
+                            <th>最小金额</th>
+                            <th>最大金额</th>
+                            <th>利息类型</th>
+                            <th>逾期利息率</th>
+                            <th>梯度数量</th>
+                            <th>状态</th>
+                            <th>排序</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>{$v['name']}</td>
+                                <td>￥{$v['min_amount']}</td>
+                                <td>￥{$v['max_amount']}</td>
+                                <td>{$v['interest_type_text']}</td>
+                                <td>{$v['overdue_interest_rate']}%</td>
+                                <td>{$v['gradient_count']}</td>
+                                <td>
+                                    <span class="label label-{if condition="$v['status'] eq 1"}success{else/}danger{/if}">{$v['status_text']}</span>
+                                </td>
+                                <td>{$v['sort']}</td>
+                                <td>{$v['created_at']}</td>
+                                <td>
+                                    <a href="{:url('admin/LoanProduct/showProduct', ['id' => $v['id']])}" class="btn btn-flat btn-primary btn-xs">编辑</a>
+                                    <button class="btn btn-flat btn-{if condition="$v['status'] eq 1"}warning{else/}success{/if} btn-xs" onclick="changeStatus({$v['id']}, {$v['status'] == 1 ? 0 : 1})">
+                                        {if condition="$v['status'] eq 1"}禁用{else/}启用{/if}
+                                    </button>
+                                    <button class="btn btn-flat btn-danger btn-xs" onclick="deleteProduct({$v['id']})">删除</button>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function changeStatus(id, status) {
+    var action = status == 1 ? '启用' : '禁用';
+    if (confirm('确定要' + action + '该产品吗？')) {
+        $.post('{:url("admin/LoanProduct/changeStatus")}', {
+            id: id,
+            status: status
+        }, function(res) {
+            if (res.code == 0) {
+                alert('操作成功');
+                location.reload();
+            } else {
+                alert(res.msg);
+            }
+        });
+    }
+}
+
+function deleteProduct(id) {
+    if (confirm('确定要删除该产品吗？')) {
+        $.post('{:url("admin/LoanProduct/deleteProduct")}', {
+            id: id
+        }, function(res) {
+            if (res.code == 0) {
+                alert('删除成功');
+                location.reload();
+            } else {
+                alert(res.msg);
+            }
+        });
+    }
+}
+</script>
+
+

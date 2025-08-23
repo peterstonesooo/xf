@@ -117,6 +117,8 @@ return array(
                             'icon' => 'fa-circle-o',
                             'url' => 'admin/PointsOrder/orderList',
                         ),
+
+
                     // '升级缴费订单' =>
                     //     array(
                     //         'icon' => 'fa-circle-o',
@@ -226,6 +228,39 @@ return array(
                         'icon' => 'fa-circle-o',
                         'url' => 'admin/Capital/withdrawList',
                     ),
+                ),
+        ),
+    '贷款管理' =>
+        array(
+            'icon' => 'fa-money',
+            'url' =>
+                array(
+                    '贷款产品管理' =>
+                        array(
+                            'icon' => 'fa-circle-o',
+                            'url' => 'admin/LoanProduct/productList',
+                        ),
+                    '贷款申请管理' =>
+                        array(
+                            'icon' => 'fa-circle-o',
+                            'url' => 'admin/LoanApplication/applicationList',
+                        ),
+
+                    '还款计划管理' =>
+                        array(
+                            'icon' => 'fa-circle-o',
+                            'url' => 'admin/LoanRepayment/planList',
+                        ),
+                    '还款记录管理' =>
+                        array(
+                            'icon' => 'fa-circle-o',
+                            'url' => 'admin/LoanRepayment/recordList',
+                        ),
+                    '逾期管理' =>
+                        array(
+                            'icon' => 'fa-circle-o',
+                            'url' => 'admin/LoanRepayment/overdueList',
+                        ),
                 ),
         ),
     '设置中心' =>

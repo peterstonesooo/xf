@@ -79,11 +79,19 @@
                         <input type="number" class="form-control" name="repayment_amount" step="0.01" required>
                     </div>
                     <div class="form-group">
-                        <label>还款方式</label>
-                        <select class="form-control" name="repayment_method" required>
-                            <option value="1">自动扣款</option>
-                            <option value="2">手动还款</option>
+                        <label>钱包类型</label>
+                        <select class="form-control" name="wallet_type" id="wallet-type" required>
+                            <option value="">请选择钱包类型</option>
+                            <option value="1">充值余额</option>
+                            <option value="2">荣誉钱包</option>
+                            <option value="5">收益钱包</option>
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <label>用户钱包余额</label>
+                        <div id="wallet-balance" class="form-control-static">
+                            请先选择钱包类型
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>备注</label>
@@ -100,9 +108,22 @@
 </div>
 
 <script>
+var currentPlanId = null;
+var userWalletBalances = {};
+
 function manualRepay(planId) {
+    currentPlanId = planId;
     $('#repay-plan-id').val(planId);
-    $('#repayModal').modal('show');
+    
+    // 获取用户钱包余额
+    $.get('{:url("admin/LoanRepayment/getUserWalletBalances")}', {plan_id: planId}, function(res) {
+        if (res.code == 0) {
+            userWalletBalances = res.data;
+            $('#repayModal').modal('show');
+        } else {
+            alert('获取用户钱包信息失败：' + res.msg);
+        }
+    });
 }
 
 function sendReminder(planId) {
@@ -118,15 +139,54 @@ function sendReminder(planId) {
 }
 
 $(document).ready(function() {
+    // 钱包类型选择变化时更新余额显示
+    $('#wallet-type').change(function() {
+        var walletType = $(this).val();
+        if (walletType && userWalletBalances[walletType]) {
+            var balance = userWalletBalances[walletType].balance;
+            var name = userWalletBalances[walletType].name;
+            $('#wallet-balance').html(name + '：￥' + balance);
+        } else {
+            $('#wallet-balance').html('请先选择钱包类型');
+        }
+    });
+
     $('#submit-repay').click(function() {
-        var formData = $('#repay-form').serialize();
+        var planId = $('#repay-plan-id').val();
+        var repaymentAmount = $('input[name="repayment_amount"]').val();
+        var walletType = $('#wallet-type').val();
+        var remark = $('textarea[name="remark"]').val();
+
+        if (!repaymentAmount || repaymentAmount <= 0) {
+            alert('请输入有效的还款金额');
+            return;
+        }
+
+        if (!walletType) {
+            alert('请选择钱包类型');
+            return;
+        }
+
+        // 检查余额是否足够
+        if (userWalletBalances[walletType] && parseFloat(userWalletBalances[walletType].balance) < parseFloat(repaymentAmount)) {
+            alert('钱包余额不足，无法还款');
+            return;
+        }
+
+        var formData = {
+            plan_id: planId,
+            repayment_amount: repaymentAmount,
+            wallet_type: walletType,
+            remark: remark
+        };
+
         $.post('{:url("admin/LoanRepayment/manualRepay")}', formData, function(res) {
             if (res.code == 0) {
                 alert('还款成功');
                 $('#repayModal').modal('hide');
                 location.reload();
             } else {
-                alert(res.msg);
+                alert('还款失败：' + res.msg);
             }
         });
     });

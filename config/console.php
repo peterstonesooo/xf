@@ -48,5 +48,7 @@ return [
         'MonthlyFenhong' => 'app\common\command\MonthlyFenhong',
         'RujinPointsTask' => 'app\common\command\RujinPointsTask',
         'DailyBonusReturn' => 'app\common\command\DailyBonusReturn',
+        'checkLoanOverdue' => 'app\common\command\CheckLoanOverdue',
+        'loanOverdueManager' => 'app\common\command\LoanOverdueManager',
     ],
 ];

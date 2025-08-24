@@ -483,4 +483,278 @@ class LoanController extends AuthController
 
         return $maxLoanAmount;
     }
+
+    /**
+     * 逾期还款
+     */
+    public function overdueRepayment()
+    {
+        try {
+            $req = $this->validate(request(), [
+                'plan_id' => 'require|number',
+                'repayment_amount' => 'require|float|gt:0',
+                'wallet_type' => 'require|number', // 钱包类型
+                'pay_password' => 'require|length:6'
+            ]);
+
+            // 验证支付密码
+            if (!$this->user || $this->user['pay_password'] !== md5($req['pay_password'])) {
+                return out(null, 10001, '支付密码错误');
+            }
+
+            // 钱包类型映射
+            $walletTypeMap = [
+                1 => ['field' => 'topup_balance', 'name' => '充值余额'],
+                2 => ['field' => 'team_bonus_balance', 'name' => '荣誉钱包'],
+                3 => ['field' => 'butie', 'name' => '稳盈钱包'],
+                4 => ['field' => 'balance', 'name' => '民生钱包'],
+                5 => ['field' => 'digit_balance', 'name' => '收益钱包'],
+                6 => ['field' => 'integral', 'name' => '积分'],
+                7 => ['field' => 'appreciating_wallet', 'name' => '幸福收益'],
+                8 => ['field' => 'butie_lock', 'name' => '稳赢钱包转入'],
+                9 => ['field' => 'lottery_tickets', 'name' => '抽奖卷'],
+                10 => ['field' => 'tiyan_wallet_lock', 'name' => '体验钱包预支金'],
+                11 => ['field' => 'tiyan_wallet', 'name' => '体验钱包'],
+                12 => ['field' => 'xingfu_tickets', 'name' => '幸福助力卷'],
+            ];
+
+            // 验证钱包类型
+            if (!isset($walletTypeMap[$req['wallet_type']])) {
+                return out(null, 10001, '不支持的还款钱包类型');
+            }
+
+            // 获取支持的钱包类型配置
+            $supportedTypes = \app\model\LoanConfig::getConfig('back_money_types', '1,2,3,4,5');
+            $supportedTypes = explode(',', $supportedTypes);
+            if (!in_array($req['wallet_type'], $supportedTypes)) {
+                return out(null, 10001, '该钱包类型不支持还款');
+            }
+
+            $plan = LoanRepaymentPlan::find($req['plan_id']);
+            if (!$plan) {
+                return out(null, 10001, '还款计划不存在');
+            }
+
+            // 验证用户权限
+            if ($plan->user_id != $this->user['id']) {
+                return out(null, 10001, '无权操作此还款计划');
+            }
+
+            if ($plan->status != 3) {
+                return out(null, 10001, '该期未逾期');
+            }
+
+            $totalAmount = bcadd($plan->remaining_amount, $plan->overdue_interest, 2);
+            if ($req['repayment_amount'] > $totalAmount) {
+                return out(null, 10001, '还款金额不能大于应还总额');
+            }
+
+            // 获取钱包字段名和名称
+            $walletField = $walletTypeMap[$req['wallet_type']]['field'];
+            $walletName = $walletTypeMap[$req['wallet_type']]['name'];
+
+            // 检查用户钱包余额是否足够
+            if ($this->user[$walletField] < $req['repayment_amount']) {
+                return out(null, 10001, "{$walletName}余额不足，请先充值");
+            }
+
+            Db::startTrans();
+            try {
+                // 扣除用户钱包余额
+                \app\model\User::changeInc(
+                    $this->user['id'],
+                    -$req['repayment_amount'],
+                    $walletField,
+                    108, // 交易类型：逾期还款
+                    $plan->id,
+                    2, // 支出
+                    "逾期还款({$walletName})",
+                    0,
+                    1
+                );
+
+                // 创建还款记录
+                \app\model\LoanRepaymentRecord::create([
+                    'plan_id' => $plan->id,
+                    'application_id' => $plan->application_id,
+                    'user_id' => $this->user['id'],
+                    'repayment_amount' => $req['repayment_amount'],
+                    'repayment_type' => 3, // 逾期还款
+                    'repayment_method' => 2, // 手动还款
+                    'wallet_type' => $req['wallet_type'], // 记录使用的钱包类型
+                    'remark' => $req['remark'] ?? "使用{$walletName}还款"
+                ]);
+
+                // 更新还款计划
+                $plan->paid_amount += $req['repayment_amount'];
+                $plan->remaining_amount = $totalAmount - $plan->paid_amount;
+                
+                if ($plan->remaining_amount <= 0) {
+                    $plan->status = 2; // 已还款
+                    $plan->overdue_days = 0;
+                    $plan->overdue_interest = 0;
+                }
+                
+                $plan->save();
+
+                // 发送还款成功通知
+                $this->sendRepaymentSuccessNotification($plan, $walletName);
+
+                Db::commit();
+                return out(null, 0, "使用{$walletName}逾期还款成功");
+            } catch (\Exception $e) {
+                Db::rollback();
+                return out(null, 10001, '逾期还款失败：' . $e->getMessage());
+            }
+
+        } catch (\Exception $e) {
+            return out(null, 500, '逾期还款失败：' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 获取逾期还款计划列表
+     */
+    public function getOverduePlans()
+    {
+        try {
+            $req = $this->validate(request(), [
+                'page' => 'integer|min:1',
+                'limit' => 'integer|min:1|max:50'
+            ]);
+
+            $page = $req['page'] ?? 1;
+            $limit = $req['limit'] ?? 10;
+
+            $builder = LoanRepaymentPlan::with(['application'])
+                ->where('user_id', $this->user['id'])
+                ->where('status', 3); // 逾期状态
+
+            $total = $builder->count();
+            $plans = $builder->page($page, $limit)
+                ->order('overdue_days desc, due_date asc')
+                ->select();
+
+            $data = [];
+            foreach ($plans as $plan) {
+                $data[] = [
+                    'id' => $plan->id,
+                    'application_id' => $plan->application_id,
+                    'period' => $plan->period,
+                    'due_date' => $plan->due_date,
+                    'remaining_amount' => $plan->remaining_amount,
+                    'overdue_days' => $plan->overdue_days,
+                    'overdue_interest' => $plan->overdue_interest,
+                    'total_amount' => bcadd($plan->remaining_amount, $plan->overdue_interest, 2),
+                    'loan_amount' => $plan->application->loan_amount
+                ];
+            }
+
+            return out([
+                'list' => $data,
+                'total' => $total,
+                'page' => $page,
+                'limit' => $limit
+            ], 0, '获取成功');
+
+        } catch (\Exception $e) {
+            return out(null, 500, '获取逾期计划失败：' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 获取支持的钱包类型列表
+     */
+    public function getSupportedWalletTypes()
+    {
+        try {
+            // 钱包类型映射
+            $walletTypeMap = [
+                1 => ['field' => 'topup_balance', 'name' => '充值余额'],
+                2 => ['field' => 'team_bonus_balance', 'name' => '荣誉钱包'],
+                3 => ['field' => 'butie', 'name' => '稳盈钱包'],
+                4 => ['field' => 'balance', 'name' => '民生钱包'],
+                5 => ['field' => 'digit_balance', 'name' => '收益钱包'],
+                6 => ['field' => 'integral', 'name' => '积分'],
+                7 => ['field' => 'appreciating_wallet', 'name' => '幸福收益'],
+                8 => ['field' => 'butie_lock', 'name' => '稳赢钱包转入'],
+                9 => ['field' => 'lottery_tickets', 'name' => '抽奖卷'],
+                10 => ['field' => 'tiyan_wallet_lock', 'name' => '体验钱包预支金'],
+                11 => ['field' => 'tiyan_wallet', 'name' => '体验钱包'],
+                12 => ['field' => 'xingfu_tickets', 'name' => '幸福助力卷'],
+            ];
+
+            // 获取支持的钱包类型配置
+            $supportedTypes = \app\model\LoanConfig::getConfig('back_money_types', '1,2,3,4,5');
+            $supportedTypes = explode(',', $supportedTypes);
+
+            $data = [];
+            foreach ($supportedTypes as $type) {
+                $type = (int)trim($type);
+                if (isset($walletTypeMap[$type])) {
+                    $data[] = [
+                        'type' => $type,
+                        'name' => $walletTypeMap[$type]['name'],
+                        // 'field' => $walletTypeMap[$type]['field'],
+                        'balance' => $this->user[$walletTypeMap[$type]['field']] ?? 0
+                    ];
+                }
+            }
+
+            return out($data, 0, '获取成功');
+
+        } catch (\Exception $e) {
+            return out(null, 500, '获取钱包类型失败：' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 发送还款成功通知
+     */
+    private function sendRepaymentSuccessNotification($plan)
+    {
+        try {
+            $user = User::find($plan->user_id);
+            $application = LoanApplication::find($plan->application_id);
+            
+            if (!$user || !$application) {
+                return false;
+            }
+
+            $title = '逾期还款成功通知';
+            $content = "尊敬的{$user['realname']}，您的逾期还款已成功！\n\n";
+            $content .= "还款详情：\n";
+            $content .= "• 贷款金额：{$application->loan_amount}元\n";
+            $content .= "• 还款期数：第{$plan->period}期\n";
+            $content .= "• 还款金额：" . bcadd($plan->remaining_amount, $plan->overdue_interest, 2) . "元\n";
+            $content .= "• 还款时间：" . date('Y-m-d H:i:s') . "\n\n";
+            $content .= "感谢您的及时还款，请继续保持良好的信用记录。";
+
+            // 创建消息
+            $message = \app\model\NoticeMessage::create([
+                'title' => $title,
+                'content' => $content,
+                'type' => 1 // 系统通知
+            ]);
+
+            // 为用户创建消息记录
+            \app\model\NoticeMessageUser::create([
+                'user_id' => $plan->user_id,
+                'message_id' => $message->id,
+                'is_read' => 0,
+                'read_time' => null
+            ]);
+
+            \think\facade\Log::info("还款成功通知发送成功", [
+                'plan_id' => $plan->id,
+                'user_id' => $plan->user_id,
+                'message_id' => $message->id
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            \think\facade\Log::error('发送还款成功通知失败：' . $e->getMessage());
+            return false;
+        }
+    }
 }

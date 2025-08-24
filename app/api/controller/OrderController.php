@@ -98,6 +98,7 @@ class OrderController extends AuthController
         }
 
 
+        /*
         if(in_array($project['project_group_id'], [7,8,9,10,11])){
             if(!$project['open_date'] || !$project['end_date']){
                 // 判断今天是星期几
@@ -130,7 +131,7 @@ class OrderController extends AuthController
                 }
             }
         }
-        
+        */
          
 
         Db::startTrans();
@@ -439,7 +440,8 @@ class OrderController extends AuthController
         ->append(['all_total_buy_num'])
         ->find()
         ->toArray();
-        
+        /*
+
         if(in_array($project['project_group_id'], [7,8,9,10,11])){
             if(!$project['open_date'] || !$project['end_date']){
                     // 判断今天是星期几
@@ -472,6 +474,7 @@ class OrderController extends AuthController
                     }
             }
         }
+        */
         if($project['project_group_id'] == 13){
             if($project['open_date'] && $project['end_date']){
                 if(time() < strtotime($project['open_date']) || time() > strtotime($project['end_date'])){

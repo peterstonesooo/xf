@@ -94,3 +94,4 @@ class LoanConfig extends Model
         return $result;
     }
 }
+

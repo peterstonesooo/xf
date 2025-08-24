@@ -55,3 +55,4 @@ class LoanApplication extends Model
         return $this->belongsTo(User::class, 'audit_user_id', 'id');
     }
 }
+

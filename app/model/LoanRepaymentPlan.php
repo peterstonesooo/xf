@@ -41,3 +41,4 @@ class LoanRepaymentPlan extends Model
         return $this->hasMany(LoanRepaymentRecord::class, 'plan_id', 'id');
     }
 }
+

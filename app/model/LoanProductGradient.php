@@ -28,3 +28,4 @@ class LoanProductGradient extends Model
         return $this->belongsTo(LoanProduct::class, 'product_id', 'id');
     }
 }
+

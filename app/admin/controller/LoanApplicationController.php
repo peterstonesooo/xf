@@ -111,12 +111,12 @@ class LoanApplicationController extends AuthController
                 $this->generateRepaymentPlan($application);
             }
 
-            Db::commit();
-            return $this->success('审核成功');
-        } catch (\Exception $e) {
-            Db::rollback();
-            return $this->error('审核失败：' . $e->getMessage());
-        }
+                    Db::commit();
+        return out(null, 0, '审核成功');
+    } catch (\Exception $e) {
+        Db::rollback();
+        return out(null, 10001, '审核失败：' . $e->getMessage());
+    }
     }
 
     /**
@@ -154,10 +154,10 @@ class LoanApplicationController extends AuthController
             }
 
             Db::commit();
-            return $this->success('批量审核成功');
+            return out(null, 0, '批量审核成功');
         } catch (\Exception $e) {
             Db::rollback();
-            return $this->error('批量审核失败：' . $e->getMessage());
+            return out(null, 10001, '批量审核失败：' . $e->getMessage());
         }
     }
 
@@ -168,32 +168,53 @@ class LoanApplicationController extends AuthController
     {
         $id = request()->param('id');
         
-        $application = LoanApplication::find($id);
+        $application = LoanApplication::with(['user'])->find($id);
         if (!$application) {
-            return $this->error('申请不存在');
+            return out(null, 10001, '申请不存在');
         }
 
         if ($application->status != 2) {
-            return $this->error('该申请未通过审核');
+            return out(null, 10001, '该申请未通过审核');
         }
 
         if ($application->status == 4) {
-            return $this->error('该申请已放款');
+            return out(null, 10001, '该申请已放款');
         }
 
         Db::startTrans();
         try {
+            // 1. 更新申请状态
             $application->status = 4;
             $application->disburse_time = date('Y-m-d H:i:s');
             $application->save();
 
+            // 2. 给用户账户增加贷款金额到充值余额
+            $user = User::where('id', $application->user_id)->lock(true)->find();
+            if (!$user) {
+                throw new \Exception('用户不存在');
+            }
 
+            // 使用changeInc方法增加用户余额并记录资金流水
+            User::changeInc(
+                $application->user_id, 
+                $application->loan_amount, 
+                'topup_balance',  // 充值余额
+                107,  // 交易类型：贷款放款
+                $application->id, 
+                1, 
+                '贷款放款', 
+                0, 
+                1
+            );
 
+            // 发送放款成功消息给用户
+            $this->sendDisburseMessage($application);
+            
             Db::commit();
-            return $this->success('放款成功');
+            return out(null, 0, '放款成功，已到账' . $application->loan_amount . '元');
         } catch (\Exception $e) {
             Db::rollback();
-            return $this->error('放款失败：' . $e->getMessage());
+            return out(null, 10001, '放款失败：' . $e->getMessage());
         }
     }
 
@@ -246,6 +267,88 @@ class LoanApplicationController extends AuthController
             echo $item->auditUser->username ?? '' . "\n";
         }
         exit;
+    }
+
+    /**
+     * 发送放款成功消息给用户
+     */
+    private function sendDisburseMessage($application)
+    {
+        try {
+            // 获取用户信息
+            $user = User::find($application->user_id);
+            if (!$user) {
+                return;
+            }
+
+            // 创建消息内容
+            $title = '贷款放款成功通知';
+            $content = "尊敬的{$user['realname']}，您的贷款申请已放款成功！\n\n";
+            $content .= "贷款详情：\n";
+            $content .= "• 贷款金额：{$application->loan_amount}元\n";
+            $content .= "• 贷款期限：{$application->loan_days}天\n";
+            $content .= "• 分期数：{$application->installment_count}期\n";
+            $content .= "• 月供金额：{$application->monthly_payment}元\n";
+            $content .= "• 放款时间：" . date('Y-m-d H:i:s') . "\n\n";
+            $content .= "资金已到账到您的充值余额中，请注意按时还款。";
+
+            // 创建消息
+            $message = \app\model\NoticeMessage::create([
+                'title' => $title,
+                'content' => $content,
+                'type' => 1 // 系统通知
+            ]);
+
+            // 为用户创建消息记录
+            \app\model\NoticeMessageUser::create([
+                'user_id' => $application->user_id,
+                'message_id' => $message->id,
+                'is_read' => 0,
+                'read_time' => null
+            ]);
+
+            // 记录日志
+            \think\facade\Log::info('放款消息发送成功', [
+                'application_id' => $application->id,
+                'user_id' => $application->user_id,
+                'message_id' => $message->id
+            ]);
+
+        } catch (\Exception $e) {
+            // 记录错误日志，但不影响放款流程
+            \think\facade\Log::error('发送放款消息失败：' . $e->getMessage(), [
+                'application_id' => $application->id,
+                'user_id' => $application->user_id
+            ]);
+        }
+    }
+
+    /**
+     * 创建放款日志
+     */
+    private function createDisburseLog($application)
+    {
+        // 记录放款操作日志
+        $logData = [
+            'application_id' => $application->id,
+            'user_id' => $application->user_id,
+            'loan_amount' => $application->loan_amount,
+            'disburse_time' => date('Y-m-d H:i:s'),
+            'admin_user_id' => session('admin_id'),
+            'remark' => '贷款放款到账',
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+        
+        // 如果有放款日志表，可以记录到这里
+        // Db::table('mp_loan_disburse_log')->insert($logData);
+        
+        // 或者记录到系统日志中
+        \think\facade\Log::info('贷款放款', [
+            'application_id' => $application->id,
+            'user_id' => $application->user_id,
+            'loan_amount' => $application->loan_amount,
+            'admin_user_id' => session('admin_id')
+        ]);
     }
 
     /**

@@ -104,14 +104,14 @@
                     <input type="hidden" id="audit-id" name="id">
                     <input type="hidden" id="audit-status" name="status">
                     <div class="form-group">
-                        <label>审核备注</label>
+                        <label id="audit-label">审核备注</label>
                         <textarea class="form-control" name="audit_remark" rows="3" placeholder="请输入审核备注"></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" id="submit-audit">提交</button>
+                <button type="button" class="btn btn-primary" id="submit-audit">确认</button>
             </div>
         </div>
     </div>
@@ -129,6 +129,10 @@ $(document).ready(function() {
         var id = $(this).data('id');
         $('#audit-id').val(id);
         $('#audit-status').val(2);
+        $('.modal-title').text('审核通过');
+        $('#audit-label').text('通过备注');
+        $('textarea[name="audit_remark"]').attr('placeholder', '请输入通过备注（可选）');
+        $('#submit-audit').removeClass('btn-danger').addClass('btn-success').text('确认通过');
         $('#auditModal').modal('show');
     });
 
@@ -136,34 +140,50 @@ $(document).ready(function() {
         var id = $(this).data('id');
         $('#audit-id').val(id);
         $('#audit-status').val(3);
+        $('.modal-title').text('审核拒绝');
+        $('#audit-label').text('拒绝原因');
+        $('textarea[name="audit_remark"]').attr('placeholder', '请输入拒绝原因（必填）');
+        $('#submit-audit').removeClass('btn-success').addClass('btn-danger').text('确认拒绝');
         $('#auditModal').modal('show');
     });
 
     // 放款
     $('.disburse-btn').click(function() {
         var id = $(this).data('id');
-        if (confirm('确定要放款吗？')) {
+        layer.confirm('确定要放款吗？', {icon: 3, title: '提示'}, function(index) {
+            layer.close(index);
             $.post('{:url("admin/LoanApplication/disburseLoan")}', {id: id}, function(res) {
                 if (res.code == 0) {
-                    alert('放款成功');
-                    location.reload();
+                    layer.msg('放款成功', {icon: 1, time: 2000}, function() {
+                        location.reload();
+                    });
                 } else {
-                    alert(res.msg);
+                    layer.msg(res.msg || '放款失败', {icon: 5, time: 3000});
                 }
             });
-        }
+        });
     });
 
     // 提交审核
     $('#submit-audit').click(function() {
+        var status = $('#audit-status').val();
+        var remark = $('textarea[name="audit_remark"]').val().trim();
+        
+        // 如果是拒绝且没有填写原因，提示用户
+        if (status == 3 && !remark) {
+            layer.msg('请填写拒绝原因', {icon: 5, time: 2000});
+            return;
+        }
+        
         var formData = $('#audit-form').serialize();
         $.post('{:url("admin/LoanApplication/auditApplication")}', formData, function(res) {
             if (res.code == 0) {
-                alert('审核成功');
-                $('#auditModal').modal('hide');
-                location.reload();
+                layer.msg('审核成功', {icon: 1, time: 2000}, function() {
+                    $('#auditModal').modal('hide');
+                    location.reload();
+                });
             } else {
-                alert(res.msg);
+                layer.msg(res.msg || '操作失败', {icon: 5, time: 3000});
             }
         });
     });

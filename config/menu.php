@@ -261,6 +261,11 @@ return array(
                             'icon' => 'fa-circle-o',
                             'url' => 'admin/LoanRepayment/overdueList',
                         ),
+                    '贷款配置' =>
+                        array(
+                            'icon' => 'fa-circle-o',
+                            'url' => 'admin/LoanConfig/configList',
+                        ),
                 ),
         ),
     '设置中心' =>

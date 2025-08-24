@@ -1,0 +1,152 @@
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <h3 class="box-title">{if condition="!empty($data)"}编辑配置{else/}添加配置{/if}</h3>
+            </div>
+            <div class="box-body">
+                <form class="form-horizontal" id="config-form">
+                    {if condition="!empty($data)"}
+                    <input type="hidden" name="id" value="{$data['id']}">
+                    {/if}
+                    
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">配置键</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="config_key" value="{$data['config_key']??''}" placeholder="请输入配置键" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">配置描述</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="config_desc" value="{$data['config_desc']??''}" placeholder="请输入配置描述">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">配置类型</label>
+                        <div class="col-sm-8">
+                            <select class="form-control" name="config_type" id="config_type" required>
+                                <option value="">请选择配置类型</option>
+                                <option value="text" {if condition="!empty($data) && $data['config_type'] == 'text' || empty($data)"}selected{/if}>文本</option>
+                                <option value="number" {if condition="!empty($data) && $data['config_type'] == 'number'"}selected{/if}>数字</option>
+                                <option value="select" {if condition="!empty($data) && $data['config_type'] == 'select'"}selected{/if}>选择</option>
+                                <option value="textarea" {if condition="!empty($data) && $data['config_type'] == 'textarea'"}selected{/if}>多行文本</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">配置值</label>
+                        <div class="col-sm-8">
+                            <div id="config_value_container">
+                                <input type="text" class="form-control" name="config_value" value="{$data['config_value']??''}" placeholder="请输入配置值" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" id="config_options_group" style="display: none;">
+                        <label class="col-sm-2 control-label">配置选项</label>
+                        <div class="col-sm-8">
+                            <textarea class="form-control" name="config_options" rows="5" placeholder="请输入配置选项，格式：JSON，如：{&quot;0&quot;:&quot;选项1&quot;,&quot;1&quot;:&quot;选项2&quot;}">{$data['config_options']??''}</textarea>
+                            <small class="help-block">JSON格式，用于select类型的配置选项</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">排序</label>
+                        <div class="col-sm-8">
+                            <input type="number" class="form-control" name="sort" value="{$data['sort']??'0'}" placeholder="请输入排序" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">显示状态</label>
+                        <div class="col-sm-8">
+                            <select class="form-control" name="is_show" required>
+                                <option value="0" {if condition="!empty($data) && $data['is_show'] == 0"}selected{/if}>隐藏</option>
+                                <option value="1" {if condition="!empty($data) && $data['is_show'] == 1 || empty($data)"}selected{/if}>显示</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-8">
+                            <button type="button" class="btn btn-primary" id="save-btn">保存</button>
+                            <a href="{:url('admin/LoanConfig/configList')}" class="btn btn-default">返回</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // 配置类型变化时更新配置值输入框
+    $('#config_type').change(function() {
+        var configType = $(this).val();
+        var container = $('#config_value_container');
+        var currentValue = $('input[name="config_value"], textarea[name="config_value"]').val();
+        
+        container.empty();
+        
+        switch(configType) {
+            case 'textarea':
+                container.html('<textarea class="form-control" name="config_value" rows="5" placeholder="请输入配置值" required>' + currentValue + '</textarea>');
+                break;
+            case 'number':
+                container.html('<input type="number" class="form-control" name="config_value" value="' + currentValue + '" placeholder="请输入数字" step="0.01" required>');
+                break;
+            default:
+                container.html('<input type="text" class="form-control" name="config_value" value="' + currentValue + '" placeholder="请输入配置值" required>');
+        }
+        
+        // 显示/隐藏配置选项
+        if (configType === 'select') {
+            $('#config_options_group').show();
+        } else {
+            $('#config_options_group').hide();
+        }
+    });
+    
+    // 初始化时触发一次
+    $('#config_type').trigger('change');
+    
+    // Ajax提交表单
+    $('#save-btn').click(function() {
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('保存中...');
+        
+        var formData = new FormData($('#config-form')[0]);
+        
+        $.ajax({
+            url: '{:url("admin/LoanConfig/saveConfig")}',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(res) {
+                if (res.code == 200) {
+                    alert('保存成功！');
+                    if (!$('input[name="id"]').val()) {
+                        window.location.href = '{:url("admin/LoanConfig/configList")}';
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    alert('保存失败：' + res.msg);
+                    $btn.prop('disabled', false).text('保存');
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('保存失败：' + error);
+                $btn.prop('disabled', false).text('保存');
+            }
+        });
+    });
+});
+</script>

@@ -8,7 +8,7 @@ use app\common\controller\BaseController;
 use think\facade\Db;
 use think\facade\View;
 
-class LoanConfigController extends BaseController
+class LoanConfigController extends AuthController
 {
     /**
      * 配置列表

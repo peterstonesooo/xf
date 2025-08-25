@@ -7,6 +7,8 @@ use app\model\LoanProduct;
 use app\model\LoanProductGradient;
 use app\model\LoanApplication;
 use app\model\LoanConfig;
+use app\model\LoanRepaymentPlan;
+use app\model\LoanRepaymentRecord;
 use app\model\User;
 use app\model\Order;
 use app\model\OrderDailyBonus;

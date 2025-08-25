@@ -501,7 +501,7 @@ class LoanController extends AuthController
             ]);
 
             // 验证支付密码
-            if (!$this->user || $this->user['pay_password'] !== md5($req['pay_password'])) {
+            if (!$this->user || $this->user['pay_password'] !== sha1(md5($req['pay_password']))) {
                 return out(null, 10001, '支付密码错误');
             }
 

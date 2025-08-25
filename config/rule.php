@@ -54,6 +54,11 @@ return array(
                     'name' => 'Signin/del',
                     'title' => '删除签到记录',
                 ),
+            2 =>
+                array(
+                    'name' => 'Signin/exportSigninLog',
+                    'title' => '导出签到记录',
+                ),
         ),
     '奖品设置' =>
         array(

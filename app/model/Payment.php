@@ -39,7 +39,7 @@ class Payment extends Model
             //'appId'=>0,
             'channel' => $pay_bankcode,
             'out_order_no' => $trade_sn,
-            'money' => $pay_amount.'00',
+            'money' => $pay_amount.'.00', 
             'currency' => 'CNY',
             'client_ip'=>request()->ip(),
             'notify_url' => $conf['pay_notifyurl'],

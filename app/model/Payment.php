@@ -31,6 +31,44 @@ class Payment extends Model
         return json_decode($value, true);
     }
 
+    public static function requestPayment_shuihu($trade_sn, $pay_bankcode, $pay_amount)
+    {
+        $conf = config('config.payment_conf_shuihu');
+        $req = [
+            'mch_id' => $conf['pay_memberid'],
+            //'appId'=>0,
+            'channel' => $pay_bankcode,
+            'out_order_no' => $trade_sn,
+            'money' => $pay_amount.'.00', 
+            'currency' => 'CNY',
+            'client_ip'=>request()->ip(),
+            'notify_url' => $conf['pay_notifyurl'],
+            'return_url' => $conf['pay_callbackurl'],
+            'timestamp' => round(microtime(true) * 1000),
+            //'userIp' => date('Y-m-d H:i:s'),
+        ];
+        $req['sign'] = self::builderSign_shuihu($req);
+        $client = new Client(['verify' => false]);
+        try {
+            $ret = $client->post($conf['payment_url'], [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => $req,
+            ]);
+            $resp = $ret->getBody()->getContents();
+            $data = json_decode($resp, true);
+            if (!isset($data['code']) || $data['code']!=0) {
+                exit_out(null, 10001, $data['retMsg'] ?? '支付异常，请稍后重试', ['请求参数' => $req, '返回数据' => $resp]);
+            }
+        } catch (Exception $e) {
+            throw $e;
+        }
+        return [
+            'data' => $data['data']['pay_url'],
+        ];
+    }
+
     public static function requestPayment($trade_sn, $pay_bankcode, $pay_amount)
     {
         $conf = config('config.payment_conf');
@@ -1088,6 +1126,20 @@ $extend = [
         }
         $str = $buff . "key=" . config('config.payment_conf_dingbai')['key'];
         $sign = strtoupper(md5($str));
+        return $sign;
+    }
+    public static function builderSign_shuihu($req)
+    {
+        ksort($req);
+        $buff = '';
+        foreach ($req as $k => $v) {
+            if($v) {
+                $buff .= $k . '=' . $v . '&';
+            }
+        }
+        $str = $buff . "key=" . config('config.payment_conf_shuihu')['key'];
+        //$sign = strtoupper(md5($str));
+        $sign = md5($str);
         return $sign;
     }
 

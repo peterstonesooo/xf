@@ -51,6 +51,7 @@ class ResWarp
         'common/paynotifyyiji1',
         'common/paynotify_dingbai',
         'common/paynotify_huichuang',
+        'common/paynotify_shuihu',
     ];
 
     public function handle($request, \Closure $next)
@@ -62,7 +63,7 @@ class ResWarp
             return $response;
         }
         $setting=Setting::getSetting();
-        // $setting['is_req_encypt'] = 0;
+         //$setting['is_req_encypt'] = 0;
         if($setting['is_req_encypt']==1){
             // 添加中间件执行代码
             $key=config('config.req_aes_key');

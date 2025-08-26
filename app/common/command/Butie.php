@@ -60,7 +60,8 @@ class Butie extends Command
                         }else{
                             if($order['dividend_cycle'] > 0){//每周返现
                                 //12期订单特殊处理
-                                if(in_array($order['project_id'],[55,56,57,58,59])){
+                                if($order['project_id']>=50 && $order['project_id']<=69){
+                                    
                                     $huimin_amount =  $order['huimin_amount'];
                                     if($huimin_amount > 0){
                                         User::changeInc($order['user_id'],$huimin_amount,'digit_balance',59,$order['id'],5, '周盈惠民金');

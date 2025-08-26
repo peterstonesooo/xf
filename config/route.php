@@ -42,4 +42,8 @@ return [
     'default_jsonp_handler' => 'jsonpReturn',
     // 默认JSONP处理方法
     'var_jsonp_handler'     => 'callback',
+    
+    // 出资相关路由
+    'Investment/getSupportedWalletTypes' => 'api/Investment/getSupportedWalletTypes',
+    'Investment/getInvestmentStats' => 'api/Investment/getInvestmentStats',
 ];

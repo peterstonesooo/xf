@@ -702,4 +702,147 @@ return array(
                     'title' => '删除协议',
                 ),
         ),
+    '贷款产品管理' =>
+        array(
+            0 =>
+                array(
+                    'name' => 'LoanProduct/productList',
+                    'title' => '查看贷款产品列表',
+                ),
+            1 =>
+                array(
+                    'name' => 'LoanProduct/showProduct',
+                    'title' => '查看产品详情',
+                ),
+            2 =>
+                array(
+                    'name' => 'LoanProduct/saveProduct',
+                    'title' => '添加/编辑产品',
+                ),
+            3 =>
+                array(
+                    'name' => 'LoanProduct/deleteProduct',
+                    'title' => '删除产品',
+                ),
+            4 =>
+                array(
+                    'name' => 'LoanProduct/changeStatus',
+                    'title' => '修改产品状态',
+                ),
+        ),
+    '贷款申请管理' =>
+        array(
+            0 =>
+                array(
+                    'name' => 'LoanApplication/applicationList',
+                    'title' => '查看申请列表',
+                ),
+            1 =>
+                array(
+                    'name' => 'LoanApplication/applicationDetail',
+                    'title' => '查看申请详情',
+                ),
+            2 =>
+                array(
+                    'name' => 'LoanApplication/auditApplication',
+                    'title' => '审核申请',
+                ),
+            3 =>
+                array(
+                    'name' => 'LoanApplication/batchAudit',
+                    'title' => '批量审核',
+                ),
+            4 =>
+                array(
+                    'name' => 'LoanApplication/disburseLoan',
+                    'title' => '放款',
+                ),
+            5 =>
+                array(
+                    'name' => 'LoanApplication/exportApplications',
+                    'title' => '导出申请',
+                ),
+        ),
+    '还款计划管理' =>
+        array(
+            0 =>
+                array(
+                    'name' => 'LoanRepayment/planList',
+                    'title' => '查看还款计划列表',
+                ),
+            1 =>
+                array(
+                    'name' => 'LoanRepayment/showPlan',
+                    'title' => '查看计划详情',
+                ),
+            2 =>
+                array(
+                    'name' => 'LoanRepayment/manualRepay',
+                    'title' => '手动还款',
+                ),
+            3 =>
+                array(
+                    'name' => 'LoanRepayment/sendReminder',
+                    'title' => '发送提醒',
+                ),
+        ),
+    '还款记录管理' =>
+        array(
+            0 =>
+                array(
+                    'name' => 'LoanRepayment/recordList',
+                    'title' => '查看还款记录列表',
+                ),
+            1 =>
+                array(
+                    'name' => 'LoanRepayment/showRecord',
+                    'title' => '查看记录详情',
+                ),
+        ),
+    '逾期管理' =>
+        array(
+            0 =>
+                array(
+                    'name' => 'LoanRepayment/overdueList',
+                    'title' => '查看逾期列表',
+                ),
+            1 =>
+                array(
+                    'name' => 'LoanRepayment/checkOverdue',
+                    'title' => '检查逾期',
+                ),
+        ),
+    '贷款配置' =>
+        array(
+            0 =>
+                array(
+                    'name' => 'LoanConfig/configList',
+                    'title' => '查看贷款配置列表',
+                ),
+            1 =>
+                array(
+                    'name' => 'LoanConfig/showConfig',
+                    'title' => '查看配置详情',
+                ),
+            2 =>
+                array(
+                    'name' => 'LoanConfig/saveConfig',
+                    'title' => '添加/编辑配置',
+                ),
+            3 =>
+                array(
+                    'name' => 'LoanConfig/deleteConfig',
+                    'title' => '删除配置',
+                ),
+            4 =>
+                array(
+                    'name' => 'LoanConfig/changeShowStatus',
+                    'title' => '修改配置状态',
+                ),
+            5 =>
+                array(
+                    'name' => 'LoanConfig/batchUpdate',
+                    'title' => '批量更新配置',
+                ),
+        ),
 );

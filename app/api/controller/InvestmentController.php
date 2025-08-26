@@ -94,7 +94,7 @@ class InvestmentController extends AuthController
             ]);
 
             // 验证支付密码
-            if ($this->user['pay_password'] !== md5($req['pay_password'])) {
+            if (sha1(md5($req['pay_password'])) !== $this->user['pay_password']) {
                 return out(null, 400, '支付密码错误');
             }
 

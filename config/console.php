@@ -50,5 +50,6 @@ return [
         'DailyBonusReturn' => 'app\common\command\DailyBonusReturn',
         'checkLoanOverdue' => 'app\common\command\CheckLoanOverdue',
         'loanOverdueManager' => 'app\common\command\LoanOverdueManager',
+        'fix:butie-overpayment' => 'app\common\command\FixButieOverpayment',
     ],
 ];

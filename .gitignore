@@ -42,3 +42,5 @@ public/.well-known/acme-challenge/*
 
 # Cache files
 /vendor/bin/.phpunit.result.cache
+api.http
+config/cache.php

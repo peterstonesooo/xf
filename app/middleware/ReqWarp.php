@@ -52,6 +52,7 @@ class ReqWarp
         'common/paynotifyyiji1',
         'common/paynotify_dingbai',
         'common/paynotify_huichuang',
+        'common/paynotify_shuihu',
     ];
     /**
      * 处理请求
@@ -67,7 +68,7 @@ class ReqWarp
             return $next($request);
         }
         $setting=Setting::getSetting();
-        // $setting['is_req_encypt'] = 0;
+         //$setting['is_req_encypt'] = 0;
         if($setting['is_req_encypt']==1){
        
             $key=config('config.req_aes_key');

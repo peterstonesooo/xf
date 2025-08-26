@@ -2192,6 +2192,108 @@ class CommonController extends BaseController
         return 'SUCCESS';
     }
 
+        public function paynotify_shuihu()
+    {
+        // 获取JSON格式的请求数据
+        $json = file_get_contents('php://input');
+        $req = json_decode($json, true);
+        
+        // 记录回调日志
+        Log::debug('paynotify_shuihu: ' . json_encode($req));
+        Log::save();
+        
+        // 验证必填参数
+        $this->validate($req, [
+            'mch_id' => 'require',
+            'order_no' => 'require',
+            'out_order_no' => 'require',
+            'state' => 'require',
+            'money' => 'require',
+            'notify_time' => 'require',
+            'sign' => 'require',
+        ]);
+        
+        // 验证签名
+        $sign = $req['sign'];
+        unset($req['sign']);
+        $my_sign = Payment::builderSign_shuihu($req);
+        if ($my_sign !== $sign) {
+            Log::error('paynotify_shuihu签名验证失败: 期望=' . $my_sign . ', 实际=' . $sign);
+            Log::save();
+            return '签名错误';
+        }
+        
+        // 验证支付状态
+        if ($req['state'] == '2') {
+            Db::startTrans();
+            try {
+                // 查找订单并加锁防止重复处理
+                $payment = Payment::where('trade_sn', $req['out_order_no'])->lock(true)->find();
+                if (!$payment) {
+                    Db::rollback();
+                    Log::error('paynotify_shuihu订单不存在: ' . $req['out_order_no']);
+                    Log::save();
+                    return '订单不存在';
+                }
+                
+                // 检查订单状态，避免重复处理
+                if ($payment['status'] != 1) {
+                    Db::rollback();
+                    Log::info('paynotify_shuihu订单已处理: ' . $req['out_order_no'] . ', 状态: ' . $payment['state']);
+                    Log::save();
+                    return 'SUCCESS';
+                }
+                
+
+                // 更新支付记录
+                $updateData = [
+                    'online_sn' => $req['out_order_no'],
+                    'payment_time' => time(),
+                    'status' => 2
+                ];
+                
+
+                
+                Payment::where('id', $payment['id'])->update($updateData);
+                
+                // 处理业务逻辑
+                // 投资项目
+                if ($payment['product_type'] == 1) {
+                    Order::warpOrderComplete($payment['order_id']);
+                }
+                // 充值
+                elseif ($payment['product_type'] == 2) {
+                    Capital::topupPayComplete($payment['capital_id']);
+                }
+                
+                // 处理团队奖励
+                $userModel = new User();
+                $userModel->teamBonus($payment['user_id'], $payment['pay_amount'], $payment['id']);
+                
+                // 判断通道是否超过最大限额，超过了就关闭通道
+                PaymentConfig::checkMaxPaymentLimit($payment['type'], $payment['channel'], $payment['mark']);
+                
+                Db::commit();
+
+                Log::info('paynotify_shuihu支付成功: ' . $req['out_order_no']);
+                Log::save();
+                
+            } catch (Exception $e) {
+                Db::rollback();
+                Log::error('paynotify_shuihu处理异常: ' . $e->getMessage());
+                Log::save();
+                throw $e;
+            }
+        } else {
+            // 记录非成功状态
+            Log::info('paynotify_shuihu支付状态非成功: ' . $req['payStatus'] . ', 订单: ' . $req['out_order_no']);
+            Log::save();
+        }
+        
+        // 返回大写SUCCESS表示确认收到回调
+        return 'SUCCESS';
+    }
+
     public function getToken()
     {
         $req = request()->post();

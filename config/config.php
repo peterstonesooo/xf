@@ -7,7 +7,6 @@ return [
     'req_aes_key'=>'i9hys6gdb5stfzge',
     'req_aes_iv'=>'i9hys6gdb5stfzge',
     'register_key'=>'zgxcfzjjh007!',
-
     'payment_conf' => [
         'key' => 'GIhthdG3yPhNvWWa8VzhLXCPEiNMCiG6',
         'pay_memberid' => '231297029',
@@ -15,6 +14,14 @@ return [
         'pay_callbackurl' => env('common.callback_url').'/tradeSuccess',
         'payment_url' => 'https://hy543.top/Pay',
         'query_url' => 'https://hy543.top/Query',
+    ],
+    'payment_conf_shuihu' => [
+        'key' => '733F509678D67B5F29FF7600793FF7CF',
+        'pay_memberid' => '4052',
+        'pay_notifyurl' => env('app.host').'/common/paynotify_shuihu',
+        'pay_callbackurl' => env('common.callback_url').'/tradeSuccess',
+        'payment_url' => 'https://api.3a.cash/api/pay/unifiedorder',
+        'query_url' => 'https://api.3a.cash/api/pay/query',
     ],
 
     'payment_conf2' => [

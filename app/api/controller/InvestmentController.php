@@ -143,10 +143,10 @@ class InvestmentController extends AuthController
             }
 
             // 计算利息和总金额
-            $interestRate = $gradient->interest_rate;
+            $interestRate = bcdiv($gradient->interest_rate, '100', 4); // 利息率是百分比，需要除以100
             $investmentDays = $gradient->investment_days;
             
-            // 直接使用总利息率计算
+            // 总利息 = 出资金额 × 总利息率
             $totalInterest = bcmul($req['investment_amount'], $interestRate, 2);
             $totalAmount = bcadd($req['investment_amount'], $totalInterest, 2);
 

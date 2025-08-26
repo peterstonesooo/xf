@@ -19,7 +19,7 @@ class LoanApplicationController extends AuthController
     public function applicationList()
     {
         $req = request()->param();
-        var_dump($req);exit;
+        
         $builder = LoanApplication::with(['user', 'product', 'gradient', 'auditUser']);
         
         // 搜索条件

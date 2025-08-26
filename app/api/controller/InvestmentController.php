@@ -156,22 +156,35 @@ class InvestmentController extends AuthController
 
             Db::startTrans();
             try {
-                // 扣除用户钱包余额
-                User::where('id', $this->user['id'])->dec($walletField, $req['investment_amount'])->update();
-
-                // 记录余额变动日志
-                $logType = $req['wallet_type'] == 6 ? 2 : 1; // 积分用log_type=2
-                UserBalanceLog::create([
-                    'user_id' => $this->user['id'],
-                    'type' => 113, // 出资扣款
-                    'log_type' => $logType,
-                    'relation_id' => 0,
-                    'before_balance' => $user[$walletField],
-                    'change_balance' => -$req['investment_amount'],
-                    'after_balance' => bcsub($user[$walletField], $req['investment_amount'], 2),
-                    'remark' => '出资扣款',
-                    'status' => 2
-                ]);
+                // 扣除用户钱包余额并记录日志
+                // 根据钱包类型设置正确的log_type
+                $logTypeMap = [
+                    1 => 1,  // topup_balance -> log_type=1 (余额)
+                    2 => 2,  // team_bonus_balance -> log_type=2 (荣誉钱包)
+                    3 => 3,  // butie -> log_type=3 (稳盈钱包)
+                    4 => 4,  // balance -> log_type=4 (民生钱包)
+                    5 => 5,  // digit_balance -> log_type=5 (收益钱包)
+                    6 => 2,  // integral -> log_type=2 (积分)
+                    7 => 6,  // appreciating_wallet -> log_type=6 (幸福收益)
+                    8 => 7,  // butie_lock -> log_type=7 (稳赢钱包转入)
+                    9 => 8,  // lottery_tickets -> log_type=8 (抽奖卷)
+                    10 => 9, // tiyan_wallet_lock -> log_type=9 (体验钱包预支金)
+                    11 => 11, // tiyan_wallet -> log_type=11 (体验钱包)
+                    12 => 10  // xingfu_tickets -> log_type=10 (幸福助力卷)
+                ];
+                $logType = $logTypeMap[$req['wallet_type']] ?? 1;
+                User::changeInc(
+                    $this->user['id'], 
+                    -(float)$req['investment_amount'], 
+                    $walletField, 
+                    113, // 出资扣款
+                    0, 
+                    $logType, 
+                    '出资扣款', 
+                    0, 
+                    2, 
+                    'CZ'
+                );
 
                 // 创建出资记录
                 $investment = InvestmentRecord::create([

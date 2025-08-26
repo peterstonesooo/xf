@@ -105,22 +105,35 @@ class InvestmentAutoReturn extends Command
             $principalAmount = $investment->investment_amount;
             $interestAmount = $investment->total_interest;
 
-            // 增加用户钱包余额
-            User::where('id', $investment->user_id)->inc($returnWalletField, $returnAmount)->update();
-
-            // 记录余额变动日志
-            $logType = $returnWalletType == 6 ? 2 : 1; // 积分用log_type=2
-            UserBalanceLog::create([
-                'user_id' => $investment->user_id,
-                'type' => 114, // 出资返还
-                'log_type' => $logType,
-                'relation_id' => $investment->id,
-                'before_balance' => 0, // 这里需要获取实际余额，简化处理
-                'change_balance' => $returnAmount,
-                'after_balance' => 0, // 这里需要获取实际余额，简化处理
-                'remark' => '出资到期返还',
-                'status' => 2
-            ]);
+            // 增加用户钱包余额并记录日志
+            // 根据钱包类型设置正确的log_type
+            $logTypeMap = [
+                1 => 1,  // topup_balance -> log_type=1 (余额)
+                2 => 2,  // team_bonus_balance -> log_type=2 (荣誉钱包)
+                3 => 3,  // butie -> log_type=3 (稳盈钱包)
+                4 => 4,  // balance -> log_type=4 (民生钱包)
+                5 => 5,  // digit_balance -> log_type=5 (收益钱包)
+                6 => 2,  // integral -> log_type=2 (积分)
+                7 => 6,  // appreciating_wallet -> log_type=6 (幸福收益)
+                8 => 7,  // butie_lock -> log_type=7 (稳赢钱包转入)
+                9 => 8,  // lottery_tickets -> log_type=8 (抽奖卷)
+                10 => 9, // tiyan_wallet_lock -> log_type=9 (体验钱包预支金)
+                11 => 11, // tiyan_wallet -> log_type=11 (体验钱包)
+                12 => 10  // xingfu_tickets -> log_type=10 (幸福助力卷)
+            ];
+            $logType = $logTypeMap[$returnWalletType] ?? 1;
+            User::changeInc(
+                $investment->user_id, 
+                $returnAmount, 
+                $returnWalletField, 
+                114, // 出资返还
+                $investment->id, 
+                $logType, 
+                '出资到期返还', 
+                0, 
+                2, 
+                'HF'
+            );
 
             // 创建返还记录
             InvestmentReturnRecord::create([

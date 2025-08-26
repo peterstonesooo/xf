@@ -108,7 +108,7 @@
                 </div>
                 {/if}
 
-                {if condition="!empty($data['repaymentPlans'])"}
+                {if condition="isset($data['repaymentPlans']) && count($data['repaymentPlans']) > 0"}
                 <div class="row">
                     <div class="col-md-12">
                         <h4>还款计划</h4>
@@ -136,8 +136,50 @@
                                         <td>￥{$plan['paid_amount']}</td>
                                         <td>￥{$plan['remaining_amount']}</td>
                                         <td>
-                                            <span class="label label-{if condition="$plan['status'] eq 1"}warning{elseif condition="$plan['status'] eq 2"}success{else/}danger{/if}">{$plan['status_text']}</span>
+                                            <span class="label label-{if condition="$plan['status'] eq 1"}warning{elseif condition="$plan['status'] eq 2"}success{else/}danger{/if}">
+                                                {if condition="$plan['status'] eq 1"}待还款{elseif condition="$plan['status'] eq 2"}已还款{else/}逾期{/if}
+                                            </span>
                                         </td>
+                                    </tr>
+                                <?php } ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {elseif condition="$data['status'] eq 1"}
+                <div class="row">
+                    <div class="col-md-12">
+                        <h4>还款计划预览（审核通过后将生成）</h4>
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>期数</th>
+                                    <th>预计到期日期</th>
+                                    <th>本金</th>
+                                    <th>利息</th>
+                                    <th>总金额</th>
+                                    <th>备注</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php 
+                                $installmentCount = $data['installment_count'];
+                                $loanAmount = $data['loan_amount'];
+                                $totalAmount = $data['total_amount'];
+                                $monthlyAmount = $totalAmount / $installmentCount;
+                                $monthlyPrincipal = $loanAmount / $installmentCount;
+                                $monthlyInterest = ($totalAmount - $loanAmount) / $installmentCount;
+                                
+                                for ($i = 1; $i <= $installmentCount; $i++) {
+                                    $dueDate = date('Y-m-d', strtotime("+{$i} month"));
+                                ?>
+                                    <tr>
+                                        <td>第{$i}期</td>
+                                        <td>{$dueDate}</td>
+                                        <td>￥{$monthlyPrincipal}</td>
+                                        <td>￥{$monthlyInterest}</td>
+                                        <td>￥{$monthlyAmount}</td>
+                                        <td><span class="label label-info">预览</span></td>
                                     </tr>
                                 <?php } ?>
                             </tbody>

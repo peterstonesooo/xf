@@ -288,7 +288,7 @@ class LoanApplicationController extends AuthController
             $content .= "• 贷款金额：{$application->loan_amount}元\n";
             $content .= "• 贷款期限：{$application->loan_days}天\n";
             $content .= "• 分期数：{$application->installment_count}期\n";
-            $content .= "• 月供金额：{$application->monthly_payment}元\n";
+            $content .= "• 月供金额：" . number_format($application->total_amount / $application->installment_count, 2) . "元\n";
             $content .= "• 放款时间：" . date('Y-m-d H:i:s') . "\n\n";
             $content .= "资金已到账到您的充值余额中，请注意按时还款。";
 

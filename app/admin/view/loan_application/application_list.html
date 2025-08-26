@@ -53,12 +53,12 @@
                                 <td>{$v['id']}</td>
                                 <td>
                                     用户ID：{$v['user_id']}<br>
-                                    手机号：{$v['user']['phone']}<br>
-                                    姓名：{$v['user']['realname']}
+                                    手机号：{if condition="$v['user']"} {$v['user']['phone']} {else/} 无用户信息 {/if}<br>
+                                    姓名：{if condition="$v['user']"} {$v['user']['realname']} {else/} 无用户信息 {/if}
                                 </td>
                                 <td>
-                                    产品：{$v['product']['name']}<br>
-                                    梯度：{$v['gradient']['loan_days']}天/{$v['gradient']['installment_count']}期
+                                    产品：{if condition="$v['product']"} {$v['product']['name']} {else/} 无产品信息 {/if}<br>
+                                    梯度：{if condition="$v['gradient']"} {$v['gradient']['loan_days']}天/{$v['gradient']['installment_count']}期 {else/} 无梯度信息 {/if}
                                 </td>
                                 <td>￥{$v['loan_amount']}</td>
                                 <td>{$v['loan_days']}天</td>

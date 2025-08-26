@@ -845,4 +845,40 @@ return array(
                     'title' => '批量更新配置',
                 ),
         ),
+    '出资申请记录管理' =>
+        array(
+            0 =>
+                array(
+                    'name' => 'InvestmentRecord/recordList',
+                    'title' => '查看出资申请记录列表',
+                ),
+            1 =>
+                array(
+                    'name' => 'InvestmentRecord/recordDetail',
+                    'title' => '查看出资申请记录详情',
+                ),
+            2 =>
+                array(
+                    'name' => 'InvestmentRecord/exportRecords',
+                    'title' => '导出出资申请记录',
+                ),
+        ),
+    '出资返还记录管理' =>
+        array(
+            0 =>
+                array(
+                    'name' => 'InvestmentReturn/returnList',
+                    'title' => '查看出资返还记录列表',
+                ),
+            1 =>
+                array(
+                    'name' => 'InvestmentReturn/returnDetail',
+                    'title' => '查看出资返还记录详情',
+                ),
+            2 =>
+                array(
+                    'name' => 'InvestmentReturn/exportReturns',
+                    'title' => '导出出资返还记录',
+                ),
+        ),
 );

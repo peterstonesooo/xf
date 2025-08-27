@@ -323,6 +323,11 @@ return array(
                             'icon' => 'fa-circle-o',
                             'url' => 'admin/Setting/settingList',
                         ),
+                    '转账配置' =>
+                        array(
+                            'icon' => 'fa-exchange',
+                            'url' => 'admin/TransferConfig/index',
+                        ),
                     '数据修正' =>
                         array(
                             'icon' => 'fa-database',

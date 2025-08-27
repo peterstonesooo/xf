@@ -16,6 +16,7 @@ use app\model\Coin;
 use app\model\Order;
 use app\model\PaymentConfig;
 use app\model\Project;
+use app\model\TransferConfig;
 use app\model\User;
 use app\model\UserBalanceLog;
 use app\model\UserRelation;
@@ -652,9 +653,10 @@ class UserController extends AuthController
         ]);//type 1 数字人民币，，realname 对方姓名，account 对方账号，money 转账金额，pay_password 支付密码
         $user = $this->user;
 
-        //最低转账金额为100元
-        if($req['money'] < 100){
-            return out(null, 10001, '最低转账金额为100元');
+        // 检查转账配置
+        $transferCheck = TransferConfig::checkTransferAllowed($req['type'], $req['money']);
+        if (!$transferCheck['allowed']) {
+            return out(null, 10001, $transferCheck['message']);
         }
         if (empty($user['ic_number'])) {
             return out(null, 10001, '请先完成实名认证');
@@ -707,17 +709,30 @@ class UserController extends AuthController
             }
 
 
-            if ($req['money'] > $user[$field]) {
-                return out(null, 10002, '转账余额不足');
-            }
-            //转出金额  扣金额 可用金额 转账金额
-            $change_balance = 0 - $req['money'];
+            // 获取转账配置
+            $transferConfig = TransferConfig::getConfigByWalletType($req['type']);
             
-        //2 转账余额（充值金额加他人转账的金额）
-        User::changeInc($user['id'],$change_balance,$field,18,0,$logType,'转账['.$fieldText.']转账给-'.$take['realname'],0,1);
+            // 计算手续费
+            $feeAmount = 0;
+            if ($transferConfig && $transferConfig['fee_rate'] > 0) {
+                $feeAmount = round($req['money'] * ($transferConfig['fee_rate'] / 100), 2);
+            }
+            
+            // 计算实际扣除金额（转账金额 + 手续费）
+            $totalDeductAmount = $req['money'] + $feeAmount;
+            
+            if ($totalDeductAmount > $user[$field]) {
+                return out(null, 10002, '转账余额不足（包含手续费）');
+            }
+            
+            // 转出金额（包含手续费）
+            $change_balance = 0 - $totalDeductAmount;
+            
+            // 扣除转账人余额（包含手续费）
+            User::changeInc($user['id'], $change_balance, $field, 18, 0, $logType, '转账['.$fieldText.']转账给-'.$take['realname'].($feeAmount > 0 ? '（手续费：'.$feeAmount.'元）' : ''), 0, 1);
                 
-        //收到金额  加金额 转账金额
-        User::changeInc($take['id'],$req['money'],'topup_balance',19,0,1,'接收转账来自-'.$user['realname'],0,1);
+            // 收款人只收到转账金额（不含手续费）
+            User::changeInc($take['id'], $req['money'], 'topup_balance', 19, 0, 1, '接收转账来自-'.$user['realname'], 0, 1);
             
             Db::commit();
         } catch (Exception $e) {

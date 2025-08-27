@@ -142,3 +142,4 @@ class InvestmentRecordController extends AuthController
         exit;
     }
 }
+

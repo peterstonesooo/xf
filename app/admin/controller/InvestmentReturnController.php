@@ -137,3 +137,4 @@ class InvestmentReturnController extends AuthController
         exit;
     }
 }
+

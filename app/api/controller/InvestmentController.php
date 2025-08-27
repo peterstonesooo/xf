@@ -291,6 +291,91 @@ class InvestmentController extends AuthController
     }
 
     /**
+     * 获取出资详情
+     */
+    public function getInvestmentDetail()
+    {
+        try {
+            $req = $this->validate(request(), [
+                'id' => 'require|number'
+            ]);
+            
+            $user = $this->user;
+            
+            // 获取出资记录详情
+            $investment = InvestmentRecord::with(['gradient', 'returnRecords'])
+                                         ->where('id', $req['id'])
+                                         ->where('user_id', $user['id'])
+                                         ->find();
+            
+            if (!$investment) {
+                return out(null, 404, '出资记录不存在');
+            }
+
+            // 获取返还记录（一次性返还）
+            $returnedAmount = 0;
+            $returnedInterest = 0;
+            $returnRecord = null;
+            
+            if ($investment->returnRecords && count($investment->returnRecords) > 0) {
+                $returnRecord = $investment->returnRecords[0]; // 取第一条记录
+                $returnedAmount = $returnRecord->return_amount;
+                $returnedInterest = $returnRecord->interest_amount;
+            }
+
+            // 计算剩余金额
+            $remainingAmount = $investment->investment_amount - $returnedAmount;
+            $remainingInterest = $investment->total_interest - $returnedInterest;
+
+            // 计算进度
+            $progressPercent = $investment->investment_amount > 0 ? round(($returnedAmount / $investment->investment_amount) * 100, 2) : 0;
+
+            $data = [
+                'id' => $investment->id,
+                'gradient_name' => $investment->gradient->name ?? '',
+                'investment_amount' => $investment->investment_amount,
+                'investment_days' => $investment->investment_days,
+                'interest_rate' => $investment->interest_rate,
+                'total_interest' => $investment->total_interest,
+                'total_amount' => $investment->total_amount,
+                'wallet_type' => $investment->wallet_type,
+                'wallet_type_text' => $investment->getWalletTypeTextAttr(null, $investment->toArray()),
+                'start_date' => $investment->start_date,
+                'end_date' => $investment->end_date,
+                'status' => $investment->status,
+                'status_text' => $investment->getStatusTextAttr(null, $investment->toArray()),
+                'return_time' => $investment->return_time,
+                'created_at' => $investment->created_at,
+                'updated_at' => $investment->updated_at,
+                
+                // 返还相关
+                'returned_amount' => $returnedAmount,
+                'returned_interest' => $returnedInterest,
+                'remaining_amount' => $remainingAmount,
+                'remaining_interest' => $remainingInterest,
+                'progress_percent' => $progressPercent,
+                'return_record' => $returnRecord ? [
+                    'id' => $returnRecord->id,
+                    'return_type' => $returnRecord->return_type,
+                    'return_type_text' => $returnRecord->getReturnTypeTextAttr(null, $returnRecord->toArray()),
+                    'return_amount' => $returnRecord->return_amount,
+                    'interest_amount' => $returnRecord->interest_amount,
+                    'wallet_type' => $returnRecord->wallet_type,
+                    'wallet_type_text' => $returnRecord->getWalletTypeTextAttr(null, $returnRecord->toArray()),
+                    'return_time' => $returnRecord->return_time,
+                    'created_at' => $returnRecord->created_at
+                ] : null,
+                'is_returned' => $returnRecord ? true : false
+            ];
+
+            return out($data, 0, '获取成功');
+
+        } catch (\Exception $e) {
+            return out(null, 500, '获取出资详情失败：' . $e->getMessage());
+        }
+    }
+
+    /**
      * 获取支持的出资钱包类型
      */
     public function getSupportedWalletTypes()

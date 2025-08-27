@@ -40,8 +40,8 @@ class TransferConfig extends Model
     }
     
     /**
-     * 获取指定钱包类型的配置
-     * @param int $walletType 钱包类型 1-余额钱包 2-荣誉钱包 3-收益钱包
+     * 获取指定钱包类型的配置（仅启用状态）
+     * @param int $walletType 钱包类型 1-收益钱包 2-荣誉钱包 3-余额钱包
      * @return array|null
      */
     public static function getConfigByWalletType($walletType)
@@ -52,6 +52,16 @@ class TransferConfig extends Model
     }
     
     /**
+     * 获取指定钱包类型的配置（不管状态）
+     * @param int $walletType 钱包类型 1-收益钱包 2-荣誉钱包 3-余额钱包
+     * @return array|null
+     */
+    public static function getConfigByWalletTypeAll($walletType)
+    {
+        return self::where('wallet_type', $walletType)->find();
+    }
+    
+    /**
      * 检查转账是否允许
      * @param int $walletType 钱包类型
      * @param float $amount 转账金额
@@ -59,7 +69,8 @@ class TransferConfig extends Model
      */
     public static function checkTransferAllowed($walletType, $amount)
     {
-        $config = self::getConfigByWalletType($walletType);
+        // 先查询配置，不管状态如何
+        $config = self::where('wallet_type', $walletType)->find();
         
         if (!$config) {
             return ['allowed' => false, 'message' => '该钱包类型转账功能未配置'];

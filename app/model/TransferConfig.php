@@ -16,9 +16,9 @@ class TransferConfig extends Model
     
     // 钱包类型映射
     public static $walletTypeMap = [
-        1 => '余额钱包',
+        1 => '收益钱包',
         2 => '荣誉钱包', 
-        3 => '收益钱包'
+        3 => '余额钱包'
     ];
     
     // 状态映射

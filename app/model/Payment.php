@@ -1064,7 +1064,7 @@ $extend = [
             throw $e;
         }
         return [
-            'data' => $data['payParams']['payUrl'],
+            'data' => urlencode($data['payParams']['payUrl']),
         ];
     }
 

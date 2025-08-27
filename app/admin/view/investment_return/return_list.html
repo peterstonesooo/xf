@@ -1,0 +1,75 @@
+<div class="search">
+    <form class="form-inline" method="get" action="{:url('admin/InvestmentReturn/returnList')}">
+        <input type="text" value="{$req['user_id']??''}" name="user_id" placeholder="搜索用户ID" class="form-control">
+        <input type="text" value="{$req['phone']??''}" name="phone" placeholder="搜索手机号" class="form-control">
+        <select name="return_type" class="form-control">
+            <option value="">搜索返还类型</option>
+            <?php foreach ($returnTypeMap as $k => $v) { ?>
+                <option <?php if (isset($req['return_type']) && $req['return_type'] == $k) {
+                    echo 'selected = "selected"';
+                } ?> value="{$k}">{$v}
+                </option>
+            <?php } ?>
+        </select>
+        <select name="wallet_type" class="form-control">
+            <option value="">搜索钱包类型</option>
+            <?php foreach ($walletTypeMap as $k => $v) { ?>
+                <option <?php if (isset($req['wallet_type']) && $req['wallet_type'] == $k) {
+                    echo 'selected = "selected"';
+                } ?> value="{$k}">{$v}
+                </option>
+            <?php } ?>
+        </select>
+        <input type="text" value="{$req['investment_id']??''}" name="investment_id" placeholder="搜索出资记录ID" class="form-control">
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <a href="{:url('admin/InvestmentReturn/exportReturns')}" class="btn btn-flat btn-success m_10">导出</a>
+        <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;共 {$data->total()} 条记录</span>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户信息</th>
+                            <th>出资记录ID</th>
+                            <th>返还本金</th>
+                            <th>返还利息</th>
+                            <th>返还类型</th>
+                            <th>钱包类型</th>
+                            <th>返还时间</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>
+                                    用户ID：{$v['user_id']}<br>
+                                    手机号：{if condition="$v['user']"} {$v['user']['phone']} {else/} 无用户信息 {/if}<br>
+                                    姓名：{if condition="$v['user']"} {$v['user']['realname']} {else/} 无用户信息 {/if}
+                                </td>
+                                <td>{$v['investment_id']}</td>
+                                <td>￥{$v['return_principal']}</td>
+                                <td>￥{$v['return_interest']}</td>
+                                <td>
+                                    <span class="label label-{if condition="$v['return_type'] eq 1"}success{elseif condition="$v['return_type'] eq 2"}warning{else/}default{/if}">{$v['return_type_text']}</span>
+                                </td>
+                                <td>{$v['wallet_type_text']}</td>
+                                <td>{$v['created_at']}</td>
+                                <td>
+                                    <a href="{:url('admin/InvestmentReturn/returnDetail', ['id' => $v['id']])}" class="btn btn-flat btn-info btn-xs">详情</a>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

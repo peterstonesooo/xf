@@ -323,7 +323,7 @@ class InvestmentController extends AuthController
                     $data[] = [
                         'type' => $type,
                         'name' => $walletTypeMap[$type]['name'],
-                        'balance' => $this->user[$walletFieldMap[$type]['field']] ?? 0
+                        'balance' => $this->user[$walletTypeMap[$type]['field']] ?? 0
                     ];
                 }
             }

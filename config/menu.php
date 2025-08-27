@@ -266,6 +266,16 @@ return array(
                             'icon' => 'fa-circle-o',
                             'url' => 'admin/LoanConfig/configList',
                         ),
+                    '出资申请记录' =>
+                        array(
+                            'icon' => 'fa-circle-o',
+                            'url' => 'admin/InvestmentRecord/recordList',
+                        ),
+                    '出资返还记录' =>
+                        array(
+                            'icon' => 'fa-circle-o',
+                            'url' => 'admin/InvestmentReturn/returnList',
+                        ),
                 ),
         ),
     '设置中心' =>

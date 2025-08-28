@@ -710,7 +710,7 @@ class ProjectController extends AuthController
         $order = Order::where('user_id',$user['id'])->where('status','in',[2,4])->select();
         $order_daysreturn = OrderDailyBonus::where('user_id',$user['id'])->where('status','in',[2,4])->select();
         if(!$order && !$order_daysreturn){
-            return out(null,10002,'请优先完成任一五福临门板块申领');
+            return out(null,10002,'请优先完成任意五福临门板块申领');
         }
         
 
@@ -771,7 +771,7 @@ class ProjectController extends AuthController
         }
         
         if (!$satisfied) {
-            return out(null, 10003, '请优先完成任一五福临门板块申领');
+            return out(null, 10003, '请优先完成任意五福临门板块申领');
         }
         
 

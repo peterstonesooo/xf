@@ -122,7 +122,7 @@ class LoanController extends AuthController
             // 检查用户资格和计算最大贷款限额
             $maxLoanAmount = $this->checkUserQualificationAndGetMaxAmount($user['id']);
             if ($maxLoanAmount === false) {
-                return out(null, 400, '您尚未完成任一五福临门板块申领，无法申请贷款');
+                return out(null, 400, '您尚未完成任意五福临门板块申领，无法申请贷款');
             }
             
             // 检查幸福助力券数量

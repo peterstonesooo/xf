@@ -43,7 +43,7 @@
                                 <td>￥{$v['min_amount']}</td>
                                 <td>￥{$v['max_amount']}</td>
                                 <td>{$v['interest_type_text']}</td>
-                                <td>{$v['overdue_interest_rate']}%</td>
+                                <td><?php echo number_format($v['overdue_interest_rate'], 4); ?>%</td>
                                 <td>{$v['gradient_count']}</td>
                                 <td>
                                     <span class="label label-{if condition="$v['status'] eq 1"}success{else/}danger{/if}">{$v['status_text']}</span>

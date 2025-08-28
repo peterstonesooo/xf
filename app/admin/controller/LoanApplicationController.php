@@ -258,7 +258,7 @@ class LoanApplicationController extends AuthController
             echo $item->loan_amount . "\t";
             echo $item->loan_days . "\t";
             echo $item->installment_count . "\t";
-            echo $item->interest_rate . "\t";
+            echo number_format($item->interest_rate, 4) . "\t";
             echo $item->total_interest . "\t";
             echo $item->total_amount . "\t";
             echo $item->getStatusTextAttr(null, $item->toArray()) . "\t";

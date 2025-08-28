@@ -134,7 +134,7 @@ class InvestmentRecordController extends AuthController
                 $item->wallet_type_text,
                 $item->gradient->name ?? '',
                 $item->gradient->investment_days ?? 0,
-                ($item->gradient->interest_rate ?? 0) * 100,
+                number_format(($item->gradient->interest_rate ?? 0) * 100, 4),
                 $item->status_text,
                 $item->created_at
             );
@@ -142,4 +142,6 @@ class InvestmentRecordController extends AuthController
         exit;
     }
 }
+
+
 

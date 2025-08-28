@@ -522,7 +522,7 @@ class LoanController extends AuthController
                 2 => ['field' => 'team_bonus_balance', 'name' => '荣誉钱包'],
                 3 => ['field' => 'butie', 'name' => '稳盈钱包'],
                 4 => ['field' => 'balance', 'name' => '民生钱包'],
-                5 => ['field' => 'digit_balance', 'name' => '收益钱包']
+                5 => ['field' => 'digit_balance', 'name' => '惠民钱包']
             ];
 
             $plan = LoanRepaymentPlan::find($req['plan_id']);
@@ -665,7 +665,7 @@ class LoanController extends AuthController
                 2 => ['field' => 'team_bonus_balance', 'name' => '荣誉钱包'],
                 3 => ['field' => 'butie', 'name' => '稳盈钱包'],
                 4 => ['field' => 'balance', 'name' => '民生钱包'],
-                5 => ['field' => 'digit_balance', 'name' => '收益钱包'],
+                5 => ['field' => 'digit_balance', 'name' => '惠民钱包'],
                 6 => ['field' => 'integral', 'name' => '积分'],
                 7 => ['field' => 'appreciating_wallet', 'name' => '幸福收益'],
                 8 => ['field' => 'butie_lock', 'name' => '稳赢钱包转入'],
@@ -811,7 +811,7 @@ class LoanController extends AuthController
                 2 => ['field' => 'team_bonus_balance', 'name' => '荣誉钱包'],
                 3 => ['field' => 'butie', 'name' => '稳盈钱包'],
                 4 => ['field' => 'balance', 'name' => '民生钱包'],
-                5 => ['field' => 'digit_balance', 'name' => '收益钱包']
+                5 => ['field' => 'digit_balance', 'name' => '惠民钱包']
             ];
 
             $walletField = $walletTypeMap[$walletType]['field'];
@@ -980,7 +980,7 @@ class LoanController extends AuthController
             'team_bonus_balance' => 2, // 荣誉钱包
             'butie' => 3,              // 稳盈钱包
             'balance' => 4,            // 民生钱包
-            'digit_balance' => 5       // 收益钱包
+            'digit_balance' => 5       // 惠民钱包
         ];
         return $logTypeMap[$walletField] ?? 1;
     }

@@ -667,7 +667,7 @@ class UserController extends AuthController
                 $filed = 'digit_balance';
                 $log_type = 5;
                 $balance_type = 15;
-                $text = '收益钱包';
+                $text = '惠民钱包';
                 break;
             case 5:
                 $filed = 'butie';

@@ -882,7 +882,7 @@ class CapitalController extends AuthController
                     $v['log_type_text'] = '荣誉钱包';
                     break;
                 case 5:
-                    $v['log_type_text'] = '收益钱包';
+                    $v['log_type_text'] = '惠民钱包';
                     break;
                 case 11:
                     $v['log_type_text'] = '体验钱包';

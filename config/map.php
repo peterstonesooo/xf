@@ -377,7 +377,7 @@ return array(
             2 => '荣誉钱包',//team_bonus_balance
             3 => '稳盈钱包',//butie  共富金
             4 => '民生钱包',//balance
-            5 => '收益钱包',//digit_balance  惠民金
+            5 => '惠民钱包',//digit_balance  惠民金
             6 => '积分',//integral
             7 => '幸福收益',//appreciating_wallet
             8 => '稳赢钱包转入',// butie_lock

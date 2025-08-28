@@ -160,7 +160,7 @@ class LoanRepaymentController extends AuthController
             2 => ['field' => 'team_bonus_balance', 'name' => '荣誉钱包'],
             3 => ['field' => 'butie', 'name' => '稳盈钱包'],
             4 => ['field' => 'balance', 'name' => '民生钱包'],
-            5 => ['field' => 'digit_balance', 'name' => '收益钱包'],
+            5 => ['field' => 'digit_balance', 'name' => '惠民钱包'],
         ];
 
         // 获取支持的钱包类型配置
@@ -210,7 +210,7 @@ class LoanRepaymentController extends AuthController
             2 => ['field' => 'team_bonus_balance', 'name' => '荣誉钱包'],
             3 => ['field' => 'butie', 'name' => '稳盈钱包'],
             4 => ['field' => 'balance', 'name' => '民生钱包'],
-            5 => ['field' => 'digit_balance', 'name' => '收益钱包'],
+            5 => ['field' => 'digit_balance', 'name' => '惠民钱包'],
         ];
 
         // 验证钱包类型

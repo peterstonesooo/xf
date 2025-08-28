@@ -16,7 +16,7 @@ class TransferConfig extends Model
     
     // 钱包类型映射
     public static $walletTypeMap = [
-        1 => '收益钱包',
+        1 => '惠民钱包',
         2 => '荣誉钱包', 
         3 => '余额钱包'
     ];
@@ -41,7 +41,7 @@ class TransferConfig extends Model
     
     /**
      * 获取指定钱包类型的配置（仅启用状态）
-     * @param int $walletType 钱包类型 1-收益钱包 2-荣誉钱包 3-余额钱包
+     * @param int $walletType 钱包类型 1-惠民钱包 2-荣誉钱包 3-余额钱包
      * @return array|null
      */
     public static function getConfigByWalletType($walletType)
@@ -53,7 +53,7 @@ class TransferConfig extends Model
     
     /**
      * 获取指定钱包类型的配置（不管状态）
-     * @param int $walletType 钱包类型 1-收益钱包 2-荣誉钱包 3-余额钱包
+     * @param int $walletType 钱包类型 1-惠民钱包 2-荣誉钱包 3-余额钱包
      * @return array|null
      */
     public static function getConfigByWalletTypeAll($walletType)

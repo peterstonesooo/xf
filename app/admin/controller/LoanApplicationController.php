@@ -359,6 +359,7 @@ class LoanApplicationController extends AuthController
         $loanAmount = $application->loan_amount;
         $installmentCount = $application->installment_count;
         $totalAmount = $application->total_amount;
+        $loanDays = $application->loan_days;
         
         // 计算每期金额
         $monthlyAmount = $totalAmount / $installmentCount;
@@ -367,7 +368,12 @@ class LoanApplicationController extends AuthController
         
         // 生成还款计划
         for ($i = 1; $i <= $installmentCount; $i++) {
-            $dueDate = date('Y-m-d', strtotime("+{$i} month"));
+            // 根据梯度表中的loan_days计算还款时间
+            // 第一次还款：time() + loan_days
+            // 第二次还款：time() + loan_days * 2
+            // 第三次还款：time() + loan_days * 3
+            $daysToAdd = $loanDays * $i;
+            $dueDate = date('Y-m-d', strtotime("+{$daysToAdd} day", strtotime($application->created_at)));
             
             LoanRepaymentPlan::create([
                 'application_id' => $application->id,

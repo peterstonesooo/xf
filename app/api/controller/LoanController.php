@@ -148,7 +148,7 @@ class LoanController extends AuthController
 
             // 验证用户是否有未完成的申请
             $pendingApplication = LoanApplication::where('user_id', $this->user['id'])
-                                                ->whereIn('status', [1, 2, 4]) // 待审核、已通过、已放款
+                                                ->whereIn('status', [1, 2]) // 待审核、已通过、已放款
                                                 ->find();
             if ($pendingApplication) {
                 return out(null, 400, '您有未完成的贷款申请，请等待处理完成后再申请');

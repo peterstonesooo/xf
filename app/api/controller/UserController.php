@@ -2682,7 +2682,7 @@ class UserController extends AuthController
         // 检查用户是否已激活幸福权益
         $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
         if (!$activation) {
-            return out(null, 10001, '请先完成幸福权益激活后才能提现');
+            return out(null, 10001, '请先完成幸福权益激活');
         }
 
         // if (empty($user['ic_number'])) {

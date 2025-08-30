@@ -130,7 +130,7 @@ class HappinessEquityController extends AuthController
                 $beforeTopupBalance = $user['topup_balance'];
                 
                 // 扣除充值余额
-                User::changeInc($user['id'], -$paymentAmount, 'topup_balance', 115, 0, 1, '幸福权益激活缴纳', 0, 1);
+                User::changeInc($user['id'], -$paymentAmount, 'topup_balance', 115, 0, 1, '幸福权益激活', 0, 1);
                 
                 // 准备钱包余额数据
                 $walletBalances = [

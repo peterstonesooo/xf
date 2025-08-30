@@ -405,6 +405,13 @@ class CapitalController extends AuthController
            }elseif ($req['type'] == 2){
                $field = 'digit_balance';
                $log_type = 5;
+               
+               // 检查日期，9月16号之前不允许提现
+               $currentDate = date('Y-m-d');
+               $allowDate = '2024-09-16';
+               if ($currentDate < $allowDate) {
+                   return out(null, 10001, '本次周期结束后即可进行提现');
+               }
            }elseif ($req['type'] == 3){
                $field = 'tiyan_wallet';
                $log_type = 11;
@@ -530,6 +537,13 @@ class CapitalController extends AuthController
         
         Db::startTrans();
         try {
+
+            // 检查日期，9月16号之前不允许提现
+            $currentDate = date('Y-m-d');
+            $allowDate = '2024-09-16';
+            if ($currentDate < $allowDate) {
+                return out(null, 10001, '本次周期结束后即可进行提现');
+            }
 
             $field = 'digit_balance';
             $log_type =2;

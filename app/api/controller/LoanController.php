@@ -166,6 +166,17 @@ class LoanController extends AuthController
 
             Db::startTrans();
             try {
+                // 重新获取用户信息（加锁）
+                $user = User::where('id', $this->user['id'])->lock(true)->find();
+                
+                // 再次检查幸福助力券数量
+                if ($user['xingfu_tickets'] < $requiredTickets) {
+                    return out(null, 400, "申请借资需要{$requiredTickets}张幸福助力券，您当前有{$user['xingfu_tickets']}张");
+                }
+                
+                // 扣除幸福助力券
+                User::changeInc($user['id'], -$requiredTickets, 'xingfu_tickets', 116, $req['product_id'], 12, '贷款申请扣除助力券', 0, 1);
+                
                 // 创建贷款申请
                 $application = LoanApplication::create([
                     'user_id' => $this->user['id'],

@@ -102,6 +102,24 @@ class LoanController extends AuthController
                 return out(null, 400, '支付密码错误');
             }
 
+            // 验证身份信息
+            if (empty($user['realname']) || empty($user['ic_number'])) {
+                return out(null, 400, '请先完成实名认证');
+            }
+
+            // 验证提交的身份信息与用户实名认证信息是否一致
+            if ($req['realname'] !== $user['realname']) {
+                return out(null, 400, '姓名与实名认证信息不一致');
+            }
+
+            if ($req['id_card'] !== $user['ic_number']) {
+                return out(null, 400, '身份证号与实名认证信息不一致');
+            }
+
+            if ($req['phone'] !== $user['phone']) {
+                return out(null, 400, '手机号与实名认证信息不一致');
+            }
+
             // 验证产品是否存在且启用
             $product = LoanProduct::where('id', $req['product_id'])
                                  ->where('status', 1)

@@ -49,6 +49,11 @@ class HappinessEquityController extends AuthController
             // 计算需要缴纳的金额
             $paymentAmount = round($totalBalance * ($equityRate / 100), 2);
             
+            // 如果已激活，使用激活记录中的实际缴纳金额
+            if ($activation) {
+                $paymentAmount = $activation['payment_amount'];
+            }
+            
             $data = [
                 'is_activated' => !empty($activation),
                 'title' => $title,

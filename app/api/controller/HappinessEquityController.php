@@ -106,7 +106,7 @@ class HappinessEquityController extends AuthController
             $paymentAmount = round($totalBalance * ($equityRate / 100), 2);
             
             // 检查充值余额是否足够
-            if ($user['topup_balance'] < $paymentAmount) {
+            if (!isset($user['topup_balance']) || $user['topup_balance'] < $paymentAmount) {
                 return out(null, 10001, '充值余额不足，需要' . $paymentAmount . '元');
             }
             
@@ -116,7 +116,7 @@ class HappinessEquityController extends AuthController
                 $user = User::where('id', $user['id'])->lock(true)->find();
                 
                 // 再次检查余额
-                if ($user['topup_balance'] < $paymentAmount) {
+                if (!isset($user['topup_balance']) || $user['topup_balance'] < $paymentAmount) {
                     return out(null, 10001, '充值余额不足，需要' . $paymentAmount . '元');
                 }
                 

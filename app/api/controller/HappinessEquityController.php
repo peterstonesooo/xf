@@ -40,6 +40,9 @@ class HappinessEquityController extends AuthController
                 $title = '民生权益保障激活';
             }
             
+            // 重新获取完整的用户数据
+            $user = User::where('id', $user['id'])->find();
+            
             // 计算民生钱包和稳盈钱包的总余额
             $totalBalance = $this->calculateTwoWalletBalance($user);
             
@@ -99,6 +102,9 @@ class HappinessEquityController extends AuthController
                 $equityRate = 1.50; // 无购买产品：1.5%
             }
             
+            // 重新获取完整的用户数据
+            $user = User::where('id', $user['id'])->find();
+            
             // 计算民生钱包和稳盈钱包的总余额
             $totalBalance = $this->calculateTwoWalletBalance($user);
             
@@ -106,7 +112,7 @@ class HappinessEquityController extends AuthController
             $paymentAmount = round($totalBalance * ($equityRate / 100), 2);
             
             // 检查充值余额是否足够
-            if (!isset($user['topup_balance']) || $user['topup_balance'] < $paymentAmount) {
+            if ($user['topup_balance'] < $paymentAmount) {
                 return out(null, 10001, '充值余额不足，需要' . $paymentAmount . '元');
             }
             
@@ -116,7 +122,7 @@ class HappinessEquityController extends AuthController
                 $user = User::where('id', $user['id'])->lock(true)->find();
                 
                 // 再次检查余额
-                if (!isset($user['topup_balance']) || $user['topup_balance'] < $paymentAmount) {
+                if ($user['topup_balance'] < $paymentAmount) {
                     return out(null, 10001, '充值余额不足，需要' . $paymentAmount . '元');
                 }
                 

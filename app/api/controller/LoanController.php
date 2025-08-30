@@ -128,7 +128,7 @@ class LoanController extends AuthController
             // 检查幸福助力券数量
             $requiredTickets = LoanConfig::getConfig('xingfu_tickets_num', 10);
             if ($user['xingfu_tickets'] < $requiredTickets) {
-                return out(null, 400, "申请贷款需要{$requiredTickets}张幸福助力券，您当前有{$user['xingfu_tickets']}张");
+                return out(null, 400, "申请借资需要{$requiredTickets}张幸福助力券，您当前有{$user['xingfu_tickets']}张");
             }
             
             // 验证贷款金额是否在范围内
@@ -299,7 +299,7 @@ class LoanController extends AuthController
                 return out([
                     'qualified' => false,
                     'max_loan_amount' => 0,
-                    'message' => '您尚未完成任一五福临门板块申领，无法申请贷款',
+                    'message' => '您尚未完成任意五福临门板块申领，无法申请贷款',
                     'xingfu_tickets' => $user['xingfu_tickets'],
                     'required_tickets' => $requiredTickets,
                     'has_enough_tickets' => $hasEnoughTickets
@@ -310,7 +310,7 @@ class LoanController extends AuthController
                 return out([
                     'qualified' => false,
                     'max_loan_amount' => $maxLoanAmount,
-                    'message' => "申请贷款需要{$requiredTickets}张幸福助力券，您当前有{$user['xingfu_tickets']}张",
+                    'message' => "申请借资需要{$requiredTickets}张幸福助力券，您当前有{$user['xingfu_tickets']}张",
                     'xingfu_tickets' => $user['xingfu_tickets'],
                     'required_tickets' => $requiredTickets,
                     'has_enough_tickets' => $hasEnoughTickets

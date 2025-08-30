@@ -56,7 +56,7 @@ class EquityRecordController extends AuthController
             $order = Order::where('id',$item['relation_id'])->field('id,project_name,single_amount,buy_num,order_sn')->find();
             $item['price']= $item['text'] = $item['order_sn']='';
             if($order){
-                $item['price'] = bcmul($order['single_amount'],$order['buy_num'],2);
+                $item['price'] = bcmul((string)$order['single_amount'],(string)$order['buy_num'],2);
                 $item['text'] = "投资{$order['project_name']}{$item['price']}元赠送{$item['num']}份$txtName";
                 $item['order_sn'] = $order['order_sn'];
             }else{
@@ -68,7 +68,7 @@ class EquityRecordController extends AuthController
         $data['list'] = $list;
         $data['today_equity_price'] = $todayPrice;
         $data['sum'] = $sum;
-        $data['sum_price'] = bcmul($todayPrice,$sum,2);
+        $data['sum_price'] = bcmul((string)$todayPrice,(string)$sum,2);
         return out($data);
     }
 

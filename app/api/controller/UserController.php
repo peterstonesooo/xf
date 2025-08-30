@@ -1254,7 +1254,7 @@ class UserController extends AuthController
                                                 ->paginate();
         foreach($invite_bonus as $key=>$item){
         
-            $orderPrice = bcmul($item['single_amount'],$item['buy_num'],2);
+            $orderPrice = bcmul((string)$item['single_amount'],(string)$item['buy_num'],2);
             $realname = User::where($item['user_id'])->value('realname');
             $invite_bonus[$key]['realname'] = $realname;
             $level = UserRelation::where('user_id',$user['id'])->where('sub_user_id',$item['user_id'])->value('level');
@@ -2214,7 +2214,7 @@ class UserController extends AuthController
         $coin = UserCoinBalance::where('user_id', $userId)->select();
         foreach ($coin as $v) {
             $coin = Coin::where('id', $v['coin_id'])->find();
-            $assets += bcmul(Coin::nowPrice($coin['code']), $v['balance'], 4);
+            $assets += bcmul((string)Coin::nowPrice($coin['code']), (string)$v['balance'], 4);
         }
         return $assets;
     }

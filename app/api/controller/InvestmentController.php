@@ -147,8 +147,8 @@ class InvestmentController extends AuthController
             $investmentDays = $gradient->investment_days;
             
             // 总利息 = 出资金额 × 总利息率
-            $totalInterest = bcmul($req['investment_amount'], $interestRate, 2);
-            $totalAmount = bcadd($req['investment_amount'], $totalInterest, 2);
+            $totalInterest = bcmul((string)$req['investment_amount'], $interestRate, 2);
+            $totalAmount = bcadd((string)$req['investment_amount'], $totalInterest, 2);
 
             // 计算开始和结束日期
             $startDate = date('Y-m-d');

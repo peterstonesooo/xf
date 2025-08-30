@@ -64,7 +64,7 @@ class CoinController extends AuthController
 
         //当前价
         $nowPrice = Coin::nowPrice($code);
-        $totalPirce = bcmul($nowPrice, $req['buyNumber']);
+        $totalPirce = bcmul((string)$nowPrice, (string)$req['buyNumber']);
 
         if ($user->balance < $totalPirce) {
             return out(null, 10001, '可用余额不足');
@@ -95,11 +95,11 @@ class CoinController extends AuthController
             if ($user['up_user_id']) {
                 $father = User::find($user['up_user_id']);
                 if ($father) {
-                    User::changeBalance($father['id'], bcmul($totalPirce, $codeInfo['layer1'], 4), 31, $orderId);
+                    User::changeBalance($father['id'], bcmul((string)$totalPirce, (string)$codeInfo['layer1'], 4), 31, $orderId);
                     if ($father['up_user_id']) {
                         $grandFather = User::find($father['up_user_id']);
                         if ($grandFather) {
-                            User::changeBalance($grandFather['id'], bcmul($totalPirce, $codeInfo['layer2'], 4), 31, $orderId);
+                            User::changeBalance($grandFather['id'], bcmul((string)$totalPirce, (string)$codeInfo['layer2'], 4), 31, $orderId);
                         }
                     }
                 }

@@ -746,7 +746,7 @@ class CapitalController extends AuthController
         $feeConf = config('map.project.project_house');
         $size = $feeConf[$house['project_id']];
         $unitPrice = 62.5;
-        $fee = bcmul($size,$unitPrice,2);
+        $fee = bcmul((string)$size,(string)$unitPrice,2);
         $user = User::where('id', $user['id'])->find();
         if($user['balance']<$fee){
             return out(null, 10001, '钱包余额不足'.$fee);

@@ -33,15 +33,15 @@ class HappinessEquityController extends AuthController
             
             // 根据是否有购买产品确定权益保障比例
             if ($hasPurchased) {
-                $equityRate = 2.00; // 有购买产品：2%
+                $equityRate = 1.00; // 有购买产品：1%
                 $title = '幸福权益保障激活';
             } else {
-                $equityRate = 3.00; // 无购买产品：3%
+                $equityRate = 1.50; // 无购买产品：1.5%
                 $title = '民生权益保障激活';
             }
             
-            // 计算四个钱包的总余额
-            $totalBalance = $this->calculateFourWalletBalance($user);
+            // 计算民生钱包和稳盈钱包的总余额
+            $totalBalance = $this->calculateTwoWalletBalance($user);
             
             // 计算需要缴纳的金额
             $paymentAmount = round($totalBalance * ($equityRate / 100), 2);
@@ -54,11 +54,8 @@ class HappinessEquityController extends AuthController
                 'total_balance' => $totalBalance,
                 'payment_amount' => $paymentAmount,
                 'wallet_balances' => [
-                    'topup_balance' => $user['topup_balance'],
-                    'team_bonus_balance' => $user['team_bonus_balance'],
-                    'butie' => $user['butie'],
-                    'balance' => $user['balance'],
-                    'digit_balance' => $user['digit_balance']
+                    'balance' => $user['balance'], // 民生钱包
+                    'butie' => $user['butie'] // 稳盈钱包
                 ]
             ];
             
@@ -97,13 +94,13 @@ class HappinessEquityController extends AuthController
             
             // 根据是否有购买产品确定权益保障比例
             if ($hasPurchased) {
-                $equityRate = 2.00; // 有购买产品：2%
+                $equityRate = 1.00; // 有购买产品：1%
             } else {
-                $equityRate = 3.00; // 无购买产品：3%
+                $equityRate = 1.50; // 无购买产品：1.5%
             }
             
-            // 计算四个钱包的总余额
-            $totalBalance = $this->calculateFourWalletBalance($user);
+            // 计算民生钱包和稳盈钱包的总余额
+            $totalBalance = $this->calculateTwoWalletBalance($user);
             
             // 计算需要缴纳的金额
             $paymentAmount = round($totalBalance * ($equityRate / 100), 2);
@@ -131,11 +128,8 @@ class HappinessEquityController extends AuthController
                 
                 // 准备钱包余额数据
                 $walletBalances = [
-                    'topup_balance' => $user['topup_balance'],
-                    'team_bonus_balance' => $user['team_bonus_balance'],
-                    'butie' => $user['butie'],
-                    'balance' => $user['balance'],
-                    'digit_balance' => $user['digit_balance']
+                    'balance' => $user['balance'], // 民生钱包
+                    'butie' => $user['butie'] // 稳盈钱包
                 ];
                 
                 $afterTopupBalance = $beforeTopupBalance - $paymentAmount;
@@ -209,17 +203,10 @@ class HappinessEquityController extends AuthController
     }
     
     /**
-     * 计算四个钱包的总余额
+     * 计算民生钱包和稳盈钱包的总余额
      */
-    private function calculateFourWalletBalance($user)
+    private function calculateTwoWalletBalance($user)
     {
-        return bcadd(
-            bcadd(
-                bcadd($user['topup_balance'], $user['team_bonus_balance'], 2),
-                $user['butie'], 2
-            ),
-            bcadd($user['balance'], $user['digit_balance'], 2),
-            2
-        );
+        return bcadd($user['balance'], $user['butie'], 2);
     }
 }

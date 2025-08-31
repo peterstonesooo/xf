@@ -49,7 +49,7 @@ class TransferConfigController extends AuthController
     public function save()
     {
         $req = $this->validate(request(), [
-            'wallet_type|钱包类型' => 'require|in:1,2,3',
+            'wallet_type|钱包类型' => 'require|in:1,2,3,4',
             'min_amount|最低转账金额' => 'require|float|gt:0',
             'max_amount|最高转账金额' => 'require|float|gt:0',
             'fee_rate|手续费率' => 'require|float|egt:0|elt:100',

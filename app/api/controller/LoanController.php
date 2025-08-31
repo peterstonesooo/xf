@@ -150,9 +150,13 @@ class LoanController extends AuthController
             }
             
             // 验证贷款金额是否在范围内
-            $actualMaxAmount = min($product->max_amount, $maxLoanAmount);
-            if ($req['loan_amount'] < $product->min_amount || $req['loan_amount'] > $actualMaxAmount) {
-                return out(null, 400, "贷款金额必须在{$product->min_amount}元到{$actualMaxAmount}元之间");
+            if ($req['loan_amount'] < $product->min_amount || $req['loan_amount'] > $product->max_amount) {
+                return out(null, 400, "贷款金额必须在{$product->min_amount}元到{$product->max_amount}元之间");
+            }
+
+            // 验证用户完成的产品组限额
+            if ($req['loan_amount'] > $maxLoanAmount) {
+                return out(null, 400, "根据您完成的产品组，最大可贷款金额为{$maxLoanAmount}元");
             }
 
             // 验证用户申请次数限制

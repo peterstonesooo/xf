@@ -63,7 +63,8 @@ class HappinessEquityController extends AuthController
                 'payment_amount' => $paymentAmount,
                 'wallet_balances' => [
                     'balance' => $user['balance'], // 民生钱包
-                    'butie' => $user['butie'] // 稳盈钱包
+                    'butie' => $user['butie'], // 稳盈钱包
+                    'butie_lock' => $user['butie_lock'] // 稳盈钱包转入
                 ]
             ];
             
@@ -140,7 +141,8 @@ class HappinessEquityController extends AuthController
                 // 准备钱包余额数据
                 $walletBalances = [
                     'balance' => $user['balance'], // 民生钱包
-                    'butie' => $user['butie'] // 稳盈钱包
+                    'butie' => $user['butie'], // 稳盈钱包
+                    'butie_lock' => $user['butie_lock'] // 稳盈钱包转入
                 ];
                 
                 $afterTopupBalance = $beforeTopupBalance - $paymentAmount;
@@ -214,10 +216,11 @@ class HappinessEquityController extends AuthController
     }
     
     /**
-     * 计算民生钱包和稳盈钱包的总余额
+     * 计算民生钱包、稳盈钱包和稳盈钱包转入的总余额
      */
     private function calculateTwoWalletBalance($user)
     {
-        return bcadd($user['balance'], $user['butie'], 2);
+        $balance = bcadd($user['balance'], $user['butie'], 2);
+        return bcadd($balance, $user['butie_lock'], 2);
     }
 }

@@ -87,8 +87,8 @@ class LoanController extends AuthController
                 'gradient_id' => 'require|number',
                 'loan_amount' => 'require|float|gt:0',
                 'realname' => 'require|max:50',
-                'id_card' => 'require|length:18',
-                'phone' => 'require|mobile',
+                'id_card' => 'require',
+                'phone' => 'require',
                 'pay_password|支付密码' => 'require'
             ]);
 

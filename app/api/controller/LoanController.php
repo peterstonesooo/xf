@@ -44,12 +44,26 @@ class LoanController extends AuthController
                 return out(null, 404, '产品不存在或已禁用');
             }
 
+            // 计算用户可贷款范围
+            $user = $this->user;
+            $maxLoanAmount = $this->checkUserQualificationAndGetMaxAmount($user['id']);
+            
+            // 计算实际的最大贷款金额（取产品最大金额和用户最大限额的较小值）
+            $actualMaxAmount = $maxLoanAmount !== false ? min($product->max_amount, $maxLoanAmount) : $product->max_amount;
+            
+            // 计算实际的最小贷款金额（如果用户最大限额小于产品最小金额，则无法贷款）
+            $actualMinAmount = $maxLoanAmount !== false && $maxLoanAmount >= $product->min_amount ? $product->min_amount : 0;
+
             // 格式化产品数据
             $productData = [
                 'id' => $product->id,
                 'name' => $product->name,
                 'min_amount' => $product->min_amount,
                 'max_amount' => $product->max_amount,
+                'actual_min_amount' => $actualMinAmount,
+                'actual_max_amount' => $actualMaxAmount,
+                'user_max_loan_amount' => $maxLoanAmount !== false ? $maxLoanAmount : 0,
+                'can_apply' => $maxLoanAmount !== false && $maxLoanAmount >= $product->min_amount,
                 'interest_type' => $product->interest_type,
                 'interest_type_text' => $product->getInterestTypeTextAttr(null, $product->toArray()),
                 'overdue_interest_rate' => $product->overdue_interest_rate,

@@ -645,13 +645,19 @@ class UserController extends AuthController
     //数字人民币转账
     public function transferAccounts(){
         $req = $this->validate(request(), [
-            'type' => 'require|in:1,2,3',//惠民钱包 2.荣誉钱包 3.余额
+            'type' => 'require|in:1,2,3,4',//1-惠民钱包 2-荣誉钱包 3-余额钱包 4-普惠钱包
             'realname|对方姓名' => 'require|max:20',
             'account|对方账号' => 'require',
             'money|转账金额' => 'require|number',
             'pay_password|支付密码' => 'require',
         ]);//type 1 数字人民币，，realname 对方姓名，account 对方账号，money 转账金额，pay_password 支付密码
         $user = $this->user;
+
+        // 检查用户是否已激活幸福权益
+        $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
+        if (!$activation) {
+            return out(null, 10001, '请先完成幸福权益激活');
+        }
 
         // 检查转账配置
         $transferCheck = TransferConfig::checkTransferAllowed($req['type'], $req['money']);
@@ -667,7 +673,7 @@ class UserController extends AuthController
         if (!empty($req['pay_password']) && $user['pay_password'] !== sha1(md5($req['pay_password']))) {
             return out(null, 10001, '支付密码错误');
         }
-        if (!in_array($req['type'], [1,2,3])) {
+        if (!in_array($req['type'], [1,2,3,4])) {
             return out(null, 10001, '不支持该支付方式');
         }
         if ($user['phone'] == $req['account'] && $req['type']==3) {
@@ -705,6 +711,11 @@ class UserController extends AuthController
                     $field = 'topup_balance';
                     $fieldText = '余额钱包';
                     $logType = 1;
+                    break;
+                case 4:
+                    $field = 'puhui';
+                    $fieldText = '普惠钱包';
+                    $logType = 13;
                     break;
             }
 
@@ -746,13 +757,19 @@ class UserController extends AuthController
     //转账2
     public function transferAccounts2(){
         $req = $this->validate(request(), [
-            'type' => 'require|in:1,2,3',//1推荐给奖励,2 转账余额（充值金额）3 可提现余额
+            'type' => 'require|in:1,2,3,4',//1推荐给奖励,2 转账余额（充值金额）3 可提现余额 4普惠钱包
             //'realname|对方姓名' => 'require|max:20',
             'account|对方账号' => 'require',//虚拟币钱包地址
             'money|转账金额' => 'require|number|between:100,100000',
             'pay_password|支付密码' => 'require',
         ]);//type 1 数字人民币，，realname 对方姓名，account 对方账号，money 转账金额，pay_password 支付密码
         $user = $this->user;
+
+        // 检查用户是否已激活幸福权益
+        $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
+        if (!$activation) {
+            return out(null, 10001, '请先完成幸福权益激活');
+        }
 
         if (empty($user['ic_number'])) {
             return out(null, 10001, '请先完成实名认证');
@@ -787,19 +804,20 @@ class UserController extends AuthController
                 exit_out(null, 10002, '请收款用户先完成实名认证');
             }
             
-            if($req['type'] ==1){
-                $field = 'digital_yuan_amount';
-                $fieldText = '数字人民币';
-                $logType=2;
-            }/* elseif($req['type'] ==2){
-                $field = 'balance';
-                $fieldText = '充值余额';
-                $logType = 1;
-            } */
-            // }else{
-            //     $field = 'balance';
-            //     $fieldText = '可提现余额';
-            // }
+            switch($req['type']){
+                case 1:
+                    $field = 'digital_yuan_amount';
+                    $fieldText = '数字人民币';
+                    $logType=2;
+                    break;
+                case 4:
+                    $field = 'puhui';
+                    $fieldText = '普惠钱包';
+                    $logType=13;
+                    break;
+                default:
+                    exit_out(null, 10001, '不支持该支付方式');
+            }
 
 
             if ($req['money'] > $user[$field]) {

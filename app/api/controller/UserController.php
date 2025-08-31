@@ -59,7 +59,7 @@ class UserController extends AuthController
         //topup_balance 充值余额 team_bonus_balance 团队奖励 butie 补贴钱包 balance 签到红包钱包 digit_balance 项目惠民钱包
         //$user = User::where('id', $user['id'])->append(['equity', 'digital_yuan', 'my_bonus', 'total_bonus', 'profiting_bonus', 'exchange_equity', 'exchange_digital_yuan', 'passive_total_income', 'passive_receive_income', 'passive_wait_income', 'subsidy_total_income', 'team_user_num', 'team_performance', 'can_withdraw_balance'])->find()->toArray();
         $user = User::where('id', $user['id'])
-                    ->field('id,phone,realname,pay_password,up_user_id,is_active,invite_code,ic_number,level,balance,topup_balance,team_bonus_balance,appreciating_wallet,butie_lock,created_at,qq,avatar,digit_balance,butie,integral,tiyan_wallet,tiyan_wallet_lock,xingfu_tickets')
+                    ->field('id,phone,realname,pay_password,up_user_id,is_active,invite_code,ic_number,level,balance,topup_balance,team_bonus_balance,appreciating_wallet,butie_lock,created_at,qq,avatar,digit_balance,butie,integral,tiyan_wallet,tiyan_wallet_lock,xingfu_tickets,puhui')
                     ->find()
                     ->toArray();
     

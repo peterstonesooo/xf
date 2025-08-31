@@ -391,6 +391,7 @@ return array(
             10 => '体验钱包预支金',//tiyan_wallet_lock
             11 => '体验钱包',//tiyan_wallet
             12 => '幸福助力卷',//xingfu_tickets
+            13 => '普惠钱包',//puhui
         ),
         'status_map' =>
         array(

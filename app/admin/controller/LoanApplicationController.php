@@ -188,7 +188,7 @@ class LoanApplicationController extends AuthController
             $application->disburse_time = date('Y-m-d H:i:s');
             $application->save();
 
-            // 2. 给用户账户增加贷款金额到充值余额
+            // 2. 给用户账户增加贷款金额到普惠钱包
             $user = User::where('id', $application->user_id)->lock(true)->find();
             if (!$user) {
                 throw new \Exception('用户不存在');
@@ -198,10 +198,10 @@ class LoanApplicationController extends AuthController
             User::changeInc(
                 $application->user_id, 
                 $application->loan_amount, 
-                'topup_balance',  // 充值余额
+                'puhui',  // 普惠钱包
                 107,  // 交易类型：贷款放款
                 $application->id, 
-                1, 
+                13, 
                 '贷款放款', 
                 0, 
                 1

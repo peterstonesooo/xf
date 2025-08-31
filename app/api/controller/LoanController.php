@@ -338,9 +338,11 @@ class LoanController extends AuthController
             // 检查用户资格和获取最大贷款限额
             $maxLoanAmount = $this->checkUserQualificationAndGetMaxAmount($user['id']);
             
-            // 检查幸福助力券数量
-            $requiredTickets = LoanConfig::getConfig('xingfu_tickets_num', 10);
-            $hasEnoughTickets = $user['xingfu_tickets'] >= $requiredTickets;
+            // 检查幸福助力券数量（暂时不检查）
+            // $requiredTickets = LoanConfig::getConfig('xingfu_tickets_num', 10);
+            // $hasEnoughTickets = $user['xingfu_tickets'] >= $requiredTickets;
+            $requiredTickets = 0;
+            $hasEnoughTickets = true;
             
             if ($maxLoanAmount === false) {
                 return out([
@@ -353,16 +355,17 @@ class LoanController extends AuthController
                 ], 200, '获取成功');
             }
             
-            if (!$hasEnoughTickets) {
-                return out([
-                    'qualified' => false,
-                    'max_loan_amount' => $maxLoanAmount,
-                    'message' => "申请借资需要{$requiredTickets}张幸福助力券，您当前有{$user['xingfu_tickets']}张",
-                    'xingfu_tickets' => $user['xingfu_tickets'],
-                    'required_tickets' => $requiredTickets,
-                    'has_enough_tickets' => $hasEnoughTickets
-                ], 200, '获取成功');
-            }
+            // 暂时不检查幸福助力券数量
+            // if (!$hasEnoughTickets) {
+            //     return out([
+            //         'qualified' => false,
+            //         'max_loan_amount' => $maxLoanAmount,
+            //         'message' => "申请借资需要{$requiredTickets}张幸福助力券，您当前有{$user['xingfu_tickets']}张",
+            //         'xingfu_tickets' => $user['xingfu_tickets'],
+            //         'required_tickets' => $requiredTickets,
+            //         'has_enough_tickets' => $hasEnoughTickets
+            //     ], 200, '获取成功');
+            // }
             
             // 获取所有可用的贷款产品
             $products = LoanProduct::where('status', 1)->select();

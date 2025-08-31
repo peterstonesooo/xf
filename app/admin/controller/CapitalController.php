@@ -60,7 +60,7 @@ class CapitalController extends AuthController
         }
 
         $data = $this->capitalList($req);
-        $logTypeList = [2=>'荣誉钱包',5=>'惠民钱包',11=>'体验钱包'];
+        $logTypeList = [2=>'荣誉钱包',5=>'惠民钱包',11=>'体验钱包',13=>'普惠钱包'];
         $this->assign('logTypeList', $logTypeList);
         $this->assign('req', $req);
         $this->assign('data', $data);
@@ -210,6 +210,9 @@ class CapitalController extends AuthController
                     break;
                 case 11:
                     $log_type = '体验钱包';
+                    break;
+                case 13:
+                    $log_type = '普惠钱包';
                     break;
             }
             if($req['status'] == 2){

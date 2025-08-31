@@ -216,6 +216,9 @@ class Capital extends Model
                      }elseif ($capital['log_type'] == 11) {
                         $field = 'tiyan_wallet';
                         $log_type = 11;
+                     }elseif ($capital['log_type'] == 13) {
+                        $field = 'puhui';
+                        $log_type = 13;
                      }
                     $type = 13;
 

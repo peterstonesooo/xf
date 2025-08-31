@@ -293,7 +293,7 @@ class CapitalController extends AuthController
             //'pay_channel|收款渠道' => 'require|number',
             'pay_password|支付密码' => 'require',
             'bank_id|银行卡'=>'require|number',
-            'type|提现钱包'=>'require|number', //1现金余额，2债券收益，3释放提现额度
+            'type|提现钱包'=>'require|number', //1现金余额，2债券收益，3释放提现额度，4普惠钱包
         ]);
         $user = $this->user;
 
@@ -415,6 +415,9 @@ class CapitalController extends AuthController
            }elseif ($req['type'] == 3){
                $field = 'tiyan_wallet';
                $log_type = 11;
+           }elseif ($req['type'] == 4){
+               $field = 'puhui';
+               $log_type = 13;
            }
 
             if ($user[$field] < $req['amount']) {

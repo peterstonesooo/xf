@@ -40,6 +40,7 @@
                             <th>出资记录ID</th>
                             <th>返还本金</th>
                             <th>返还利息</th>
+                            <th>返还总额</th>
                             <th>返还类型</th>
                             <th>钱包类型</th>
                             <th>返还时间</th>
@@ -54,8 +55,9 @@
                                     姓名：{if condition="$v['user']"} {$v['user']['realname']} {else/} 无用户信息 {/if}
                                 </td>
                                 <td>{$v['investment_id']}</td>
-                                <td>￥{$v['return_principal']}</td>
-                                <td>￥{$v['return_interest']}</td>
+                                <td>￥{$v['principal_amount']}</td>
+                                <td>￥{$v['interest_amount']}</td>
+                                <td>￥{$v['return_amount']}</td>
                                 <td>
                                     <span class="label label-{if condition="$v['return_type'] eq 1"}success{elseif condition="$v['return_type'] eq 2"}warning{else/}default{/if}">{$v['return_type_text']}</span>
                                 </td>

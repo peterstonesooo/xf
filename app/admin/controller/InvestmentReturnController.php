@@ -117,23 +117,28 @@ class InvestmentReturnController extends AuthController
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         
         // 输出CSV头部
-        echo "ID,用户ID,用户手机号,用户姓名,出资记录ID,返还本金,返还利息,返还类型,钱包类型,返还时间\n";
+        echo "ID,用户ID,用户手机号,用户姓名,出资记录ID,返还本金,返还利息,返还总额,返还类型,钱包类型,返还时间\n";
         
+        // 输出数据
         foreach ($data as $item) {
-            echo sprintf(
-                "%d,%d,%s,%s,%d,%.2f,%.2f,%s,%s,%s\n",
+            $userPhone = $item->user ? $item->user->phone : '';
+            $userName = $item->user ? $item->user->realname : '';
+            
+            echo implode(',', [
                 $item->id,
                 $item->user_id,
-                $item->user->phone ?? '',
-                $item->user->realname ?? '',
+                $userPhone,
+                $userName,
                 $item->investment_id,
-                $item->return_principal,
-                $item->return_interest,
+                $item->principal_amount,
+                $item->interest_amount,
+                $item->return_amount,
                 $item->return_type_text,
                 $item->wallet_type_text,
                 $item->created_at
-            );
+            ]) . "\n";
         }
+        
         exit;
     }
 }

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>出资返还记录详情</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="__STATIC__/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="__STATIC__/admin/style/admin.css" media="all">
+    <link rel="stylesheet" href="__STATIC__/admin/style/login.css" media="all">
+    <script src="__STATIC__/layui/layui.js"></script>
+    <script src="__STATIC__/admin/js/jquery.min.js"></script>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box">
+                <div class="box-header">
+                    <h3 class="box-title">出资返还记录详情</h3>
+                </div>
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>基本信息</h4>
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th width="150">返还记录ID</th>
+                                    <td>{$data['id']}</td>
+                                </tr>
+                                <tr>
+                                    <th>出资记录ID</th>
+                                    <td>{$data['investment_id']}</td>
+                                </tr>
+                                <tr>
+                                    <th>用户ID</th>
+                                    <td>{$data['user_id']}</td>
+                                </tr>
+                                <tr>
+                                    <th>返还类型</th>
+                                    <td>
+                                        <span class="label label-{if condition="$data['return_type'] eq 1"}success{elseif condition="$data['return_type'] eq 2"}warning{else/}default{/if}">{$data['return_type_text']}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>钱包类型</th>
+                                    <td>{$data['wallet_type_text']}</td>
+                                </tr>
+                                <tr>
+                                    <th>创建时间</th>
+                                    <td>{$data['created_at']}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h4>返还金额信息</h4>
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th width="150">返还本金</th>
+                                    <td>￥{$data['principal_amount']}</td>
+                                </tr>
+                                <tr>
+                                    <th>返还利息</th>
+                                    <td>￥{$data['interest_amount']}</td>
+                                </tr>
+                                <tr>
+                                    <th>返还总额</th>
+                                    <td><strong>￥{$data['return_amount']}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th>备注</th>
+                                    <td>{$data['remark']}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    {if condition="$data['user']"}
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h4>用户信息</h4>
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th width="150">用户ID</th>
+                                    <td>{$data['user']['id']}</td>
+                                </tr>
+                                <tr>
+                                    <th>手机号</th>
+                                    <td>{$data['user']['phone']}</td>
+                                </tr>
+                                <tr>
+                                    <th>姓名</th>
+                                    <td>{$data['user']['realname']}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    {/if}
+
+                    {if condition="$data['investment']"}
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h4>出资记录信息</h4>
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th width="150">出资记录ID</th>
+                                    <td>{$data['investment']['id']}</td>
+                                </tr>
+                                <tr>
+                                    <th>出资金额</th>
+                                    <td>￥{$data['investment']['investment_amount']}</td>
+                                </tr>
+                                <tr>
+                                    <th>出资天数</th>
+                                    <td>{$data['investment']['investment_days']}天</td>
+                                </tr>
+                                <tr>
+                                    <th>利率</th>
+                                    <td><?php echo number_format(($data['investment']['interest_rate'])*100, 4); ?>%</td>
+                                </tr>
+                                <tr>
+                                    <th>总利息</th>
+                                    <td>￥{$data['investment']['total_interest']}</td>
+                                </tr>
+                                <tr>
+                                    <th>总金额</th>
+                                    <td>￥{$data['investment']['total_amount']}</td>
+                                </tr>
+                                <tr>
+                                    <th>开始日期</th>
+                                    <td>{$data['investment']['start_date']}</td>
+                                </tr>
+                                <tr>
+                                    <th>结束日期</th>
+                                    <td>{$data['investment']['end_date']}</td>
+                                </tr>
+                                <tr>
+                                    <th>出资时间</th>
+                                    <td>{$data['investment']['created_at']}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    {/if}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <a href="{:url('admin/InvestmentReturn/returnList')}" class="btn btn-default">返回列表</a>
+    </div>
+</div>
+</body>
+</html>

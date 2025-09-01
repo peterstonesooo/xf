@@ -38,25 +38,42 @@ class FixInvestmentInterestData extends Command
                 try {
                     $output->writeln("处理出资记录ID: {$investment['id']}");
                     $output->writeln("  用户ID: {$investment['user_id']}");
-                    $output->writeln("  出资金额: {$investment['investment_amount']}");
-                    $output->writeln("  当前利率: {$investment['interest_rate']}");
-                    $output->writeln("  出资天数: {$investment['investment_days']}");
+                    $output->writeln("  出资金额: {$investment['investment_amount']} (类型: " . gettype($investment['investment_amount']) . ")");
+                    $output->writeln("  当前利率: {$investment['interest_rate']} (类型: " . gettype($investment['interest_rate']) . ")");
+                    $output->writeln("  出资天数: {$investment['investment_days']} (类型: " . gettype($investment['investment_days']) . ")");
                     $output->writeln("  当前总利息: {$investment['total_interest']}");
                     $output->writeln("  当前总金额: {$investment['total_amount']}");
+                    
+                    // 根据gradient_id查找正确的利率和天数
+                    $gradient = InvestmentGradient::where('id', $investment['gradient_id'])->find();
+                    if (!$gradient) {
+                        $output->writeln("  ✗ 找不到对应的梯度配置，跳过此记录");
+                        $skippedCount++;
+                        continue;
+                    }
+                    
+                    $output->writeln("  梯度信息:");
+                    $output->writeln("    梯度名称: {$gradient['name']}");
+                    $output->writeln("    正确利率: {$gradient['interest_rate']}");
+                    $output->writeln("    正确天数: {$gradient['investment_days']}");
                     
                     // 使用正确的公式重新计算利息
                     // 总利息 = 出资金额 × (利率/100) × 出资天数
                     $newTotalInterest = bcmul(
                         bcmul(
                             (string)$investment['investment_amount'], 
-                            bcdiv($investment['interest_rate'], '100', 4), 
+                            bcdiv($gradient['interest_rate'], '100', 4), 
                             4
                         ), 
-                        (string)$investment['investment_days'], 
+                        (string)$gradient['investment_days'], 
                         2
                     );
                     
                     $newTotalAmount = bcadd((string)$investment['investment_amount'], $newTotalInterest, 2);
+                    
+                    $output->writeln("  计算结果:");
+                    $output->writeln("    新总利息: {$newTotalInterest}");
+                    $output->writeln("    新总金额: {$newTotalAmount}");
                     
                     $output->writeln("  新总利息: {$newTotalInterest}");
                     $output->writeln("  新总金额: {$newTotalAmount}");
@@ -84,7 +101,9 @@ class FixInvestmentInterestData extends Command
                                 // 更新出资记录
                                 InvestmentRecord::where('id', $investment['id'])->update([
                                     'total_interest' => $newTotalInterest,
-                                    'total_amount' => $newTotalAmount
+                                    'total_amount' => $newTotalAmount,
+                                    'interest_rate' => $gradient['interest_rate'],
+                                    'investment_days' => $gradient['investment_days']
                                 ]);
                                 
                                 // 记录修复日志

@@ -12,6 +12,8 @@ use app\model\PointsOrder;
 use app\model\CoinOrder;
 use app\model\InvestmentRecord;
 use app\model\LoanApplication;
+use app\model\RelationshipRewardLog;
+use app\model\UserRelation;
 use think\facade\Db;
 use Exception;
 
@@ -158,6 +160,9 @@ class HappinessEquityController extends AuthController
                     $afterTopupBalance
                 );
                 
+                // 分发三级返回
+                $this->distributeThreeLevelReward($user['id'], $paymentAmount, $activation['id']);
+                
                 Db::commit();
                 
                 return out([
@@ -222,5 +227,52 @@ class HappinessEquityController extends AuthController
     {
         $balance = bcadd($user['balance'], $user['butie'], 2);
         return bcadd($balance, $user['butie_lock'], 2);
+    }
+    
+
+    
+    /**
+     * 幸福权益缴费三级返回
+     * @param int $userId 缴费用户ID
+     * @param float $paymentAmount 缴费金额
+     * @param int $activationId 激活记录ID
+     */
+    private function distributeThreeLevelReward($userId, $paymentAmount, $activationId)
+    {
+        try {
+            // 获取用户的上三级关系
+            $relation = UserRelation::where('sub_user_id', $userId)->select();
+            
+            if (empty($relation)) {
+                return;
+            }
+            
+            // 获取缴费用户信息
+            $user = User::where('id', $userId)->field('id,realname,phone')->find();
+            
+            // 三级返回比例配置（参考项目中其他地方的配置）
+            $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
+            
+            foreach ($relation as $v) {
+                $reward = round(dbconfig($map[$v['level']])/100*$paymentAmount, 2);
+                if($reward > 0){
+                    User::changeInc($v['user_id'],$reward,'team_bonus_balance',116,$activationId,2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'XFQY');
+                    RelationshipRewardLog::insert([
+                        'uid' => $v['user_id'],
+                        'reward' => $reward,
+                        'son' => $userId,
+                        'son_lay' => $v['level'],
+                        'created_at' => date('Y-m-d H:i:s')
+                    ]);
+                }
+            }
+            
+        } catch (Exception $e) {
+            \think\facade\Log::error('幸福权益缴费三级返回失败：' . $e->getMessage(), [
+                'user_id' => $userId,
+                'payment_amount' => $paymentAmount,
+                'activation_id' => $activationId
+            ]);
+        }
     }
 }

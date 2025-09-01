@@ -59,11 +59,12 @@ class FixInvestmentInterestData extends Command
                     
                     // 使用正确的公式重新计算利息
                     // 总利息 = 出资金额 × (利率/100) × 出资天数
+                    // 计算过程中不四舍五入，最后结果才保留两位小数
                     $newTotalInterest = bcmul(
                         bcmul(
                             (string)$investment['investment_amount'], 
-                            bcdiv($gradient['interest_rate'], '100', 4), 
-                            4
+                            bcdiv($gradient['interest_rate'], '100', 8), 
+                            8
                         ), 
                         (string)$gradient['investment_days'], 
                         2

@@ -256,7 +256,7 @@ class HappinessEquityController extends AuthController
             foreach ($relation as $v) {
                 $reward = round(dbconfig($map[$v['level']])/100*$paymentAmount, 2);
                 if($reward > 0){
-                    User::changeInc($v['user_id'],$reward,'team_bonus_balance',116,$activationId,2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'XFQY');
+                    User::changeInc($v['user_id'],$reward,'team_bonus_balance',117,$activationId,2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'XFQY');
                     RelationshipRewardLog::insert([
                         'uid' => $v['user_id'],
                         'reward' => $reward,

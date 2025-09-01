@@ -74,7 +74,7 @@ class RepairHappinessEquityReward extends Command
         $existingReward = UserBalanceLog::where('user_id', '>', 0)
             ->where('type', 116)
             ->where('remark', 'like', '团队奖励%级%')
-            ->where('order_id', $activationId)
+            ->where('relation_id', $activationId)
             ->find();
             
         if ($existingReward) {

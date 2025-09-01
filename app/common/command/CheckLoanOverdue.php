@@ -55,12 +55,13 @@ class CheckLoanOverdue extends Command
                     $product = LoanProduct::find($application->product_id);
                     if ($product && $product->overdue_interest_rate > 0) {
                         // 逾期利息 = 剩余金额 × 逾期日利率 × 逾期天数
+                        // 计算过程中不四舍五入，最后结果才保留两位小数
                         $overdueInterest = bcmul(
-                            $plan->remaining_amount, 
+                            (string)$plan->remaining_amount, 
                             bcmul(
-                                bcdiv($product->overdue_interest_rate, '100', 4), 
+                                bcdiv($product->overdue_interest_rate, '100', 8), 
                                 (string)$overdueDays, 
-                                4
+                                8
                             ), 
                             2
                         );

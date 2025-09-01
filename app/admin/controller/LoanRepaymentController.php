@@ -373,7 +373,16 @@ class LoanRepaymentController extends AuthController
             $application = LoanApplication::find($plan->application_id);
             if ($application) {
                 $product = $application->product;
-                $overdueInterest = $plan->remaining_amount * ($product->overdue_interest_rate / 100) * $overdueDays;
+                // 使用bcmath确保精度，计算过程中不四舍五入，最后结果才保留两位小数
+                $overdueInterest = bcmul(
+                    bcmul(
+                        (string)$plan->remaining_amount, 
+                        bcdiv($product->overdue_interest_rate, '100', 8), 
+                        8
+                    ), 
+                    (string)$overdueDays, 
+                    2
+                );
                 $plan->overdue_interest = $overdueInterest;
             }
             

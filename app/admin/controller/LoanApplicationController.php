@@ -361,10 +361,10 @@ class LoanApplicationController extends AuthController
         $totalAmount = $application->total_amount;
         $loanDays = $application->loan_days;
         
-        // 计算每期金额
-        $monthlyAmount = $totalAmount / $installmentCount;
-        $monthlyPrincipal = $loanAmount / $installmentCount;
-        $monthlyInterest = ($totalAmount - $loanAmount) / $installmentCount;
+        // 计算每期金额（使用bcmath确保精度）
+        $monthlyAmount = bcdiv((string)$totalAmount, (string)$installmentCount, 2);
+        $monthlyPrincipal = bcdiv((string)$loanAmount, (string)$installmentCount, 2);
+        $monthlyInterest = bcdiv(bcsub((string)$totalAmount, (string)$loanAmount, 2), (string)$installmentCount, 2);
         
         // 生成还款计划
         for ($i = 1; $i <= $installmentCount; $i++) {

@@ -192,9 +192,10 @@ class LoanController extends AuthController
 
             // 计算利息和总金额
             $loanDays = $gradient->loan_days;
-            $interestRate = bcdiv($gradient->interest_rate, '100', 4); // 利息率是百分比，需要除以100
+            $interestRate = bcdiv($gradient->interest_rate, '100', 8); // 利息率是百分比，需要除以100，使用8位精度
             // 总利息 = 贷款金额 × 日利息率 × 贷款天数
-            $totalInterest = bcmul(bcmul((string)$req['loan_amount'], $interestRate, 4), (string)$loanDays, 2);
+            // 计算过程中不四舍五入，最后结果才保留两位小数
+            $totalInterest = bcmul(bcmul((string)$req['loan_amount'], $interestRate, 8), (string)$loanDays, 2);
             $totalAmount = bcadd((string)$req['loan_amount'], $totalInterest, 2);
             
             // 计算月供金额（总金额除以分期数）

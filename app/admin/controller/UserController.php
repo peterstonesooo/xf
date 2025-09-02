@@ -27,6 +27,7 @@ use app\model\UserProduct;
 use app\model\UserRelation;
 use app\model\GiftRecord;
 use app\model\UserProjectGroup;
+use app\model\HappinessEquityActivation;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Exception;
 use think\db\Fetch;
@@ -2448,6 +2449,52 @@ class UserController extends AuthController
             }
         } catch (Exception $e) {
             return out(null, 10001, '更新失败：' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 获取用户团队激活数据
+     */
+    public function getTeamActivationData()
+    {
+        $req = request()->param();
+        $this->validate($req, [
+            'user_id' => 'require|number',
+        ]);
+
+        try {
+            $userId = $req['user_id'];
+            
+            // 获取下三级团队总人数
+            $teamTotalCount = UserRelation::where('user_id', $userId)
+                ->whereIn('level', [1, 2, 3])
+                ->count();
+            
+            // 获取下三级团队实名人数
+            $teamRealNameCount = UserRelation::alias('ur')
+                ->join('user u', 'u.id = ur.sub_user_id')
+                ->where('ur.user_id', $userId)
+                ->whereIn('ur.level', [1, 2, 3])
+                ->where('u.shiming_status', 1)
+                ->count();
+            
+            // 获取下三级团队激活人数（从happiness_equity_activation表计算）
+            $teamActiveCount = UserRelation::alias('ur')
+                ->join('happiness_equity_activation hea', 'hea.user_id = ur.sub_user_id')
+                ->where('ur.user_id', $userId)
+                ->whereIn('ur.level', [1, 2, 3])
+                ->where('hea.status', 1) // 只统计已激活状态
+                ->count();
+            
+            $data = [
+                'team_total_count' => $teamTotalCount,
+                'team_real_name_count' => $teamRealNameCount,
+                'team_active_count' => $teamActiveCount
+            ];
+            
+            return out($data, 200, '获取成功');
+        } catch (Exception $e) {
+            return out(null, 10001, '获取失败：' . $e->getMessage());
         }
     }
 }

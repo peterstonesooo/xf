@@ -390,6 +390,11 @@ return array(
                     'name' => 'User/message',
                     'title' => '发送站内信',
                 ),
+            17 =>
+                array(
+                    'name' => 'User/getTeamActivationData',
+                    'title' => '查看团队激活数据',
+                ),
         ),
     '用户资金明细' =>
         array(

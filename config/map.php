@@ -282,6 +282,9 @@ return array(
             110 => '贷款逾期还款',
             113 => '出资扣款',
             114 => '出资返还',
+            115 => '幸福权益激活',
+            116 => '贷款申请扣除助力券',
+            117 => '幸福权益缴纳返佣',
         ),
         'balance_type_map' =>
         array(
@@ -362,7 +365,12 @@ return array(
             106 => '幸福助力卷兑换',
             107 => '贷款放款',
             108 => '贷款还款',
-            109 => '贷款逾期还款',
+            110 => '贷款逾期还款',
+            113 => '出资扣款',
+            114 => '出资返还',
+            115 => '幸福权益激活',
+            116 => '贷款申请扣除助力券',
+            117 => '幸福权益缴纳返佣',
         ),
         'integral_type_map' =>
         array(
@@ -377,7 +385,7 @@ return array(
             2 => '荣誉钱包',//team_bonus_balance
             3 => '稳盈钱包',//butie  共富金
             4 => '民生钱包',//balance
-            5 => '收益钱包',//digit_balance  惠民金
+            5 => '惠民钱包',//digit_balance  惠民金
             6 => '积分',//integral
             7 => '幸福收益',//appreciating_wallet
             8 => '稳赢钱包转入',// butie_lock
@@ -385,6 +393,7 @@ return array(
             10 => '体验钱包预支金',//tiyan_wallet_lock
             11 => '体验钱包',//tiyan_wallet
             12 => '幸福助力卷',//xingfu_tickets
+            13 => '普惠钱包',//puhui
         ),
         'status_map' =>
         array(

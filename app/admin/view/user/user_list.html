@@ -83,7 +83,7 @@
                                     <br>
                                     民生钱包：{$v['balance']}
                                     <br>
-                                    收益钱包：{$v['digit_balance']}
+                                    惠民钱包：{$v['digit_balance']}
                                     <br>
                                     增值钱包：{$v['appreciating_wallet']}
                                     <br>
@@ -137,6 +137,7 @@
                                     <!-- <a {:auth_show_judge('User/batchBalance')} class="btn btn-flat btn-xs" href="{:url('admin/User/batchShowBalance', ['user_id' => $v['id'], 'type' => 15])}">批量入金</a> -->
                                     <!-- <a {:auth_show_judge('User/deductBalance')} class="btn btn-flat btn-xs" href="{:url('admin/User/showChangeBalance', ['user_id' => $v['id'], 'type' => 16])}">手动出金</a> -->
                                     <a {:auth_show_judge('User/userTeamList')} class="btn btn-flat btn-xs" href="{:url('admin/User/userTeamList', ['user_id' => $v['id']])}">查看团队人数</a>
+                                    <a {:auth_show_judge('User/getTeamActivationData')} class="btn btn-flat btn-xs btn-warning" onclick="showTeamActivationModal({$v['id']})">团队激活</a>
                                      <a {:auth_show_judge('UserDelivery/userDeliveryList')} class="btn btn-flat btn-xs" href="{:url('admin/UserDelivery/userDeliveryList', ['user_id' => $v['id']])}">查看收货地址</a>
                                     <!--<a {:auth_show_judge('PayAccount/payAccountList')} class="btn btn-flat btn-xs" href="{:url('admin/PayAccount/payAccountList', ['user_id' => $v['id']])}">查看收款配置</a> -->
                                     <a {:auth_show_judge('User/editPhone')} class="btn btn-flat btn-xs" href="{:url('admin/User/editPhone', ['user_id' => $v['id']])}">修改手机号</a>
@@ -229,6 +230,52 @@
                     <button type="submit" class="btn btn-primary">提交</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- 团队激活弹框 -->
+<div class="modal fade" id="teamActivationModal" tabindex="-1" role="dialog" aria-labelledby="teamActivationModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="teamActivationModalLabel">团队激活数据</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="alert alert-info">
+                            <strong>下三级团队统计：</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group text-center">
+                            <label class="control-label">团队总人数</label>
+                            <div class="h3 text-primary" id="teamTotalCount">-</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group text-center">
+                            <label class="control-label">团队实名人数</label>
+                            <div class="h3 text-success" id="teamRealNameCount">-</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group text-center">
+                            <label class="control-label">团队激活人数</label>
+                            <div class="h3 text-warning" id="teamActiveCount">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
         </div>
     </div>
 </div>
@@ -414,6 +461,31 @@
             });
         });
     });
+
+    // 显示团队激活弹框
+    function showTeamActivationModal(userId) {
+        // 重置数据
+        $('#teamTotalCount').text('-');
+        $('#teamRealNameCount').text('-');
+        $('#teamActiveCount').text('-');
+        
+        // 显示弹框
+        $('#teamActivationModal').modal('show');
+        
+        // 获取团队激活数据
+        $.get('{:url("admin/User/getTeamActivationData")}', {user_id: userId}, function(res) {
+            if (res.code == 200) {
+                var data = res.data;
+                $('#teamTotalCount').text(data.team_total_count);
+                $('#teamRealNameCount').text(data.team_real_name_count);
+                $('#teamActiveCount').text(data.team_active_count);
+            } else {
+                layer.msg(res.msg, {icon: 2, time: 2000});
+            }
+        }).fail(function() {
+            layer.msg('获取数据失败，请重试', {icon: 2, time: 2000});
+        });
+    }
 </script>
 <style>
     th{

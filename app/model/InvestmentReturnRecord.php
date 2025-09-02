@@ -22,7 +22,7 @@ class InvestmentReturnRecord extends Model
         2 => '荣誉钱包',
         3 => '稳盈钱包',
         4 => '民生钱包',
-        5 => '收益钱包',
+        5 => '惠民钱包',
         6 => '积分',
         7 => '幸福收益',
         8 => '稳赢钱包转入',
@@ -56,3 +56,5 @@ class InvestmentReturnRecord extends Model
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }
+
+

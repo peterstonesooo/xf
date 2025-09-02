@@ -112,7 +112,7 @@ class InvestmentAutoReturn extends Command
                 2 => 2,  // team_bonus_balance -> log_type=2 (荣誉钱包)
                 3 => 3,  // butie -> log_type=3 (稳盈钱包)
                 4 => 4,  // balance -> log_type=4 (民生钱包)
-                5 => 5,  // digit_balance -> log_type=5 (收益钱包)
+                5 => 5,  // digit_balance -> log_type=5 (惠民钱包)
                 6 => 2,  // integral -> log_type=2 (积分)
                 7 => 6,  // appreciating_wallet -> log_type=6 (幸福收益)
                 8 => 7,  // butie_lock -> log_type=7 (稳赢钱包转入)

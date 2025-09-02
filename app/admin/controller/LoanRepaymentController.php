@@ -160,7 +160,7 @@ class LoanRepaymentController extends AuthController
             2 => ['field' => 'team_bonus_balance', 'name' => '荣誉钱包'],
             3 => ['field' => 'butie', 'name' => '稳盈钱包'],
             4 => ['field' => 'balance', 'name' => '民生钱包'],
-            5 => ['field' => 'digit_balance', 'name' => '收益钱包'],
+            5 => ['field' => 'digit_balance', 'name' => '惠民钱包'],
         ];
 
         // 获取支持的钱包类型配置
@@ -210,7 +210,7 @@ class LoanRepaymentController extends AuthController
             2 => ['field' => 'team_bonus_balance', 'name' => '荣誉钱包'],
             3 => ['field' => 'butie', 'name' => '稳盈钱包'],
             4 => ['field' => 'balance', 'name' => '民生钱包'],
-            5 => ['field' => 'digit_balance', 'name' => '收益钱包'],
+            5 => ['field' => 'digit_balance', 'name' => '惠民钱包'],
         ];
 
         // 验证钱包类型
@@ -373,7 +373,16 @@ class LoanRepaymentController extends AuthController
             $application = LoanApplication::find($plan->application_id);
             if ($application) {
                 $product = $application->product;
-                $overdueInterest = $plan->remaining_amount * ($product->overdue_interest_rate / 100) * $overdueDays;
+                // 使用bcmath确保精度，计算过程中不四舍五入，最后结果才保留两位小数
+                $overdueInterest = bcmul(
+                    bcmul(
+                        (string)$plan->remaining_amount, 
+                        bcdiv($product->overdue_interest_rate, '100', 8), 
+                        8
+                    ), 
+                    (string)$overdueDays, 
+                    2
+                );
                 $plan->overdue_interest = $overdueInterest;
             }
             

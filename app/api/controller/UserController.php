@@ -16,6 +16,7 @@ use app\model\Coin;
 use app\model\Order;
 use app\model\PaymentConfig;
 use app\model\Project;
+use app\model\TransferConfig;
 use app\model\User;
 use app\model\UserBalanceLog;
 use app\model\UserRelation;
@@ -55,10 +56,10 @@ class UserController extends AuthController
     {
         $user = $this->user;
 
-        //topup_balance 充值余额 team_bonus_balance 团队奖励 butie 补贴钱包 balance 签到红包钱包 digit_balance 项目收益钱包
+        //topup_balance 充值余额 team_bonus_balance 团队奖励 butie 补贴钱包 balance 签到红包钱包 digit_balance 项目惠民钱包
         //$user = User::where('id', $user['id'])->append(['equity', 'digital_yuan', 'my_bonus', 'total_bonus', 'profiting_bonus', 'exchange_equity', 'exchange_digital_yuan', 'passive_total_income', 'passive_receive_income', 'passive_wait_income', 'subsidy_total_income', 'team_user_num', 'team_performance', 'can_withdraw_balance'])->find()->toArray();
         $user = User::where('id', $user['id'])
-                    ->field('id,phone,realname,pay_password,up_user_id,is_active,invite_code,ic_number,level,balance,topup_balance,team_bonus_balance,appreciating_wallet,butie_lock,created_at,qq,avatar,digit_balance,butie,integral,tiyan_wallet,tiyan_wallet_lock,xingfu_tickets')
+                    ->field('id,phone,realname,pay_password,up_user_id,is_active,invite_code,ic_number,level,balance,topup_balance,team_bonus_balance,appreciating_wallet,butie_lock,created_at,qq,avatar,digit_balance,butie,integral,tiyan_wallet,tiyan_wallet_lock,xingfu_tickets,puhui')
                     ->find()
                     ->toArray();
     
@@ -644,7 +645,7 @@ class UserController extends AuthController
     //数字人民币转账
     public function transferAccounts(){
         $req = $this->validate(request(), [
-            'type' => 'require|in:1,2,3',//收益钱包 2.荣誉钱包 3.余额
+            'type' => 'require|in:1,2,3,4',//1-惠民钱包 2-荣誉钱包 3-余额钱包 4-普惠钱包
             'realname|对方姓名' => 'require|max:20',
             'account|对方账号' => 'require',
             'money|转账金额' => 'require|number',
@@ -652,9 +653,16 @@ class UserController extends AuthController
         ]);//type 1 数字人民币，，realname 对方姓名，account 对方账号，money 转账金额，pay_password 支付密码
         $user = $this->user;
 
-        //最低转账金额为100元
-        if($req['money'] < 100){
-            return out(null, 10001, '最低转账金额为100元');
+        // 检查用户是否已激活幸福权益
+        $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
+        if (!$activation) {
+            return out(null, 10001, '请先完成幸福权益激活');
+        }
+
+        // 检查转账配置
+        $transferCheck = TransferConfig::checkTransferAllowed($req['type'], $req['money']);
+        if (!$transferCheck['allowed']) {
+            return out(null, 10001, $transferCheck['message']);
         }
         if (empty($user['ic_number'])) {
             return out(null, 10001, '请先完成实名认证');
@@ -665,7 +673,7 @@ class UserController extends AuthController
         if (!empty($req['pay_password']) && $user['pay_password'] !== sha1(md5($req['pay_password']))) {
             return out(null, 10001, '支付密码错误');
         }
-        if (!in_array($req['type'], [1,2,3])) {
+        if (!in_array($req['type'], [1,2,3,4])) {
             return out(null, 10001, '不支持该支付方式');
         }
         if ($user['phone'] == $req['account'] && $req['type']==3) {
@@ -691,7 +699,7 @@ class UserController extends AuthController
             switch($req['type']){
                 case 1:
                     $field = 'digit_balance';
-                    $fieldText = '收益钱包';
+                    $fieldText = '惠民钱包';
                     $logType=5;
                     break;
                 case 2:
@@ -704,20 +712,38 @@ class UserController extends AuthController
                     $fieldText = '余额钱包';
                     $logType = 1;
                     break;
+                case 4:
+                    $field = 'puhui';
+                    $fieldText = '普惠钱包';
+                    $logType = 13;
+                    break;
             }
 
 
-            if ($req['money'] > $user[$field]) {
-                return out(null, 10002, '转账余额不足');
-            }
-            //转出金额  扣金额 可用金额 转账金额
-            $change_balance = 0 - $req['money'];
+            // 获取转账配置
+            $transferConfig = TransferConfig::getConfigByWalletType($req['type']);
             
-        //2 转账余额（充值金额加他人转账的金额）
-        User::changeInc($user['id'],$change_balance,$field,18,0,$logType,'转账['.$fieldText.']转账给-'.$take['realname'],0,1);
+            // 计算手续费
+            $feeAmount = 0;
+            if ($transferConfig && $transferConfig['fee_rate'] > 0) {
+                $feeAmount = round($req['money'] * ($transferConfig['fee_rate'] / 100), 2);
+            }
+            
+            // 计算实际扣除金额（转账金额 + 手续费）
+            $totalDeductAmount = $req['money'] + $feeAmount;
+            
+            if ($totalDeductAmount > $user[$field]) {
+                return out(null, 10002, '转账余额不足（包含手续费）');
+            }
+            
+            // 转出金额（包含手续费）
+            $change_balance = 0 - $totalDeductAmount;
+            
+            // 扣除转账人余额（包含手续费）
+            User::changeInc($user['id'], $change_balance, $field, 18, 0, $logType, '转账['.$fieldText.']转账给-'.$take['realname'].($feeAmount > 0 ? '（手续费：'.$feeAmount.'元）' : ''), 0, 1);
                 
-        //收到金额  加金额 转账金额
-        User::changeInc($take['id'],$req['money'],'topup_balance',19,0,1,'接收转账来自-'.$user['realname'],0,1);
+            // 收款人只收到转账金额（不含手续费）
+            User::changeInc($take['id'], $req['money'], 'topup_balance', 19, 0, 1, '接收转账来自-'.$user['realname'], 0, 1);
             
             Db::commit();
         } catch (Exception $e) {
@@ -731,13 +757,19 @@ class UserController extends AuthController
     //转账2
     public function transferAccounts2(){
         $req = $this->validate(request(), [
-            'type' => 'require|in:1,2,3',//1推荐给奖励,2 转账余额（充值金额）3 可提现余额
+            'type' => 'require|in:1,2,3,4',//1推荐给奖励,2 转账余额（充值金额）3 可提现余额 4普惠钱包
             //'realname|对方姓名' => 'require|max:20',
             'account|对方账号' => 'require',//虚拟币钱包地址
             'money|转账金额' => 'require|number|between:100,100000',
             'pay_password|支付密码' => 'require',
         ]);//type 1 数字人民币，，realname 对方姓名，account 对方账号，money 转账金额，pay_password 支付密码
         $user = $this->user;
+
+        // 检查用户是否已激活幸福权益
+        $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
+        if (!$activation) {
+            return out(null, 10001, '请先完成幸福权益激活');
+        }
 
         if (empty($user['ic_number'])) {
             return out(null, 10001, '请先完成实名认证');
@@ -772,19 +804,20 @@ class UserController extends AuthController
                 exit_out(null, 10002, '请收款用户先完成实名认证');
             }
             
-            if($req['type'] ==1){
-                $field = 'digital_yuan_amount';
-                $fieldText = '数字人民币';
-                $logType=2;
-            }/* elseif($req['type'] ==2){
-                $field = 'balance';
-                $fieldText = '充值余额';
-                $logType = 1;
-            } */
-            // }else{
-            //     $field = 'balance';
-            //     $fieldText = '可提现余额';
-            // }
+            switch($req['type']){
+                case 1:
+                    $field = 'digital_yuan_amount';
+                    $fieldText = '数字人民币';
+                    $logType=2;
+                    break;
+                case 4:
+                    $field = 'puhui';
+                    $fieldText = '普惠钱包';
+                    $logType=13;
+                    break;
+                default:
+                    exit_out(null, 10001, '不支持该支付方式');
+            }
 
 
             if ($req['money'] > $user[$field]) {
@@ -1239,7 +1272,7 @@ class UserController extends AuthController
                                                 ->paginate();
         foreach($invite_bonus as $key=>$item){
         
-            $orderPrice = bcmul($item['single_amount'],$item['buy_num'],2);
+            $orderPrice = bcmul((string)$item['single_amount'],(string)$item['buy_num'],2);
             $realname = User::where($item['user_id'])->value('realname');
             $invite_bonus[$key]['realname'] = $realname;
             $level = UserRelation::where('user_id',$user['id'])->where('sub_user_id',$item['user_id'])->value('level');
@@ -1533,7 +1566,7 @@ class UserController extends AuthController
      * 2 => '荣誉钱包',//team_bonus_balance
      * 3 => '稳盈钱包',//butie
      * 4 => '民生钱包',//balance
-     * 5 => '收益钱包',//digit_balance
+     * 5 => '惠民钱包',//digit_balance
      * 6 => '积分',//integral
      * 7 => '签到'
      * 8 => '购买产品'
@@ -1554,7 +1587,7 @@ class UserController extends AuthController
                             '2'=>'荣誉钱包',
                             '3'=>'稳盈钱包',
                             '4'=>'民生钱包',
-                            '5'=>'收益钱包',
+                            '5'=>'惠民钱包',
                             '6'=>'积分',
                             '7'=>'幸福收益',
                             '8'=>'幸福增值总金额',
@@ -2199,7 +2232,7 @@ class UserController extends AuthController
         $coin = UserCoinBalance::where('user_id', $userId)->select();
         foreach ($coin as $v) {
             $coin = Coin::where('id', $v['coin_id'])->find();
-            $assets += bcmul(Coin::nowPrice($coin['code']), $v['balance'], 4);
+            $assets += bcmul((string)Coin::nowPrice($coin['code']), (string)$v['balance'], 4);
         }
         return $assets;
     }
@@ -2663,6 +2696,12 @@ class UserController extends AuthController
         $req['pay_channel'] = 1;
 
         $user = $this->user;
+
+        // 检查用户是否已激活幸福权益
+        $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
+        if (!$activation) {
+            return out(null, 10001, '请先完成幸福权益激活');
+        }
 
         // if (empty($user['ic_number'])) {
         //     return out(null, 10001, '请先完成实名认证');

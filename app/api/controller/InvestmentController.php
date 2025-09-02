@@ -143,12 +143,13 @@ class InvestmentController extends AuthController
             }
 
             // 计算利息和总金额
-            $interestRate = bcdiv($gradient->interest_rate, '100', 4); // 利息率是百分比，需要除以100
+            $interestRate = $gradient->interest_rate; // 直接使用利率，不重复除以100
             $investmentDays = $gradient->investment_days;
             
-            // 总利息 = 出资金额 × 总利息率
-            $totalInterest = bcmul($req['investment_amount'], $interestRate, 2);
-            $totalAmount = bcadd($req['investment_amount'], $totalInterest, 2);
+            // 总利息 = 出资金额 × (利率/100) × 出资天数
+            // 计算过程中不四舍五入，最后结果才保留两位小数
+            $totalInterest = bcmul(bcmul((string)$req['investment_amount'], bcdiv($interestRate, '100', 8), 8), (string)$investmentDays, 2);
+            $totalAmount = bcadd((string)$req['investment_amount'], $totalInterest, 2);
 
             // 计算开始和结束日期
             $startDate = date('Y-m-d');
@@ -163,7 +164,7 @@ class InvestmentController extends AuthController
                     2 => 2,  // team_bonus_balance -> log_type=2 (荣誉钱包)
                     3 => 3,  // butie -> log_type=3 (稳盈钱包)
                     4 => 4,  // balance -> log_type=4 (民生钱包)
-                    5 => 5,  // digit_balance -> log_type=5 (收益钱包)
+                    5 => 5,  // digit_balance -> log_type=5 (惠民钱包)
                     6 => 2,  // integral -> log_type=2 (积分)
                     7 => 6,  // appreciating_wallet -> log_type=6 (幸福收益)
                     8 => 7,  // butie_lock -> log_type=7 (稳赢钱包转入)
@@ -291,6 +292,91 @@ class InvestmentController extends AuthController
     }
 
     /**
+     * 获取出资详情
+     */
+    public function getInvestmentDetail()
+    {
+        try {
+            $req = $this->validate(request(), [
+                'id' => 'require|number'
+            ]);
+            
+            $user = $this->user;
+            
+            // 获取出资记录详情
+            $investment = InvestmentRecord::with(['gradient', 'returnRecords'])
+                                         ->where('id', $req['id'])
+                                         ->where('user_id', $user['id'])
+                                         ->find();
+            
+            if (!$investment) {
+                return out(null, 404, '出资记录不存在');
+            }
+
+            // 获取返还记录（一次性返还）
+            $returnedAmount = 0;
+            $returnedInterest = 0;
+            $returnRecord = null;
+            
+            if ($investment->returnRecords && count($investment->returnRecords) > 0) {
+                $returnRecord = $investment->returnRecords[0]; // 取第一条记录
+                $returnedAmount = $returnRecord->return_amount;
+                $returnedInterest = $returnRecord->interest_amount;
+            }
+
+            // 计算剩余金额
+            $remainingAmount = $investment->investment_amount - $returnedAmount;
+            $remainingInterest = $investment->total_interest - $returnedInterest;
+
+            // 计算进度
+            $progressPercent = $investment->investment_amount > 0 ? round(($returnedAmount / $investment->investment_amount) * 100, 2) : 0;
+
+            $data = [
+                'id' => $investment->id,
+                'gradient_name' => $investment->gradient->name ?? '',
+                'investment_amount' => $investment->investment_amount,
+                'investment_days' => $investment->investment_days,
+                'interest_rate' => $investment->interest_rate,
+                'total_interest' => $investment->total_interest,
+                'total_amount' => $investment->total_amount,
+                'wallet_type' => $investment->wallet_type,
+                'wallet_type_text' => $investment->getWalletTypeTextAttr(null, $investment->toArray()),
+                'start_date' => $investment->start_date,
+                'end_date' => $investment->end_date,
+                'status' => $investment->status,
+                'status_text' => $investment->getStatusTextAttr(null, $investment->toArray()),
+                'return_time' => $investment->return_time,
+                'created_at' => $investment->created_at,
+                'updated_at' => $investment->updated_at,
+                
+                // 返还相关
+                'returned_amount' => $returnedAmount,
+                'returned_interest' => $returnedInterest,
+                'remaining_amount' => $remainingAmount,
+                'remaining_interest' => $remainingInterest,
+                'progress_percent' => $progressPercent,
+                'return_record' => $returnRecord ? [
+                    'id' => $returnRecord->id,
+                    'return_type' => $returnRecord->return_type,
+                    'return_type_text' => $returnRecord->getReturnTypeTextAttr(null, $returnRecord->toArray()),
+                    'return_amount' => $returnRecord->return_amount,
+                    'interest_amount' => $returnRecord->interest_amount,
+                    'wallet_type' => $returnRecord->wallet_type,
+                    'wallet_type_text' => $returnRecord->getWalletTypeTextAttr(null, $returnRecord->toArray()),
+                    'return_time' => $returnRecord->return_time,
+                    'created_at' => $returnRecord->created_at
+                ] : null,
+                'is_returned' => $returnRecord ? true : false
+            ];
+
+            return out($data, 0, '获取成功');
+
+        } catch (\Exception $e) {
+            return out(null, 500, '获取出资详情失败：' . $e->getMessage());
+        }
+    }
+
+    /**
      * 获取支持的出资钱包类型
      */
     public function getSupportedWalletTypes()
@@ -302,7 +388,7 @@ class InvestmentController extends AuthController
                 2 => ['field' => 'team_bonus_balance', 'name' => '荣誉钱包'],
                 3 => ['field' => 'butie', 'name' => '稳盈钱包'],
                 4 => ['field' => 'balance', 'name' => '民生钱包'],
-                5 => ['field' => 'digit_balance', 'name' => '收益钱包'],
+                5 => ['field' => 'digit_balance', 'name' => '惠民钱包'],
                 6 => ['field' => 'integral', 'name' => '积分'],
                 7 => ['field' => 'appreciating_wallet', 'name' => '幸福收益'],
                 8 => ['field' => 'butie_lock', 'name' => '稳赢钱包转入'],

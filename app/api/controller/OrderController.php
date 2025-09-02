@@ -2288,10 +2288,10 @@ class OrderController extends AuthController
                 //$item['sum_amount'] = bcmul($item['daily_bonus_ratio']*config('config.passive_income_days_conf')[$item['period']]/100,2);
                 $item['sum_amount'] = $item['sum_amount2'];
             }
-            $daily_bonus = bcmul($item['single_amount'],$item['daily_bonus_ratio']/100,2);
+            $daily_bonus = bcmul((string)$item['single_amount'],(string)($item['daily_bonus_ratio']/100),2);
            
-            $daily_bonus = bcmul($daily_bonus,$item['buy_num'],2);
-            $item['price'] = bcmul($item['single_amount'],$item['buy_num'],2);
+            $daily_bonus = bcmul((string)$daily_bonus,(string)$item['buy_num'],2);
+            $item['price'] = bcmul((string)$item['single_amount'],(string)$item['buy_num'],2);
         if($item['dividend_cycle'] == '1 month'){
                 $day_remark = '每月';
             }else{
@@ -2311,7 +2311,7 @@ class OrderController extends AuthController
         $list = Order::where('user_id', $user['id'])->where('status', '>', 1)->where('is_gift',0)->field('id,project_id,single_amount,buy_num,project_name,sum_amount,sum_amount2,order_sn,daily_bonus_ratio,period,created_at')->order('created_at','desc')->paginate(20)->each(function($item,$key){
             $bonusMultiple = Project::where('id',$item['project_id'])->value('bonus_multiple');
             $item['bonus_multiple'] = $bonusMultiple;
-            $item['price'] = bcmul($item['single_amount'],$item['buy_num'],2);
+            $item['price'] = bcmul((string)$item['single_amount'],(string)$item['buy_num'],2);
             $item['text'] = "{$item['price']}元投资{$bonusMultiple}倍{$item['project_name']}";
             
 

@@ -46,7 +46,7 @@
                     <div class="form-group">
                         <label class="col-sm-2 control-label">逾期利息率(%)</label>
                         <div class="col-sm-8">
-                            <input type="number" class="form-control" name="overdue_interest_rate" value="{$data['overdue_interest_rate']??'0.00'}" placeholder="请输入逾期利息率" step="0.01" required>
+                            <input type="number" class="form-control" name="overdue_interest_rate" value="{$data['overdue_interest_rate']??'0.0000'}" placeholder="请输入逾期利息率" step="0.0001" required>
                         </div>
                     </div>
                     
@@ -89,7 +89,7 @@
                                                     <input type="number" class="form-control" name="gradients[{$index}][installment_count]" value="{$gradient['installment_count']}" placeholder="分期数" required>
                                                 </div>
                                                 <div class="col-sm-3">
-                                                    <input type="number" class="form-control" name="gradients[{$index}][interest_rate]" value="{$gradient['interest_rate']}" placeholder="利息率(%)" step="0.01" required>
+                                                    <input type="number" class="form-control" name="gradients[{$index}][interest_rate]" value="{$gradient['interest_rate']}" placeholder="利息率(%)" step="0.0001" required>
                                                 </div>
                                                 <div class="col-sm-3">
                                                     <button type="button" class="btn btn-danger btn-xs" onclick="removeGradient(this)">删除</button>
@@ -128,7 +128,7 @@ function addGradient() {
         '<input type="number" class="form-control" name="gradients[' + gradientIndex + '][installment_count]" placeholder="分期数" required>' +
         '</div>' +
         '<div class="col-sm-3">' +
-        '<input type="number" class="form-control" name="gradients[' + gradientIndex + '][interest_rate]" placeholder="利息率(%)" step="0.01" required>' +
+        '<input type="number" class="form-control" name="gradients[' + gradientIndex + '][interest_rate]" placeholder="利息率(%)" step="0.0001" required>' +
         '</div>' +
         '<div class="col-sm-3">' +
         '<button type="button" class="btn btn-danger btn-xs" onclick="removeGradient(this)">删除</button>' +

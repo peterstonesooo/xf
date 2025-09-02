@@ -63,7 +63,7 @@
                                 <td>￥{$v['loan_amount']}</td>
                                 <td>{$v['loan_days']}天</td>
                                 <td>{$v['installment_count']}期</td>
-                                <td>{$v['interest_rate']}%</td>
+                                <td><?php echo number_format($v['interest_rate'], 4); ?>%</td>
                                 <td>￥{$v['total_interest']}</td>
                                 <td>￥{$v['total_amount']}</td>
                                 <td>

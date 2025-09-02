@@ -188,7 +188,7 @@ class LoanApplicationController extends AuthController
             $application->disburse_time = date('Y-m-d H:i:s');
             $application->save();
 
-            // 2. 给用户账户增加贷款金额到充值余额
+            // 2. 给用户账户增加贷款金额到普惠钱包
             $user = User::where('id', $application->user_id)->lock(true)->find();
             if (!$user) {
                 throw new \Exception('用户不存在');
@@ -198,10 +198,10 @@ class LoanApplicationController extends AuthController
             User::changeInc(
                 $application->user_id, 
                 $application->loan_amount, 
-                'topup_balance',  // 充值余额
+                'puhui',  // 普惠钱包
                 107,  // 交易类型：贷款放款
                 $application->id, 
-                1, 
+                13, 
                 '贷款放款', 
                 0, 
                 1
@@ -258,7 +258,7 @@ class LoanApplicationController extends AuthController
             echo $item->loan_amount . "\t";
             echo $item->loan_days . "\t";
             echo $item->installment_count . "\t";
-            echo $item->interest_rate . "\t";
+            echo number_format($item->interest_rate, 4) . "\t";
             echo $item->total_interest . "\t";
             echo $item->total_amount . "\t";
             echo $item->getStatusTextAttr(null, $item->toArray()) . "\t";
@@ -359,15 +359,21 @@ class LoanApplicationController extends AuthController
         $loanAmount = $application->loan_amount;
         $installmentCount = $application->installment_count;
         $totalAmount = $application->total_amount;
+        $loanDays = $application->loan_days;
         
-        // 计算每期金额
-        $monthlyAmount = $totalAmount / $installmentCount;
-        $monthlyPrincipal = $loanAmount / $installmentCount;
-        $monthlyInterest = ($totalAmount - $loanAmount) / $installmentCount;
+        // 计算每期金额（使用bcmath确保精度）
+        $monthlyAmount = bcdiv((string)$totalAmount, (string)$installmentCount, 2);
+        $monthlyPrincipal = bcdiv((string)$loanAmount, (string)$installmentCount, 2);
+        $monthlyInterest = bcdiv(bcsub((string)$totalAmount, (string)$loanAmount, 2), (string)$installmentCount, 2);
         
         // 生成还款计划
         for ($i = 1; $i <= $installmentCount; $i++) {
-            $dueDate = date('Y-m-d', strtotime("+{$i} month"));
+            // 根据梯度表中的loan_days计算还款时间
+            // 第一次还款：time() + loan_days
+            // 第二次还款：time() + loan_days * 2
+            // 第三次还款：time() + loan_days * 3
+            $daysToAdd = $loanDays * $i;
+            $dueDate = date('Y-m-d', strtotime("+{$daysToAdd} day", strtotime($application->created_at)));
             
             LoanRepaymentPlan::create([
                 'application_id' => $application->id,

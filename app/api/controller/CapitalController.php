@@ -293,9 +293,15 @@ class CapitalController extends AuthController
             //'pay_channel|收款渠道' => 'require|number',
             'pay_password|支付密码' => 'require',
             'bank_id|银行卡'=>'require|number',
-            'type|提现钱包'=>'require|number', //1现金余额，2债券收益，3释放提现额度
+            'type|提现钱包'=>'require|number', //1现金余额，2债券收益，3释放提现额度，4普惠钱包
         ]);
         $user = $this->user;
+
+        // 检查用户是否已激活幸福权益
+        $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
+        if (!$activation) {
+            return out(null, 10001, '请先完成幸福权益激活');
+        }
 
         // if (empty($user['ic_number'])) {
         //     return out(null, 10001, '请先完成实名认证');
@@ -399,9 +405,19 @@ class CapitalController extends AuthController
            }elseif ($req['type'] == 2){
                $field = 'digit_balance';
                $log_type = 5;
+               
+               // 检查日期，9月16号之前不允许提现
+               $currentDate = date('Y-m-d');
+               $allowDate = '2024-09-16';
+            //    if ($currentDate < $allowDate) {
+                   return out(null, 10001, '本次周期结束后即可进行提现');
+               // }
            }elseif ($req['type'] == 3){
                $field = 'tiyan_wallet';
                $log_type = 11;
+           }elseif ($req['type'] == 4){
+               $field = 'puhui';
+               $log_type = 13;
            }
 
             if ($user[$field] < $req['amount']) {
@@ -473,6 +489,12 @@ class CapitalController extends AuthController
         ]);
         $user = $this->user;
 
+        // 检查用户是否已激活幸福权益
+        $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
+        if (!$activation) {
+            return out(null, 10001, '请先完成幸福权益激活');
+        }
+
         // if (empty($user['ic_number'])) {
         //     return out(null, 10001, '请先完成实名认证');
         // }
@@ -518,6 +540,13 @@ class CapitalController extends AuthController
         
         Db::startTrans();
         try {
+
+            // 检查日期，9月16号之前不允许提现
+            $currentDate = date('Y-m-d');
+            $allowDate = '2024-09-16';
+            // if ($currentDate < $allowDate) {
+                return out(null, 10001, '本次周期结束后即可进行提现');
+            // }
 
             $field = 'digit_balance';
             $log_type =2;
@@ -734,7 +763,7 @@ class CapitalController extends AuthController
         $feeConf = config('map.project.project_house');
         $size = $feeConf[$house['project_id']];
         $unitPrice = 62.5;
-        $fee = bcmul($size,$unitPrice,2);
+        $fee = bcmul((string)$size,(string)$unitPrice,2);
         $user = User::where('id', $user['id'])->find();
         if($user['balance']<$fee){
             return out(null, 10001, '钱包余额不足'.$fee);
@@ -882,7 +911,7 @@ class CapitalController extends AuthController
                     $v['log_type_text'] = '荣誉钱包';
                     break;
                 case 5:
-                    $v['log_type_text'] = '收益钱包';
+                    $v['log_type_text'] = '惠民钱包';
                     break;
                 case 11:
                     $v['log_type_text'] = '体验钱包';

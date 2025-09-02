@@ -46,7 +46,7 @@ class LotteryController extends AuthController
         // 积分抽奖
         if ($type == 1) {
             if ($user['lottery_tickets'] < 1) {
-                return json(['code' => 0, 'msg' => '请先购买抽奖卷']);
+                return json(['code' => 0, 'msg' => '请先兑换抽奖劵']);
             }
         }
         // 订单抽奖

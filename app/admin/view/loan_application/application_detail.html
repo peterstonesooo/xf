@@ -58,7 +58,7 @@
                             </tr>
                             <tr>
                                 <th>利息率</th>
-                                <td>{$data['interest_rate']}%</td>
+                                <td><?php echo number_format($data['interest_rate'], 4); ?>%</td>
                             </tr>
                             <tr>
                                 <th>总利息</th>
@@ -166,12 +166,18 @@
                                 $installmentCount = $data['installment_count'];
                                 $loanAmount = $data['loan_amount'];
                                 $totalAmount = $data['total_amount'];
+                                $loanDays = $data['loan_days'];
                                 $monthlyAmount = $totalAmount / $installmentCount;
                                 $monthlyPrincipal = $loanAmount / $installmentCount;
                                 $monthlyInterest = ($totalAmount - $loanAmount) / $installmentCount;
                                 
                                 for ($i = 1; $i <= $installmentCount; $i++) {
-                                    $dueDate = date('Y-m-d', strtotime("+{$i} month"));
+                                    // 根据梯度表中的loan_days计算还款时间
+                                    // 第一次还款：time() + loan_days
+                                    // 第二次还款：time() + loan_days * 2
+                                    // 第三次还款：time() + loan_days * 3
+                                    $daysToAdd = $loanDays * $i;
+                                    $dueDate = date('Y-m-d', strtotime("+{$daysToAdd} day", strtotime($data['created_at'])));
                                 ?>
                                     <tr>
                                         <td>第{$i}期</td>

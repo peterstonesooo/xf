@@ -586,9 +586,12 @@ class ProjectController extends AuthController
         if (!empty($req['pay_password']) && $user['pay_password'] !== sha1(md5($req['pay_password']))) {
             return out(null, 10001, '支付密码错误');
         }
+        
+        // 修复时间计算逻辑
         $startTime = date('Y-m-d H:i:s',strtotime('this week Monday'));
         $lastWeekStart = date('Y-m-d H:i:s',strtotime('last week Monday'));
-        $lastLastWeekStart = date('Y-m-d H:i:s',strtotime('-3 week Monday'));
+        $lastLastWeekStart = date('Y-m-d H:i:s',strtotime('-2 week Monday')); // 修复：从-3改为-2
+        
         Db::startTrans();
         try {
             $user = User::where('id',$user['id'])->lock(true)->find();
@@ -598,40 +601,38 @@ class ProjectController extends AuthController
             if ($pay_amount >  ($user['topup_balance'] + $user['reward_balance'])) {
                 return out(null, 10090, '余额不足');
             }
-            //本周定投完成 就不能继续定投
+            
+            // 修复：检查本周是否已经定投过（更严格的检查）
+            $thisWeekStart = strtotime('this week Monday');
+            $thisWeekEnd = strtotime('this week Sunday 23:59:59');
             $thisWeek = OrderDingtou::where('user_id',$user['id'])
                 ->where('project_id',$project['project_id'])
-                ->where('date',$startTime)->find();
+                ->where('created_at', '>=', date('Y-m-d H:i:s', $thisWeekStart))
+                ->where('created_at', '<=', date('Y-m-d H:i:s', $thisWeekEnd))
+                ->find();
             if($thisWeek){
                 return out(null, 10001, '本周定投已完成');
             }
-            //查看上周是否有定投数据
-            $lastWeek = OrderDingtou::where('user_id',$user['id'])
-                ->where('project_id',$project['project_id'])
-                ->where('date',$lastWeekStart)->find();
             
-            if($lastWeek){
-                if($lastWeek['total_num'] == 10){
+            // 获取用户最新的定投记录来计算total_num
+            $latestOrder = OrderDingtou::where('user_id',$user['id'])
+                ->where('project_id',$project['project_id'])
+                ->order('total_num', 'desc')
+                ->find();
+            
+            if($latestOrder){
+                if($latestOrder['total_num'] >= 10){
                     return out(null, 10001, '你的定投计划已完成');
                 }
-                $project['total_num'] = $lastWeek['total_num']+1;
-                $project['date'] = $startTime;
+                $project['total_num'] = $latestOrder['total_num'] + 1;
             }else{
-                //检查是否补投
-                $lastLastWeek = OrderDingtou::where('user_id',$user['id'])
-                    ->where('project_id',$project['project_id'])
-                    ->where('date',$lastLastWeekStart)->find();
-                if($lastLastWeek){//补投
-                    $project['total_num'] = $lastLastWeek['total_num']+1;
-                    $project['date'] = $lastWeekStart;
-                }else{//新定投
-                    $project['total_num'] = 1;
-                    $project['date'] = $startTime;
-                }
+                $project['total_num'] = 1;
             }
+            
+            // 设置定投日期为本周一
+            $project['date'] = $startTime;
 
             $order_sn = 'SJGC'.build_order_sn($user['id']);
-
 
             $project['user_id'] = $user['id'];
             $project['up_user_id'] = $user['up_user_id'];
@@ -710,7 +711,7 @@ class ProjectController extends AuthController
         $order = Order::where('user_id',$user['id'])->where('status','in',[2,4])->select();
         $order_daysreturn = OrderDailyBonus::where('user_id',$user['id'])->where('status','in',[2,4])->select();
         if(!$order && !$order_daysreturn){
-            return out(null,10002,'请优先完成任一五福临门板块申领');
+            return out(null,10002,'请优先完成任意五福临门板块申领');
         }
         
 
@@ -771,7 +772,7 @@ class ProjectController extends AuthController
         }
         
         if (!$satisfied) {
-            return out(null, 10003, '请优先完成任一五福临门板块申领');
+            return out(null, 10003, '请优先完成任意五福临门板块申领');
         }
         
 

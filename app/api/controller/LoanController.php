@@ -44,12 +44,26 @@ class LoanController extends AuthController
                 return out(null, 404, '产品不存在或已禁用');
             }
 
+            // 计算用户可贷款范围
+            $user = $this->user;
+            $maxLoanAmount = $this->checkUserQualificationAndGetMaxAmount($user['id']);
+            
+            // 计算实际的最大贷款金额（取产品最大金额和用户最大限额的较小值）
+            $actualMaxAmount = $maxLoanAmount !== false ? min($product->max_amount, $maxLoanAmount) : $product->max_amount;
+            
+            // 计算实际的最小贷款金额（如果用户最大限额小于产品最小金额，则无法贷款）
+            $actualMinAmount = $maxLoanAmount !== false && $maxLoanAmount >= $product->min_amount ? $product->min_amount : 0;
+
             // 格式化产品数据
             $productData = [
                 'id' => $product->id,
                 'name' => $product->name,
                 'min_amount' => $product->min_amount,
                 'max_amount' => $product->max_amount,
+                'actual_min_amount' => $actualMinAmount,
+                'actual_max_amount' => $actualMaxAmount,
+                'user_max_loan_amount' => $maxLoanAmount !== false ? $maxLoanAmount : 0,
+                'can_apply' => $maxLoanAmount !== false && $maxLoanAmount >= $product->min_amount,
                 'interest_type' => $product->interest_type,
                 'interest_type_text' => $product->getInterestTypeTextAttr(null, $product->toArray()),
                 'overdue_interest_rate' => $product->overdue_interest_rate,
@@ -87,8 +101,8 @@ class LoanController extends AuthController
                 'gradient_id' => 'require|number',
                 'loan_amount' => 'require|float|gt:0',
                 'realname' => 'require|max:50',
-                'id_card' => 'require|length:18',
-                'phone' => 'require|mobile',
+                'id_card' => 'require',
+                'phone' => 'require',
                 'pay_password|支付密码' => 'require'
             ]);
 
@@ -100,6 +114,24 @@ class LoanController extends AuthController
             
             if (sha1(md5($req['pay_password'])) !== $user['pay_password']) {
                 return out(null, 400, '支付密码错误');
+            }
+
+            // 验证身份信息
+            if (empty($user['realname']) || empty($user['ic_number'])) {
+                return out(null, 400, '请先完成实名认证');
+            }
+
+            // 验证提交的身份信息与用户实名认证信息是否一致
+            if ($req['realname'] !== $user['realname']) {
+                return out(null, 400, '姓名与实名认证信息不一致');
+            }
+
+            if ($req['id_card'] !== $user['ic_number']) {
+                return out(null, 400, '身份证号与实名认证信息不一致');
+            }
+
+            if ($req['phone'] !== $user['phone']) {
+                return out(null, 400, '手机号与实名认证信息不一致');
             }
 
             // 验证产品是否存在且启用
@@ -122,19 +154,23 @@ class LoanController extends AuthController
             // 检查用户资格和计算最大贷款限额
             $maxLoanAmount = $this->checkUserQualificationAndGetMaxAmount($user['id']);
             if ($maxLoanAmount === false) {
-                return out(null, 400, '您尚未完成任一五福临门板块申领，无法申请贷款');
+                return out(null, 400, '您尚未完成任意五福临门板块申领，无法申请贷款');
             }
             
             // 检查幸福助力券数量
             $requiredTickets = LoanConfig::getConfig('xingfu_tickets_num', 10);
             if ($user['xingfu_tickets'] < $requiredTickets) {
-                return out(null, 400, "申请贷款需要{$requiredTickets}张幸福助力券，您当前有{$user['xingfu_tickets']}张");
+                return out(null, 400, "申请借资需要{$requiredTickets}张幸福助力券，您当前有{$user['xingfu_tickets']}张");
             }
             
             // 验证贷款金额是否在范围内
-            $actualMaxAmount = min($product->max_amount, $maxLoanAmount);
-            if ($req['loan_amount'] < $product->min_amount || $req['loan_amount'] > $actualMaxAmount) {
-                return out(null, 400, "贷款金额必须在{$product->min_amount}元到{$actualMaxAmount}元之间");
+            if ($req['loan_amount'] < $product->min_amount || $req['loan_amount'] > $product->max_amount) {
+                return out(null, 400, "您本次申请金额已超出可支持额度");
+            }
+
+            // 验证用户完成的产品组限额
+            if ($req['loan_amount'] > $maxLoanAmount) {
+                return out(null, 400, "您本次申请金额已超出可支持额度");
             }
 
             // 验证用户申请次数限制
@@ -148,7 +184,7 @@ class LoanController extends AuthController
 
             // 验证用户是否有未完成的申请
             $pendingApplication = LoanApplication::where('user_id', $this->user['id'])
-                                                ->whereIn('status', [1, 2, 4]) // 待审核、已通过、已放款
+                                                ->whereIn('status', [1, 2]) // 待审核、已通过、已放款
                                                 ->find();
             if ($pendingApplication) {
                 return out(null, 400, '您有未完成的贷款申请，请等待处理完成后再申请');
@@ -156,16 +192,28 @@ class LoanController extends AuthController
 
             // 计算利息和总金额
             $loanDays = $gradient->loan_days;
-            $interestRate = bcdiv($gradient->interest_rate, '100', 4); // 利息率是百分比，需要除以100
+            $interestRate = bcdiv($gradient->interest_rate, '100', 8); // 利息率是百分比，需要除以100，使用8位精度
             // 总利息 = 贷款金额 × 日利息率 × 贷款天数
-            $totalInterest = bcmul(bcmul($req['loan_amount'], $interestRate, 4), (string)$loanDays, 2);
-            $totalAmount = bcadd($req['loan_amount'], $totalInterest, 2);
+            // 计算过程中不四舍五入，最后结果才保留两位小数
+            $totalInterest = bcmul(bcmul((string)$req['loan_amount'], $interestRate, 8), (string)$loanDays, 2);
+            $totalAmount = bcadd((string)$req['loan_amount'], $totalInterest, 2);
             
             // 计算月供金额（总金额除以分期数）
             $monthlyPayment = bcdiv($totalAmount, (string)$gradient->installment_count, 2);
 
             Db::startTrans();
             try {
+                // 重新获取用户信息（加锁）
+                $user = User::where('id', $this->user['id'])->lock(true)->find();
+                
+                // 再次检查幸福助力券数量
+                if ($user['xingfu_tickets'] < $requiredTickets) {
+                    return out(null, 400, "申请借资需要{$requiredTickets}张幸福助力券，您当前有{$user['xingfu_tickets']}张");
+                }
+                
+                // 扣除幸福助力券
+                User::changeInc($user['id'], -$requiredTickets, 'xingfu_tickets', 116, $req['product_id'], 12, '贷款申请扣除助力券', 0, 1);
+                
                 // 创建贷款申请
                 $application = LoanApplication::create([
                     'user_id' => $this->user['id'],
@@ -291,31 +339,34 @@ class LoanController extends AuthController
             // 检查用户资格和获取最大贷款限额
             $maxLoanAmount = $this->checkUserQualificationAndGetMaxAmount($user['id']);
             
-            // 检查幸福助力券数量
-            $requiredTickets = LoanConfig::getConfig('xingfu_tickets_num', 10);
-            $hasEnoughTickets = $user['xingfu_tickets'] >= $requiredTickets;
+            // 检查幸福助力券数量（暂时不检查）
+            // $requiredTickets = LoanConfig::getConfig('xingfu_tickets_num', 10);
+            // $hasEnoughTickets = $user['xingfu_tickets'] >= $requiredTickets;
+            $requiredTickets = 0;
+            $hasEnoughTickets = true;
             
             if ($maxLoanAmount === false) {
                 return out([
                     'qualified' => false,
                     'max_loan_amount' => 0,
-                    'message' => '您尚未完成任一五福临门板块申领，无法申请贷款',
+                    'message' => '您尚未完成任意五福临门板块申领，无法申请贷款',
                     'xingfu_tickets' => $user['xingfu_tickets'],
                     'required_tickets' => $requiredTickets,
                     'has_enough_tickets' => $hasEnoughTickets
                 ], 200, '获取成功');
             }
             
-            if (!$hasEnoughTickets) {
-                return out([
-                    'qualified' => false,
-                    'max_loan_amount' => $maxLoanAmount,
-                    'message' => "申请贷款需要{$requiredTickets}张幸福助力券，您当前有{$user['xingfu_tickets']}张",
-                    'xingfu_tickets' => $user['xingfu_tickets'],
-                    'required_tickets' => $requiredTickets,
-                    'has_enough_tickets' => $hasEnoughTickets
-                ], 200, '获取成功');
-            }
+            // 暂时不检查幸福助力券数量
+            // if (!$hasEnoughTickets) {
+            //     return out([
+            //         'qualified' => false,
+            //         'max_loan_amount' => $maxLoanAmount,
+            //         'message' => "申请借资需要{$requiredTickets}张幸福助力券，您当前有{$user['xingfu_tickets']}张",
+            //         'xingfu_tickets' => $user['xingfu_tickets'],
+            //         'required_tickets' => $requiredTickets,
+            //         'has_enough_tickets' => $hasEnoughTickets
+            //     ], 200, '获取成功');
+            // }
             
             // 获取所有可用的贷款产品
             $products = LoanProduct::where('status', 1)->select();
@@ -522,7 +573,7 @@ class LoanController extends AuthController
                 2 => ['field' => 'team_bonus_balance', 'name' => '荣誉钱包'],
                 3 => ['field' => 'butie', 'name' => '稳盈钱包'],
                 4 => ['field' => 'balance', 'name' => '民生钱包'],
-                5 => ['field' => 'digit_balance', 'name' => '收益钱包']
+                5 => ['field' => 'digit_balance', 'name' => '惠民钱包']
             ];
 
             $plan = LoanRepaymentPlan::find($req['plan_id']);
@@ -665,7 +716,7 @@ class LoanController extends AuthController
                 2 => ['field' => 'team_bonus_balance', 'name' => '荣誉钱包'],
                 3 => ['field' => 'butie', 'name' => '稳盈钱包'],
                 4 => ['field' => 'balance', 'name' => '民生钱包'],
-                5 => ['field' => 'digit_balance', 'name' => '收益钱包'],
+                5 => ['field' => 'digit_balance', 'name' => '惠民钱包'],
                 6 => ['field' => 'integral', 'name' => '积分'],
                 7 => ['field' => 'appreciating_wallet', 'name' => '幸福收益'],
                 8 => ['field' => 'butie_lock', 'name' => '稳赢钱包转入'],
@@ -811,7 +862,7 @@ class LoanController extends AuthController
                 2 => ['field' => 'team_bonus_balance', 'name' => '荣誉钱包'],
                 3 => ['field' => 'butie', 'name' => '稳盈钱包'],
                 4 => ['field' => 'balance', 'name' => '民生钱包'],
-                5 => ['field' => 'digit_balance', 'name' => '收益钱包']
+                5 => ['field' => 'digit_balance', 'name' => '惠民钱包']
             ];
 
             $walletField = $walletTypeMap[$walletType]['field'];
@@ -980,7 +1031,7 @@ class LoanController extends AuthController
             'team_bonus_balance' => 2, // 荣誉钱包
             'butie' => 3,              // 稳盈钱包
             'balance' => 4,            // 民生钱包
-            'digit_balance' => 5       // 收益钱包
+            'digit_balance' => 5       // 惠民钱包
         ];
         return $logTypeMap[$walletField] ?? 1;
     }

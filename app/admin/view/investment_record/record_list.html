@@ -65,7 +65,7 @@
                                 <td>
                                     梯度：{if condition="$v['gradient']"} {$v['gradient']['name']} {else/} 无梯度信息 {/if}<br>
                                     天数：{if condition="$v['gradient']"} {$v['gradient']['investment_days']}天 {else/} 0天 {/if}<br>
-                                    利率：{if condition="$v['gradient']"} {($v['gradient']['interest_rate'])*100}% {else/} 0% {/if}
+                                    利率：{if condition="$v['gradient']"} <?php echo number_format(($v['gradient']['interest_rate'])*100, 4); ?>% {else/} 0% {/if}
                                 </td>
                                 <td>
                                     <span class="label label-{if condition="$v['status'] eq 1"}success{elseif condition="$v['status'] eq 2"}warning{elseif condition="$v['status'] eq 3"}info{else/}default{/if}">{$v['status_text']}</span>

@@ -12,10 +12,10 @@ return [
         ],
         'redis' => [
             'type' => 'redis',
-            'host' => '127.0.0.1',
+            'host' => '1Panel-redis-ds0x',
             'port' => 6379,
-            'password' => '',
-            'select' => 0,
+            'password' => 'redis_zhDTMA',
+            'select' => 3,
             'timeout' => 0,
             'persistent' => false,
         ],

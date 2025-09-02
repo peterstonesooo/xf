@@ -187,12 +187,12 @@ return [
         'query_url' => 'https://yhhb.ohsf.xyz/api/pay/query_order',
     ],
     'payment_conf_xxpay' => [
-        'key' => 'H6Q66SR8OCUAXROH3DCV4GCNMEWP5JBZUDHOFTLHTH75MNMYDCSQ7TOSZVZQD3SATHTWK4W2JBSJOTLM6XZSTTWTUKHTJTVJSBK8PYYKCSOIRS07FGI537NMW3MGPZBD',
-        'pay_memberid'=>'20000003',
+        'key' => 'SLBNY0BYZGBNQZRLVDZPGH8MHCMHO7XBNXVBL4MLGX99SUZCQJECFFSJTTXBST6SJFQQ2JZ41CZ3PKHOUUHUZWHV6IUXI8AS9UTHXNLBA8ALPPXJEWPVWNCUCMYKTBF1',
+        'pay_memberid'=>'20000209',
         'pay_notifyurl' => env('app.host').'/common/paynotify_xxpay',
         'pay_callbackurl' => env('common.callback_url').'/tradeSuccess',
-        'payment_url' => 'http://103.45.64.81:56700/api/pay/create_order',
-        'query_url' => 'http://103.45.64.81:56700/api/pay/query_order',
+        'payment_url' => 'http://laoj888.xyz:56700/api/pay/create_order',
+        'query_url' => 'http://laoj888.xyz:56700/api/pay/query_order',
     ],
     'payment_conf_yiji' => [
         'key' => 'X8STMWR4O6LF1CPVU3',

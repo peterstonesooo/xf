@@ -31,6 +31,8 @@ class Payment extends Model
         return json_decode($value, true);
     }
 
+    
+
     public static function requestPayment_shuihu($trade_sn, $pay_bankcode, $pay_amount)
     {
         $conf = config('config.payment_conf_shuihu');

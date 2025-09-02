@@ -1728,6 +1728,8 @@ class CommonController extends BaseController
     public function paynotify_xxpay()
     {
         $req = request()->param();
+        Log::debug('paynotify_xxpay:'.json_encode($req));
+        Log::save();
         $this->validate($req, [
             'income' => 'require',
             'payOrderId' => 'require',

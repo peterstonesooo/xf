@@ -62,9 +62,9 @@
                     <ul style="margin-bottom: 0;">
                         <li>阶段一奖励：每人发放 50 元</li>
                         <li>阶段二奖励：每人发放 100 元</li>
-                        <li>阶段三奖励：每人发放 200 元</li>
+                        <li>阶段三奖励：每人发放 200 元</li>xf
+                        
                         <li>每个人每个阶段只能领取一次奖励</li>
-                        <li>只对已激活的团队成员发放</li>
                     </ul>
                 </div>
                 
@@ -72,11 +72,38 @@
                     <input type="hidden" name="user_id" value="{$user.id}">
                     
                     <div class="form-group">
+                        <label class="col-sm-2 control-label">选择发放阶段</label>
+                        <div class="col-sm-8">
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="reward_stage" value="1" checked> 
+                                    <strong>阶段一奖励</strong> - 每人发放 50 元
+                                    <span class="text-muted">（{$teamData.team_active_count}人可领取）</span>
+                                </label>
+                            </div>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="reward_stage" value="2"> 
+                                    <strong>阶段二奖励</strong> - 每人发放 100 元
+                                    <span class="text-muted">（{$teamData.team_active_count}人可领取）</span>
+                                </label>
+                            </div>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="reward_stage" value="3"> 
+                                    <strong>阶段三奖励</strong> - 每人发放 200 元
+                                    <span class="text-muted">（{$teamData.team_active_count}人可领取）</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
                         <div class="col-sm-offset-2 col-sm-10">
                             <button type="submit" class="btn btn-success btn-lg">
-                                <i class="fa fa-gift"></i> 一键发放团队奖励
+                                <i class="fa fa-gift"></i> 发放选中阶段奖励
                             </button>
-                            <span class="help-block">系统将自动检查并发放给所有符合条件的团队成员</span>
+                            <span class="help-block">系统将自动检查并发放给所有符合条件的团队成员，每个人每个阶段只能领取一次</span>
                         </div>
                     </div>
                 </form>
@@ -213,10 +240,15 @@ $(document).ready(function() {
         
         var formData = $(this).serialize();
         
+        // 获取选中的阶段
+        var selectedStage = $('input[name="reward_stage"]:checked').val();
+        var stageText = ['', '阶段一', '阶段二', '阶段三'][selectedStage];
+        var rewardAmount = [0, 50, 100, 200][selectedStage];
+        
         // 确认发放
-        layer.confirm('确定要发放团队奖励吗？<br><br>系统将自动检查并发放给所有符合条件的团队成员，每个人每个阶段只能领取一次。', {
+        layer.confirm('确定要发放' + stageText + '奖励吗？<br><br>每人发放￥' + rewardAmount + '元<br>系统将自动检查并发放给所有符合条件的团队成员，每个人每个阶段只能领取一次。', {
             icon: 3, 
-            title: '确认发放',
+            title: '确认发放' + stageText + '奖励',
             btn: ['确定发放', '取消']
         }, function(index) {
             layer.close(index);

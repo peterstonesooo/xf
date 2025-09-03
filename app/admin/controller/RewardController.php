@@ -46,17 +46,19 @@ class RewardController extends AuthController
     }
     
     /**
-     * 发放奖励 - 自动发放给所有激活的下级
+     * 发放奖励 - 根据选择的阶段发放奖励
      */
     public function distributeReward()
     {
         $req = request()->param();
         $this->validate($req, [
-            'user_id' => 'require|number'
+            'user_id' => 'require|number',
+            'reward_stage' => 'require|in:1,2,3'
         ]);
         
         try {
             $userId = $req['user_id'];
+            $rewardStage = $req['reward_stage'];
             
             // 获取用户信息
             $user = User::find($userId);
@@ -64,11 +66,11 @@ class RewardController extends AuthController
                 return out(null, 10001, '用户不存在');
             }
             
-            // 获取所有激活的下级用户
+            // 获取所有激活的下级用户（所有阶段都发放给所有激活成员）
             $teamMembers = $this->getActiveTeamMembers($userId);
             
             if (empty($teamMembers)) {
-                return out(null, 10001, '没有找到激活的团队成员');
+                return out(null, 10001, '没有找到符合条件的团队成员');
             }
             
             Db::startTrans();
@@ -79,18 +81,18 @@ class RewardController extends AuthController
             
             // 定义奖励金额
             $rewardAmounts = [
-                1 => 50.00,  // 一级奖励：50元
-                2 => 100.00, // 二级奖励：100元
-                3 => 200.00  // 三级奖励：200元
+                1 => 50.00,  // 阶段一奖励：50元
+                2 => 100.00, // 阶段二奖励：100元
+                3 => 200.00  // 阶段三奖励：200元
             ];
+            
+            $rewardAmount = $rewardAmounts[$rewardStage];
             
             foreach ($teamMembers as $member) {
                 $subUserId = $member['sub_user_id'];
-                $level = $member['level'];
-                $rewardAmount = $rewardAmounts[$level];
                 
-                // 检查是否已经发放过该级别的奖励
-                if (TeamRewardRecord::hasReceivedReward($subUserId, $level)) {
+                // 检查是否已经发放过该阶段的奖励
+                if (TeamRewardRecord::hasReceivedReward($subUserId, $rewardStage)) {
                     continue; // 跳过已发放的
                 }
                 
@@ -98,11 +100,11 @@ class RewardController extends AuthController
                 $result = User::changeInc(
                     $subUserId, 
                     $rewardAmount, 
-                    'topup_balance', 
-                    116, // 奖励类型ID
+                    'puhui', 
+                    118, // 奖励类型ID
                     $userId, 
-                    1, // 钱包类型
-                    '团队' . $this->getRewardTypeText($level) . '奖励', 
+                    13, // 钱包类型
+                    '团队' . $this->getRewardTypeText($rewardStage) . '奖励', 
                     0, 
                     1, 
                     'TD'
@@ -113,18 +115,18 @@ class RewardController extends AuthController
                     $rewardRecord = new TeamRewardRecord();
                     $rewardRecord->user_id = $userId;
                     $rewardRecord->sub_user_id = $subUserId;
-                    $rewardRecord->reward_level = $level;
+                    $rewardRecord->reward_level = $rewardStage;
                     $rewardRecord->reward_amount = $rewardAmount;
-                    $rewardRecord->reward_type = $this->getRewardTypeText($level) . '奖励';
+                    $rewardRecord->reward_type = $this->getRewardTypeText($rewardStage) . '奖励';
                     $rewardRecord->status = 1;
-                    $rewardRecord->remark = '自动发放团队奖励';
+                    $rewardRecord->remark = '发放' . $this->getRewardTypeText($rewardStage) . '团队奖励';
                     $rewardRecord->save();
                     
                     $successCount++;
                     $totalAmount += $rewardAmount;
                     $rewardRecords[] = [
                         'sub_user_id' => $subUserId,
-                        'level' => $level,
+                        'level' => $rewardStage,
                         'amount' => $rewardAmount
                     ];
                 }
@@ -153,6 +155,21 @@ class RewardController extends AuthController
             ->join('happiness_equity_activation hea', 'hea.user_id = ur.sub_user_id')
             ->where('ur.user_id', $userId)
             ->whereIn('ur.level', [1, 2, 3])
+            ->where('hea.status', 1) // 只获取激活的用户
+            ->field('ur.sub_user_id, ur.level')
+            ->select()
+            ->toArray();
+    }
+    
+    /**
+     * 获取指定级别的激活团队成员
+     */
+    private function getActiveTeamMembersByLevel($userId, $level)
+    {
+        return UserRelation::alias('ur')
+            ->join('happiness_equity_activation hea', 'hea.user_id = ur.sub_user_id')
+            ->where('ur.user_id', $userId)
+            ->where('ur.level', $level)
             ->where('hea.status', 1) // 只获取激活的用户
             ->field('ur.sub_user_id, ur.level')
             ->select()

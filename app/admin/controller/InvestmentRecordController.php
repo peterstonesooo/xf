@@ -45,12 +45,29 @@ class InvestmentRecordController extends AuthController
             'list_rows' => 15,  // 每页显示15条记录
             'query' => $req
         ])->each(function ($item, $key) {
+            // 确保状态和时间正确显示
             $item->status_text = $item->getStatusTextAttr(null, $item->toArray());
             $item->wallet_type_text = $item->getWalletTypeTextAttr(null, $item->toArray());
             
             // 手动获取用户和梯度信息，因为使用了 JOIN 查询
             $item->user = User::find($item->user_id);
             $item->gradient = InvestmentGradient::find($item->gradient_id);
+            
+            // 格式化时间显示
+            if ($item->created_at) {
+                $item->created_at = date('Y-m-d H:i:s', strtotime($item->created_at));
+            }
+            if ($item->start_date) {
+                $item->start_date = date('Y-m-d', strtotime($item->start_date));
+            }
+            if ($item->end_date) {
+                $item->end_date = date('Y-m-d', strtotime($item->end_date));
+            }
+            
+            // 调试状态信息
+            if (!isset($item->status_text) || empty($item->status_text)) {
+                $item->status_text = '状态未知(' . ($item->status ?? 'null') . ')';
+            }
             
             return $item;
         });
@@ -121,6 +138,18 @@ class InvestmentRecordController extends AuthController
         $data = $builder->select()->each(function ($item, $key) {
             $item->status_text = $item->getStatusTextAttr(null, $item->toArray());
             $item->wallet_type_text = $item->getWalletTypeTextAttr(null, $item->toArray());
+            
+            // 格式化时间显示
+            if ($item->created_at) {
+                $item->created_at = date('Y-m-d H:i:s', strtotime($item->created_at));
+            }
+            if ($item->start_date) {
+                $item->start_date = date('Y-m-d', strtotime($item->start_date));
+            }
+            if ($item->end_date) {
+                $item->end_date = date('Y-m-d', strtotime($item->end_date));
+            }
+            
             return $item;
         });
 

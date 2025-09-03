@@ -17,28 +17,28 @@ class InvestmentRecordController extends AuthController
     {
         $req = request()->param();
         
-        $builder = InvestmentRecord::with(['user', 'gradient']);
+        $builder = InvestmentRecord::alias('ir');
         
         // 搜索条件
         if (!empty($req['user_id'])) {
-            $builder->where('user_id', $req['user_id']);
+            $builder->where('ir.user_id', $req['user_id']);
         }
         if (!empty($req['phone'])) {
-            $builder->whereHas('user', function($query) use ($req) {
-                $query->where('phone', 'like', '%' . $req['phone'] . '%');
-            });
+            // 修复 whereHas 查询问题，改用 JOIN 查询
+            $builder->join('user u', 'ir.user_id = u.id')
+                   ->where('u.phone', 'like', '%' . $req['phone'] . '%');
         }
         if (isset($req['status']) && $req['status'] !== '') {
-            $builder->where('status', $req['status']);
+            $builder->where('ir.status', $req['status']);
         }
         if (!empty($req['wallet_type'])) {
-            $builder->where('wallet_type', $req['wallet_type']);
+            $builder->where('ir.wallet_type', $req['wallet_type']);
         }
         if (!empty($req['gradient_id'])) {
-            $builder->where('gradient_id', $req['gradient_id']);
+            $builder->where('ir.gradient_id', $req['gradient_id']);
         }
         
-        $builder->order('id desc');
+        $builder->order('ir.id desc');
         
         // 设置分页参数
         $data = $builder->paginate([
@@ -95,28 +95,28 @@ class InvestmentRecordController extends AuthController
     {
         $req = request()->param();
         
-        $builder = InvestmentRecord::with(['user', 'gradient']);
+        $builder = InvestmentRecord::alias('ir');
         
         // 搜索条件
         if (!empty($req['user_id'])) {
-            $builder->where('user_id', $req['user_id']);
+            $builder->where('ir.user_id', $req['user_id']);
         }
         if (!empty($req['phone'])) {
-            $builder->whereHas('user', function($query) use ($req) {
-                $query->where('phone', 'like', '%' . $req['phone'] . '%');
-            });
+            // 修复 whereHas 查询问题，改用 JOIN 查询
+            $builder->join('user u', 'ir.user_id = u.id')
+                   ->where('u.phone', 'like', '%' . $req['phone'] . '%');
         }
         if (isset($req['status']) && $req['status'] !== '') {
-            $builder->where('status', $req['status']);
+            $builder->where('ir.status', $req['status']);
         }
         if (!empty($req['wallet_type'])) {
-            $builder->where('wallet_type', $req['wallet_type']);
+            $builder->where('ir.wallet_type', $req['wallet_type']);
         }
         if (!empty($req['gradient_id'])) {
-            $builder->where('gradient_id', $req['gradient_id']);
+            $builder->where('ir.gradient_id', $req['gradient_id']);
         }
         
-        $builder->order('id desc');
+        $builder->order('ir.id desc');
         
         $data = $builder->select()->each(function ($item, $key) {
             $item->status_text = $item->getStatusTextAttr(null, $item->toArray());

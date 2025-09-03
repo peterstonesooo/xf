@@ -92,7 +92,7 @@ class RewardController extends AuthController
                 $subUserId = $member['sub_user_id'];
                 
                 // 检查是否已经发放过该阶段的奖励
-                if (TeamRewardRecord::hasReceivedReward($subUserId, $rewardStage)) {
+                if (TeamRewardRecord::hasReceivedReward($subUserId, $rewardStage) !== null) {
                     continue; // 跳过已发放的
                 }
                 

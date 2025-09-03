@@ -32,7 +32,7 @@ class TeamRewardRecord extends Model
         return self::where('sub_user_id', $subUserId)
             ->where('reward_level', $rewardLevel)
             ->where('status', 1)
-            ->exists();
+            ->find();
     }
     
     /**

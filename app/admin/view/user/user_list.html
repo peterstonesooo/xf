@@ -275,6 +275,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-success" onclick="goToRewardPage()">发放奖励</button>
             </div>
         </div>
     </div>
@@ -469,6 +470,9 @@
         $('#teamRealNameCount').text('-');
         $('#teamActiveCount').text('-');
         
+        // 将用户ID存储到弹框中
+        $('#teamActivationModal').data('user-id', userId);
+        
         // 显示弹框
         $('#teamActivationModal').modal('show');
         
@@ -485,6 +489,16 @@
         }).fail(function() {
             layer.msg('获取数据失败，请重试', {icon: 2, time: 2000});
         });
+    }
+
+    // 跳转到奖励页面
+    function goToRewardPage() {
+        var userId = $('#teamActivationModal').data('user-id'); // 从弹框中获取用户ID
+        if (userId) {
+            window.location.href = '{:url("admin/Reward/rewardList")}?user_id=' + userId;
+        } else {
+            layer.msg('未获取到用户ID', {icon: 2, time: 2000});
+        }
     }
 </script>
 <style>

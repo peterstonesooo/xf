@@ -886,4 +886,17 @@ return array(
                     'title' => '导出出资返还记录',
                 ),
         ),
+    '团队奖励管理' =>
+    array(
+        0 =>
+            array(
+                'name' => 'Reward/rewardList',
+                'title' => '查看奖励列表',
+            ),
+        1 =>
+            array(
+                'name' => 'Reward/distributeReward',
+                'title' => '一键发放团队奖励',
+            ),
+    ),
 );

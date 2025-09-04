@@ -11,6 +11,7 @@ use app\model\OrderTiyan;
 use app\model\YuanmengUser;
 use app\model\OrderDailyBonus;
 use app\model\Project;
+use app\model\HappinessEquityActivation;
 
 class HomeController extends AuthController
 {
@@ -156,22 +157,20 @@ class HomeController extends AuthController
         //     $today_projescs = Project::where('status', 1)->column('id');
         // }
         
-        $project_ids = Project::where('status', 1)->where('class', 'in',[6,7,8,9])->column('id');
+        // 统计幸福激活数据
+        $arr['title'] = '今日幸福激活人数';
+        $today_start = strtotime($today . ' 00:00:00');
+        $today_end = strtotime($today . ' 23:59:59');
+        $arr['value'] = HappinessEquityActivation::where('status', 1)
+            ->where('created_at', '>=', $today_start)
+            ->where('created_at', '<=', $today_end)
+            ->count();
 
-        $arr['title'] = '本期产品总人数';
-        $user_ids1 = Order::whereIn('project_id', $project_ids)->where('status', '>', 1)->column('user_id');
-        $user_ids2 = OrderDailyBonus::whereIn('project_id', $project_ids)->where('status', '>', 1)->column('user_id');
-        $arr['value'] = count(array_unique(array_merge($user_ids1, $user_ids2)));
+        $arr['title1'] = '幸福激活总人数';
+        $arr['value1'] = HappinessEquityActivation::where('status', 1)->count();
 
-        $arr['title1'] = '本期产品总份额';
-        $orders1 = Order::whereIn('project_id', $project_ids)->where('status', '>', 1)->count();
-        $orders2 = OrderDailyBonus::whereIn('project_id', $project_ids)->where('status', '>', 1)->count();
-        $arr['value1'] = $orders1 + $orders2;
-
-        $arr['title2'] = '本期产品总金额';
-        $amount1 = Order::whereIn('project_id', $project_ids)->where('status', '>', 1)->sum('single_amount');
-        $amount2 = OrderDailyBonus::whereIn('project_id', $project_ids)->where('status', '>', 1)->sum('single_amount');
-        $arr['value2'] = $amount1+$amount2;
+        $arr['title2'] = '幸福激活总金额';
+        $arr['value2'] = round(HappinessEquityActivation::where('status', 1)->sum('payment_amount'), 2);
         $arr['url'] = '';
         $data[] = $arr;
 

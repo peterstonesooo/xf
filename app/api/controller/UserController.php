@@ -733,7 +733,7 @@ class UserController extends AuthController
             $totalDeductAmount = $req['money'] + $feeAmount;
             
             if ($totalDeductAmount > $user[$field]) {
-                return out(null, 10002, '转账余额不足（包含手续费）');
+                return out(null, 10002, $fieldText.'余额不足（无法完成转账）');
             }
             
             // 转出金额（包含手续费）

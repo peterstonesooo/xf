@@ -54,6 +54,8 @@ class HappinessEquityController extends AuthController
             // 如果已激活，使用激活记录中的实际缴纳金额
             if ($activation) {
                 $paymentAmount = $activation['payment_amount'];
+                $equityRate = $activation['equity_rate'];
+                $title = $activation['title'];
             }
             
             $data = [
@@ -203,19 +205,48 @@ class HappinessEquityController extends AuthController
     }
     
     /**
-     * 检查用户是否有购买产品
+     * 检查用户是否有购买产品（只检查产品组7,8,9,10,11）
      */
     private function checkUserHasPurchased($userId)
     {
-        // 检查各种订单表
-        $orderCount = Order::where('user_id', $userId)->whereIn('status', [2, 3, 4])->count();
-        $dailyBonusCount = OrderDailyBonus::where('user_id', $userId)->whereIn('status', [2, 3, 4])->count();
-        $tiyanCount = OrderTiyan::where('user_id', $userId)->whereIn('status', [2, 3, 4])->count();
-        $tongxingCount = OrderTongxing::where('user_id', $userId)->whereIn('status', [2, 3, 4])->count();
-        $pointsOrderCount = PointsOrder::where('user_id', $userId)->whereIn('order_status', [2, 3])->count();
-        $coinOrderCount = CoinOrder::where('user_id', $userId)->count();
-        $investmentCount = InvestmentRecord::where('user_id', $userId)->whereIn('status', [2, 3, 4])->count();
-        $loanCount = LoanApplication::where('user_id', $userId)->whereIn('status', [2, 3, 4])->count();
+        // 只检查产品组7,8,9,10,11的订单
+        $targetGroups = [7, 8, 9, 10, 11];
+        
+        // 检查各种订单表，通过项目表关联产品组进行过滤
+        $orderCount = Order::alias('o')
+            ->join('mp_project p', 'o.project_id = p.id')
+            ->where('o.user_id', $userId)
+            ->whereIn('o.status', [2, 3, 4])
+            ->whereIn('p.project_group_id', $targetGroups)
+            ->count();
+            
+        $dailyBonusCount = OrderDailyBonus::alias('o')
+            ->join('mp_project p', 'o.project_id = p.id')
+            ->where('o.user_id', $userId)
+            ->whereIn('o.status', [2, 3, 4])
+            ->whereIn('p.project_group_id', $targetGroups)
+            ->count();
+            
+        $tiyanCount = OrderTiyan::alias('o')
+            ->join('mp_project p', 'o.project_id = p.id')
+            ->where('o.user_id', $userId)
+            ->whereIn('o.status', [2, 3, 4])
+            ->whereIn('p.project_group_id', $targetGroups)
+            ->count();
+            
+        $tongxingCount = OrderTongxing::alias('o')
+            ->join('mp_project p', 'o.project_id = p.id')
+            ->where('o.user_id', $userId)
+            ->whereIn('o.status', [2, 3, 4])
+            ->whereIn('p.project_group_id', $targetGroups)
+            ->count();
+        
+        // PointsOrder、CoinOrder、InvestmentRecord、LoanApplication 这些表没有直接关联项目表
+        // 根据业务逻辑，这些可能不属于产品组7,8,9,10,11，所以暂时不计算
+        $pointsOrderCount = 0;
+        $coinOrderCount = 0;
+        $investmentCount = 0;
+        $loanCount = 0;
         
         return ($orderCount + $dailyBonusCount + $tiyanCount + $tongxingCount + $pointsOrderCount + $coinOrderCount + $investmentCount + $loanCount) > 0;
     }

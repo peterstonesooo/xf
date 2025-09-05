@@ -159,8 +159,8 @@ class HomeController extends AuthController
         
         // 统计幸福激活数据
         $arr['title'] = '今日幸福激活人数';
-        $today_start = strtotime(date('Y-m-d 00:00:00'),time());
-        $today_end = strtotime(date('Y-m-d 23:59:59'),time());
+        $today_start = date('Y-m-d 00:00:00');
+        $today_end = date('Y-m-d 23:59:59');
         $arr['value'] = HappinessEquityActivation::where('status', 1)
             ->where('created_at', '>=', $today_start)
             ->where('created_at', '<=', $today_end)

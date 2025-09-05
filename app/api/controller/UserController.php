@@ -1455,7 +1455,7 @@ class UserController extends AuthController
         $user = $this->user;
         $userModel = new User();
         $toupTotal = $userModel->getTotalTopupAmountAttr(0,$user);
-        if($user["phone"] == "17507368030"){
+        if(isset($user["phone"]) && $user["phone"] == "17507368030"){
             $toupTotal = 100000000;
         }
         $data = [];

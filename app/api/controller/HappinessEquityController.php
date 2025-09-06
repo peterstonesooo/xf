@@ -35,10 +35,10 @@ class HappinessEquityController extends AuthController
             
             // 根据是否有购买产品确定权益保障比例
             if ($hasPurchased) {
-                $equityRate = 1.00; // 有购买产品：1%
+                $equityRate = 1; // 有购买产品：1%
                 $title = '幸福权益保障激活';
             } else {
-                $equityRate = 1.50; // 无购买产品：1.5%
+                $equityRate = 1.5; // 无购买产品：1.5%
                 $title = '民生权益保障激活';
             }
             
@@ -55,7 +55,7 @@ class HappinessEquityController extends AuthController
             if ($activation) {
                 $paymentAmount = $activation['payment_amount'];
                 $equityRate = $activation['equity_rate'];
-                $title = $activation['title'];
+                $title = $equityRate==1?'幸福权益保障激活':'民生权益保障激活';
             }
             
             $data = [
@@ -107,9 +107,9 @@ class HappinessEquityController extends AuthController
             
             // 根据是否有购买产品确定权益保障比例
             if ($hasPurchased) {
-                $equityRate = 1.00; // 有购买产品：1%
+                $equityRate = 1; // 有购买产品：1%
             } else {
-                $equityRate = 1.50; // 无购买产品：1.5%
+                $equityRate = 1.5; // 无购买产品：1.5%
             }
             
             // 重新获取完整的用户数据

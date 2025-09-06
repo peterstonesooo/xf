@@ -47,7 +47,7 @@ class Butie extends Command
                                 if($ret>0){
                                     //如果项目id是70 特殊处理
                                     if($order['project_id']==70){
-                                        User::changeInc($order['user_id'],$ret,'puhui',59,$order['id'],13, '购买商品到期分红');
+                                        User::changeInc($order['user_id'],$ret,'puhui',59,$order['id'],13, '福泽普惠专享');
                                     }else{
                                         User::changeInc($order['user_id'],$ret,'digit_balance',59,$order['id'],5, '购买商品到期分红');
                                     }

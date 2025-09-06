@@ -55,5 +55,6 @@ return [
         'fix:investment_interest_data' => 'app\common\command\FixInvestmentInterestData',
         'repair:balance-log' => 'app\common\command\RepairBalanceLog',
         'repair:balance-log-error' => 'app\common\command\RepairBalanceLogError',
+        'correct:balance-log' => 'app\common\command\CorrectBalanceLog',
     ],
 ];

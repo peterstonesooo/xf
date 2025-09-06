@@ -53,5 +53,6 @@ return [
         'investment:auto-return' => 'app\common\command\InvestmentAutoReturn',
         'repair:happiness_equity_reward' => 'app\common\command\RepairHappinessEquityReward',
         'fix:investment_interest_data' => 'app\common\command\FixInvestmentInterestData',
+        'repair:balance-log' => 'app\common\command\RepairBalanceLog',
     ],
 ];

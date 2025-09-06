@@ -45,7 +45,12 @@ class Butie extends Command
                             }else{
                                 $ret = $huimin_days_return[$period_change_day]['huimin'];
                                 if($ret>0){
-                                    User::changeInc($order['user_id'],$ret,'digit_balance',59,$order['id'],5, '购买商品到期分红');
+                                    //如果项目id是70 特殊处理
+                                    if($order['project_id']==70){
+                                        User::changeInc($order['user_id'],$ret,'puhui',59,$order['id'],13, '购买商品到期分红');
+                                    }else{
+                                        User::changeInc($order['user_id'],$ret,'digit_balance',59,$order['id'],5, '购买商品到期分红');
+                                    }
                                 }
                                 if($period_change_day+1 == $len){
                                     $order->status = 4;

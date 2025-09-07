@@ -23,7 +23,7 @@ class RepairBalanceLog extends Command
     protected function configure()
     {
         $this->setName('repair:balance-log')
-            ->setDescription('修复购买商品到期分红错误发放的资金')
+            ->setDescription('查看。。。')
             ->addOption('dry-run', null, \think\console\input\Option::VALUE_NONE, '仅查看需要修复的记录，不执行修复操作')
             ->addOption('confirm', null, \think\console\input\Option::VALUE_NONE, '确认执行修复操作');
     }
@@ -39,14 +39,21 @@ class RepairBalanceLog extends Command
             } else {
                 $output->writeln('<info>=== 开始修复购买商品到期分红错误发放的资金 ===</info>');
             }
+
+            // $sql = "SELECT ub.*, u.phone
+            // FROM mp_user_balance_log as ub 
+            // LEFT JOIN mp_user AS u ON(u.id = ub.user_id)
+            // WHERE ub.type=59 AND ub.log_type=5 AND ub.remark='购买商品到期分红' 
+            // AND ub.created_at > '2025-09-01 00:00:06'";
             
             // 查询需要修复的记录
             // 先查询所有符合条件的balance_log记录
             $sql = "SELECT ub.*, u.phone
                     FROM mp_user_balance_log as ub 
                     LEFT JOIN mp_user AS u ON(u.id = ub.user_id)
-                    WHERE ub.type=59 AND ub.log_type=5 AND ub.remark='购买商品到期分红' 
+                    WHERE ub.type=59 AND ub.log_type=5 AND ub.remark='购买商品到期分红-正确发放' 
                     AND ub.created_at > '2025-09-01 00:00:06'";
+                    
             
             $allRecords = Db::query($sql);
             
@@ -54,47 +61,24 @@ class RepairBalanceLog extends Command
                 $output->writeln('<info>没有找到需要修复的记录</info>');
                 return;
             }
-            
-            // 进一步筛选出项目ID为70的订单
-            $errorRecords = [];
             foreach ($allRecords as $record) {
-                // 通过relation_id查询对应的订单，检查project_id是否为70
-                $order = Db::name('order')->where('id', $record['relation_id'])->find();
-                if ($order && $order['project_id'] == 70) {
-                    $record['project_name'] = $order['project_name'];
-                    $errorRecords[] = $record;
+
+                $sql = "SELECT * FROM mp_user_balance_log WHERE user_id = {$record['user_id']} and type=59 and log_type=5  order by id desc ";
+                $allRecords = Db::query($sql);
+                for ($i = 0; $i < count($allRecords)-1; $i++) {
+                    if($allRecords[$i]['before_balance'] != $allRecords[$i+1]['after_balance'] ){
+                        $output->writeln('============');
+                        $output->writeln("ID: ".$allRecords[$i]['id']." before_balance: ".$allRecords[$i]['before_balance']." after_balance: ".$allRecords[$i+1]['after_balance']);
+                        $needchange = $allRecords[$i]['after_balance'] - $allRecords[$i+1]['before_balance'];
+                        $output->writeln("needchange: ".$needchange);
+                        file_put_contents('needchange.txt', $record['phone']."   ".$needchange."\n", FILE_APPEND);
+                        $output->writeln("============");
+                    }
+                   
                 }
             }
             
-            if (empty($errorRecords)) {
-                $output->writeln('<info>没有找到需要修复的记录</info>');
-                return;
-            }
-            
-            $output->writeln('<info>找到 ' . count($errorRecords) . ' 条需要修复的记录</info>');
-            
-            // 显示记录详情
-            $output->writeln('');
-            $output->writeln('<comment>记录详情：</comment>');
-            $output->writeln(str_repeat('-', 100));
-            $output->writeln(sprintf('%-10s %-15s %-20s %-15s %-20s %-15s', 
-                       'ID', '用户ID', '手机号', '项目名称', '金额', '创建时间'));
-            $output->writeln(str_repeat('-', 100));
-            
-            $totalAmount = 0;
-            foreach ($errorRecords as $record) {
-                $output->writeln(sprintf('%-10s %-15s %-20s %-20s %-15s %-20s', 
-                           $record['id'], 
-                           $record['user_id'], 
-                           $record['phone'], 
-                           $record['project_name'], 
-                           $record['change_balance'], 
-                           $record['created_at']));
-                $totalAmount += $record['change_balance'];
-            }
-            $output->writeln(str_repeat('-', 100));
-            $output->writeln('<comment>总金额: ' . $totalAmount . '</comment>');
-            $output->writeln('');
+            return;
             
             if ($isDryRun) {
                 $output->writeln('<info>预览完成。如需执行修复，请使用 --confirm 参数。</info>');
@@ -129,39 +113,39 @@ class RepairBalanceLog extends Command
                     Db::startTrans();
                     
                     // 1. 减少digit_balance钱包金额
-                    User::changeInc(
-                        $record['user_id'], 
-                        -$record['change_balance'],  // 负数表示减少
-                        'digit_balance', 
-                        59,  // type
-                        $record['relation_id'], 
-                        5,   // log_type
-                        '购买商品到期分红-修复-减少digit_balance', 
-                        0,   // admin_user_id
-                        2,   // status
-                        'XF' // sn_prefix
-                    );
+                    // User::changeInc(
+                    //     $record['user_id'], 
+                    //     -$record['change_balance'],  // 负数表示减少
+                    //     'digit_balance', 
+                    //     59,  // type
+                    //     $record['relation_id'], 
+                    //     5,   // log_type
+                    //     '购买商品到期分红-修复-减少digit_balance', 
+                    //     0,   // admin_user_id
+                    //     2,   // status
+                    //     'XF' // sn_prefix
+                    // );
                     
                     // 2. 增加puhui钱包金额
-                    User::changeInc(
-                        $record['user_id'], 
-                        $record['change_balance'],   // 正数表示增加
-                        'puhui', 
-                        59,  // type
-                        $record['relation_id'], 
-                        13,  // log_type (puhui钱包对应log_type=13)
-                        '购买商品到期分红-修复-增加puhui', 
-                        0,   // admin_user_id
-                        2,   // status
-                        'XF' // sn_prefix
-                    );
+                    // User::changeInc(
+                    //     $record['user_id'], 
+                    //     $record['change_balance'],   // 正数表示增加
+                    //     'puhui', 
+                    //     59,  // type
+                    //     $record['relation_id'], 
+                    //     13,  // log_type (puhui钱包对应log_type=13)
+                    //     '购买商品到期分红-修复-增加puhui', 
+                    //     0,   // admin_user_id
+                    //     2,   // status
+                    //     'XF' // sn_prefix
+                    // );
                     
                     // 3. 修改原记录的remark
-                    UserBalanceLog::where('id', $record['id'])
-                        ->update(['remark' => '购买商品到期分红-修复']);
+                    // UserBalanceLog::where('id', $record['id'])
+                    //     ->update(['remark' => '购买商品到期分红-修复']);
                     
                     // 提交事务
-                    Db::commit();
+                    // Db::commit();
                     
                     $successCount++;
                     $output->writeln('<info>✓ 修复成功</info>');

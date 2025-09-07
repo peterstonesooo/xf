@@ -70,7 +70,7 @@ class RepairBalanceLog extends Command
                     if($allRecords[$i]['before_balance'] != $allRecords[$i+1]['after_balance'] ){
                         $output->writeln('============');
                         $output->writeln("ID: ".$allRecords[$i]['id']." before_balance: ".$allRecords[$i]['before_balance']." after_balance: ".$allRecords[$i+1]['after_balance']);
-                        $needchange = $allRecords[$i]['after_balance'] - $allRecords[$i+1]['before_balance'];
+                        $needchange = $allRecords[$i+1]['after_balance'] - $allRecords[$i]['before_balance'];
                         $output->writeln("needchange: ".$needchange);
                         file_put_contents('needchange.txt', $allRecords[$i]['id']."   ".$record['phone']."   ".$needchange."\n", FILE_APPEND);
                         $output->writeln("============");

@@ -10,6 +10,7 @@ use app\model\InvestmentReturnRecord;
 use app\model\LoanConfig;
 use app\model\User;
 use app\model\UserBalanceLog;
+use think\facade\Cache;
 use think\facade\Db;
 use think\facade\Log;
 
@@ -86,6 +87,14 @@ class InvestmentController extends AuthController
     public function submitInvestment()
     {
         try {
+            // 检查5秒内重复请求限制
+            $user = $this->user;
+            $clickRepeatName = 'investment-submit-' . $user['id'];
+            if (Cache::get($clickRepeatName)) {
+                return out(null, 10001, '操作过于频繁，请5秒后再试');
+            }
+            Cache::set($clickRepeatName, 1, 5);
+
             $req = $this->validate(request(), [
                 'gradient_id' => 'require|number',
                 'investment_amount' => 'require|float|gt:0',

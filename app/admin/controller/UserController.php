@@ -682,6 +682,12 @@ class UserController extends AuthController
                 $balance_type = 15;
                 $text = '专属充值';
                 break;
+            case 15:
+                $filed = 'puhui';
+                $log_type = 13;
+                $balance_type = 15;
+                $text = '普惠钱包';
+                break;
             default:
                 return out(null, 10001, '类型错误');
         }

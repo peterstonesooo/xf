@@ -63,7 +63,8 @@ class RepairBalanceLog extends Command
             }
             foreach ($allRecords as $record) {
 
-                $sql = "SELECT * FROM mp_user_balance_log WHERE user_id = {$record['user_id']} and type=59 and log_type=5  order by id desc ";
+                $sql = "SELECT * FROM mp_user_balance_log WHERE user_id = {$record['user_id']}
+                 and type=59 and log_type=5 AND created_at > '2025-09-01 00:00:30' order by id desc  ";
                 $allRecords = Db::query($sql);
                 for ($i = 0; $i < count($allRecords)-1; $i++) {
                     if($allRecords[$i]['before_balance'] != $allRecords[$i+1]['after_balance'] ){
@@ -71,7 +72,7 @@ class RepairBalanceLog extends Command
                         $output->writeln("ID: ".$allRecords[$i]['id']." before_balance: ".$allRecords[$i]['before_balance']." after_balance: ".$allRecords[$i+1]['after_balance']);
                         $needchange = $allRecords[$i]['after_balance'] - $allRecords[$i+1]['before_balance'];
                         $output->writeln("needchange: ".$needchange);
-                        file_put_contents('needchange.txt', $record['phone']."   ".$needchange."\n", FILE_APPEND);
+                        file_put_contents('needchange.txt', $allRecords[$i]['id']."   ".$record['phone']."   ".$needchange."\n", FILE_APPEND);
                         $output->writeln("============");
                     }
                    

@@ -3232,7 +3232,7 @@ class UserController extends AuthController
 
     // 更新用户关系
     public function upUserRelation(){
-        $users = User::field('id,up_user_id')->where('id', 21784)->select();
+        $users = User::field('id,up_user_id')->where('id','in', [21784,18214,3705])->select();
         foreach ($users as $key => $val) {
             $user_id = $val['id'];
             $allUpUserIds = User::getAllUpUserId($user_id);

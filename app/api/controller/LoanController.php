@@ -192,14 +192,14 @@ class LoanController extends AuthController
 
             // 计算利息和总金额
             $loanDays = $gradient->loan_days;
-            $interestRate = bcdiv($gradient->interest_rate, '100', 8); // 利息率是百分比，需要除以100，使用8位精度
+            $interestRate = bcdiv((string)$gradient->interest_rate, '100', 8); // 利息率是百分比，需要除以100，使用8位精度
             // 总利息 = 贷款金额 × 日利息率 × 贷款天数
             // 计算过程中不四舍五入，最后结果才保留两位小数
             $totalInterest = bcmul(bcmul((string)$req['loan_amount'], $interestRate, 8), (string)$loanDays, 2);
             $totalAmount = bcadd((string)$req['loan_amount'], $totalInterest, 2);
             
             // 计算月供金额（总金额除以分期数）
-            $monthlyPayment = bcdiv($totalAmount, (string)$gradient->installment_count, 2);
+            $monthlyPayment = bcdiv((string)$totalAmount, (string)$gradient->installment_count, 2);
 
             Db::startTrans();
             try {
@@ -591,7 +591,7 @@ class LoanController extends AuthController
             }
 
             // 计算应还金额（剩余金额 + 逾期利息）
-            $repaymentAmount = bcadd($plan->remaining_amount, $plan->overdue_interest, 2);
+            $repaymentAmount = bcadd((string)$plan->remaining_amount, (string)$plan->overdue_interest, 2);
 
             // 获取钱包字段名和名称
             $walletField = $walletTypeMap[$req['wallet_type']]['field'];
@@ -631,8 +631,8 @@ class LoanController extends AuthController
                 ]);
 
                 // 更新还款计划
-                $plan->paid_amount = bcadd($plan->paid_amount, $repaymentAmount, 2);
-                $plan->remaining_amount = bcsub($plan->remaining_amount, $plan->remaining_amount, 2); // 全部还清
+                $plan->paid_amount = bcadd((string)$plan->paid_amount, (string)$repaymentAmount, 2);
+                $plan->remaining_amount = bcsub((string)$plan->remaining_amount, (string)$plan->remaining_amount, 2); // 全部还清
                 $plan->status = 2; // 已还款
                 $plan->overdue_days = 0; // 清除逾期天数
                 $plan->overdue_interest = 0; // 清除逾期利息
@@ -687,7 +687,7 @@ class LoanController extends AuthController
                     'remaining_amount' => $plan->remaining_amount,
                     'overdue_days' => $plan->overdue_days,
                     'overdue_interest' => $plan->overdue_interest,
-                    'total_amount' => bcadd($plan->remaining_amount, $plan->overdue_interest, 2),
+                    'total_amount' => bcadd((string)$plan->remaining_amount, (string)$plan->overdue_interest, 2),
                     'loan_amount' => $plan->application->loan_amount
                 ];
             }
@@ -768,7 +768,7 @@ class LoanController extends AuthController
             $content .= "还款详情：\n";
             $content .= "• 贷款金额：{$application->loan_amount}元\n";
             $content .= "• 还款期数：第{$plan->period}期\n";
-            $content .= "• 还款金额：" . bcadd($plan->remaining_amount, $plan->overdue_interest, 2) . "元\n";
+            $content .= "• 还款金额：" . bcadd((string)$plan->remaining_amount, (string)$plan->overdue_interest, 2) . "元\n";
             $content .= "• 还款时间：" . date('Y-m-d H:i:s') . "\n\n";
             $content .= "感谢您的及时还款，请继续保持良好的信用记录。";
 
@@ -843,7 +843,7 @@ class LoanController extends AuthController
             // 计算应还金额
             $repaymentAmount = $plan->remaining_amount;
             if ($plan->status == 3) { // 逾期状态
-                $repaymentAmount = bcadd($plan->remaining_amount, $plan->overdue_interest, 2);
+                $repaymentAmount = bcadd((string)$plan->remaining_amount, (string)$plan->overdue_interest, 2);
             }
 
             // 获取支持的钱包类型配置
@@ -869,7 +869,7 @@ class LoanController extends AuthController
             $walletName = $walletTypeMap[$walletType]['name'];
 
             // 检查钱包余额
-            if (bccomp($this->user[$walletField], $repaymentAmount, 2) < 0) {
+            if (bccomp((string)$this->user[$walletField], (string)$repaymentAmount, 2) < 0) {
                 return out(null, 400, "{$walletName}余额不足");
             }
 
@@ -890,8 +890,8 @@ class LoanController extends AuthController
                 );
 
                 // 更新还款计划
-                $plan->paid_amount = bcadd($plan->paid_amount, $repaymentAmount, 2);
-                $plan->remaining_amount = bcsub($plan->remaining_amount, $plan->remaining_amount, 2); // 全部还清
+                $plan->paid_amount = bcadd((string)$plan->paid_amount, (string)$repaymentAmount, 2);
+                $plan->remaining_amount = bcsub((string)$plan->remaining_amount, (string)$plan->remaining_amount, 2); // 全部还清
                 $plan->status = 2; // 已还款
                 $plan->overdue_days = 0; // 清除逾期天数
                 $plan->overdue_interest = 0; // 清除逾期利息

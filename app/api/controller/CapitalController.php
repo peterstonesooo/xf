@@ -916,6 +916,9 @@ class CapitalController extends AuthController
                 case 11:
                     $v['log_type_text'] = '体验钱包';
                     break;
+                case 13:
+                    $v['log_type_text'] = '普惠钱包';
+                    break;
             }
             $v['withdrawStatusText'] = $v->withdrawStatusText;
             // }

@@ -190,9 +190,10 @@
                     <div class="form-group">
                         <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">总收益金额</label>
                         <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="sum_amount" class="form-control" placeholder="系统自动计算" readonly
+                            <input type="text" name="sum_amount" class="form-control" placeholder="请输入总收益金额"
                                    value="{$data['sum_amount']??''}">
                         </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
                     </div>
                 </div>
                 <div class="row dd_input_group">
@@ -222,13 +223,34 @@
                         </div>
                     </div>
                 </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">振兴钱包</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="zhenxing_wallet" class="form-control" placeholder="请输入振兴钱包奖励金额"
+                                   value="{$data['zhenxing_wallet']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">元</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">每人限购数量</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="number" name="purchase_limit_per_user" class="form-control" placeholder="请输入每人限购数量(0表示不限制)"
+                                   value="{$data['purchase_limit_per_user']??''}" min="0">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">0=不限制</div>
+                    </div>
+                </div>
                 <div class="row dd_input_group" id="rebate_rate_group">
                     <div class="form-group">
                         <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">返佣比例</label>
                         <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="rebate_rate" class="form-control" placeholder="系统自动计算" readonly
+                            <input type="text" name="rebate_rate" class="form-control" placeholder="请输入返佣比例(%)"
                                    value="{$data['rebate_rate']??''}">
                         </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
                     </div>
                 </div>
                 
@@ -559,25 +581,15 @@
             toggleFields();
         });
 
-        // 添加自动计算返佣比例和总收益金额的功能
-        $('input[name="huimin_amount"], input[name="single_amount"], input[name="gongfu_amount"]').on('input', function() {
+        // 自动计算每日收益率功能（保留）
+        $('input[name="huimin_amount"], input[name="single_amount"], input[name="gongfu_amount"], input[name="period"]').on('input', function() {
             var huiminAmount = parseFloat($('input[name="huimin_amount"]').val()) || 0;
             var singleAmount = parseFloat($('input[name="single_amount"]').val()) || 0;
             var gongfuAmount = parseFloat($('input[name="gongfu_amount"]').val()) || 0;
             var period = parseFloat($('input[name="period"]').val()) || 0;
             
-            // 计算返佣比例
-            if (singleAmount > 0) {
-                var rebateRate = ((huiminAmount - singleAmount) / singleAmount * 100).toFixed(2);
-                $('input[name="rebate_rate"]').val(rebateRate);
-            }
-            
-            // 计算总收益金额
-            var sumAmount = (huiminAmount + gongfuAmount).toFixed(2);
-            $('input[name="sum_amount"]').val(sumAmount);
-            
-            // 计算每日收益率：((惠民金+共富金)/4)/申购金额*100
-            if (singleAmount > 0) {
+            // 计算每日收益率：((惠民金+共富金)/周期)/申购金额*100
+            if (singleAmount > 0 && period > 0) {
                 var dailyBonusRatio = (((huiminAmount + gongfuAmount) / period) / singleAmount * 100).toFixed(2);
                 $('input[name="daily_bonus_ratio"]').val(dailyBonusRatio);
             }

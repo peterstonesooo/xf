@@ -90,7 +90,7 @@
                     <div class="form-group">
                         <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">每日收益率</label>
                         <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="daily_bonus_ratio" class="form-control" placeholder="系统自动计算" readonly
+                            <input type="text" name="daily_bonus_ratio" class="form-control" placeholder="请输入每日收益率(%)"
                                    value="{$data['daily_bonus_ratio']??''}">
                         </div>
                         <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
@@ -581,19 +581,7 @@
             toggleFields();
         });
 
-        // 自动计算每日收益率功能（保留）
-        $('input[name="huimin_amount"], input[name="single_amount"], input[name="gongfu_amount"], input[name="period"]').on('input', function() {
-            var huiminAmount = parseFloat($('input[name="huimin_amount"]').val()) || 0;
-            var singleAmount = parseFloat($('input[name="single_amount"]').val()) || 0;
-            var gongfuAmount = parseFloat($('input[name="gongfu_amount"]').val()) || 0;
-            var period = parseFloat($('input[name="period"]').val()) || 0;
-            
-            // 计算每日收益率：((惠民金+共富金)/周期)/申购金额*100
-            if (singleAmount > 0 && period > 0) {
-                var dailyBonusRatio = (((huiminAmount + gongfuAmount) / period) / singleAmount * 100).toFixed(2);
-                $('input[name="daily_bonus_ratio"]').val(dailyBonusRatio);
-            }
-        });
+        // 每日收益率改为手动填写，移除自动计算功能
     });
 
     function selectFile(i)

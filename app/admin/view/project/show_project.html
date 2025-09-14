@@ -273,8 +273,15 @@
                                 {if isset($data['huimin_days_return']) && !empty($data['huimin_days_return'])}
                                     {foreach $data['huimin_days_return'] as $index => $item}
                                         <div class="day-amount-row" style="margin-bottom: 10px;">
-                                            <input type="number" min="1" name="huimin_days_return[days_{$index}]" class="form-control" style="width: 45%; display: inline-block; margin-right: 5px;" placeholder="天数" value="{$item.day}">
-                                            <input type="number" step="0.01" name="huimin_days_return[amount_{$index}]" class="form-control" style="width: 45%; display: inline-block; margin-right: 5px;" placeholder="金额" value="{$item.huimin}">
+                                            <input type="number" min="1" name="huimin_days_return[days_{$index}]" class="form-control" style="width: 30%; display: inline-block; margin-right: 5px;" placeholder="天数" value="{$item.day}">
+                                            <input type="number" step="0.01" name="huimin_days_return[amount_{$index}]" class="form-control" style="width: 30%; display: inline-block; margin-right: 5px;" placeholder="金额" value="{if isset($item.zhenxing_wallet)}{$item.zhenxing_wallet}{elseif isset($item.puhui)}{$item.puhui}{elseif isset($item.huimin_amount)}{$item.huimin_amount}{elseif isset($item.gongfu_amount)}{$item.gongfu_amount}{elseif isset($item.minsheng_amount)}{$item.minsheng_amount}{elseif isset($item.huimin)}{$item.huimin}{/if}">
+                                            <select name="huimin_days_return[wallet_{$index}]" class="form-control" style="width: 25%; display: inline-block; margin-right: 5px;">
+                                                <option value="zhenxing_wallet" {if isset($item.zhenxing_wallet)}selected{/if}>振兴钱包</option>
+                                                <option value="puhui" {if isset($item.puhui)}selected{/if}>普惠金</option>
+                                                <option value="huimin_amount" {if isset($item.huimin_amount)}selected{/if}>惠民金</option>
+                                                <option value="gongfu_amount" {if isset($item.gongfu_amount)}selected{/if}>共富金</option>
+                                                <option value="minsheng_amount" {if isset($item.minsheng_amount)}selected{/if}>民生金</option>
+                                            </select>
                                             <button type="button" class="btn btn-danger btn-xs" onclick="removeDayAmount(this)">删除</button>
                                         </div>
                                     {/foreach}
@@ -677,8 +684,15 @@
         var container = $('#huimin_days_container');
         var timestamp = new Date().getTime();
         var newRow = '<div class="day-amount-row" style="margin-bottom: 10px;">' +
-            '<input type="number" min="1" name="huimin_days_return[days_' + timestamp + ']" class="form-control days-input" style="width: 45%; display: inline-block; margin-right: 5px;" placeholder="天数">' +
-            '<input type="number" step="0.01" name="huimin_days_return[amount_' + timestamp + ']" class="form-control amount-input" style="width: 45%; display: inline-block; margin-right: 5px;" placeholder="金额">' +
+            '<input type="number" min="1" name="huimin_days_return[days_' + timestamp + ']" class="form-control days-input" style="width: 30%; display: inline-block; margin-right: 5px;" placeholder="天数">' +
+            '<input type="number" step="0.01" name="huimin_days_return[amount_' + timestamp + ']" class="form-control amount-input" style="width: 30%; display: inline-block; margin-right: 5px;" placeholder="金额">' +
+            '<select name="huimin_days_return[wallet_' + timestamp + ']" class="form-control" style="width: 25%; display: inline-block; margin-right: 5px;">' +
+                '<option value="zhenxing_wallet">振兴钱包</option>' +
+                '<option value="puhui">普惠金</option>' +
+                '<option value="huimin_amount">惠民金</option>' +
+                '<option value="gongfu_amount">共富金</option>' +
+                '<option value="minsheng_amount">民生金</option>' +
+            '</select>' +
             '<button type="button" class="btn btn-danger btn-xs" onclick="removeDayAmount(this)">删除</button>' +
             '</div>';
         container.append(newRow);

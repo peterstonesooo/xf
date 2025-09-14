@@ -36,24 +36,34 @@ class ProjectController extends AuthController
         }
         
         if ($hasNewFormat) {
-            // 新格式：days_ 和 amount_ 前缀
+            // 新格式：days_、amount_ 和 wallet_ 前缀
+            $daysData = [];
+            $amountData = [];
+            $walletData = [];
+            
             foreach ($data as $key => $value) {
                 if (strpos($key, 'days_') === 0) {
                     $daysData[$key] = $value;
                 } elseif (strpos($key, 'amount_') === 0) {
                     $amountData[$key] = $value;
+                } elseif (strpos($key, 'wallet_') === 0) {
+                    $walletData[$key] = $value;
                 }
             }
             
-            // 匹配天数和金额，转换为新格式
+            // 匹配天数、金额和钱包类型，转换为新格式
             $index = 0;
             foreach ($daysData as $daysKey => $days) {
                 $timestamp = str_replace('days_', '', $daysKey);
                 $amountKey = 'amount_' . $timestamp;
+                $walletKey = 'wallet_' . $timestamp;
+                
                 if (isset($amountData[$amountKey]) && !empty($days) && !empty($amountData[$amountKey])) {
+                    $wallet = $walletData[$walletKey] ?? 'huimin_amount'; // 默认惠民金
+                    
                     $result[$index] = [
                         'day' => (int)$days,
-                        'huimin' => (float)$amountData[$amountKey]
+                        $wallet => (float)$amountData[$amountKey]
                     ];
                     $index++;
                 }

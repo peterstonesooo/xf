@@ -63,17 +63,15 @@
                             <th>分组ID</th>
                             <th>封面图</th>
                             <th>项目名称</th>
-                            <th>申购金额</th>
-                            <th>惠民金</th>
-                            <th>共富金</th>
+                            <th>金额信息</th>
                             <th>返佣比例</th>
                             <th>返利方式</th>
                             <th>申购周期</th>
                             <th>是否启用</th>
                             <!-- <th>是否推荐</th> -->
                             <!-- <th>支付方式</th> -->
-                            <th>工作日份额数</th>
-                            <th>周末份额数</th>
+                            <th>限额信息</th>
+                            <th>惠民金周期返利</th>
                             <th>项目期数</th>
                             <!-- <th>排序号</th> -->
                             <!-- <th>创建时间</th> -->
@@ -85,9 +83,13 @@
                                 <td>{$groups[$v['project_group_id']]}</td>
                                 <td><img src="{$v['cover_img']}" onclick="seePhoto('{$v['cover_img']}')" style="max-width: 80px;"></td>
                                 <td>{$v['name']}</td>
-                                <td>{$v['single_amount']}</td>
-                                <td>{$v['huimin_amount']}</td>
-                                <td>{$v['gongfu_amount']}</td>
+                                <td style="font-size: 12px; line-height: 1.4;">
+                                    普惠金：{$v['puhui']|default='0'}<br>
+                                    振兴金：{$v['zhenxing_wallet']|default='0'}<br>
+                                    惠民金：{$v['huimin_amount']|default='0'}<br>
+                                    共富金：{$v['gongfu_amount']|default='0'}<br>
+                                    购买金额：{$v['single_amount']|default='0'}
+                                </td>
                                 <td>{$v['rebate_rate']}</td>
                                 <td><?php echo isset($v['daily_bonus_ratio']) && $v['daily_bonus_ratio'] > 0 ? '每日返利' : '到期返利'; ?></td>
                                 <td>{$v['period']}</td>
@@ -118,9 +120,23 @@
                                     </div>
                                 </td> -->
                                 <!-- <td>{$v['support_pay_methods_text']}</td> -->
-                                <!-- <td>工作日{$v['total_quota']}</br>周末{$v['remaining_quota']}</td> -->
-                                <td>{$v['total_quota']}</td>
-                                <td>{$v['remaining_quota']}</td>
+                                <td style="font-size: 12px; line-height: 1.4;">
+                                    工作日限额：{$v['total_quota']|default='0'}<br>
+                                    周末限额：{$v['remaining_quota']|default='0'}<br>
+                                    每人限购数：{$v['purchase_limit_per_user']|default='0'}<br>
+                                    开始时间：{$v['start_time']|default=''}<br>
+                                    结束时间：{$v['end_time']|default=''}
+                                </td>
+                                <td>
+                                    <?php 
+                                    $huiminData = isset($v['huimin_days_return']) && !empty($v['huimin_days_return']) ? $v['huimin_days_return'] : '';
+                                    if (!empty($huiminData)) {
+                                        echo '<a href="javascript:;" onclick="showHuiminReturn(' . $v['id'] . ')" class="btn btn-xs btn-info">点击弹框查看</a>';
+                                    } else {
+                                        echo '<span style="color: #999;">无数据</span>';
+                                    }
+                                    ?>
+                                </td>
                                 <td><?php switch($v['class']){
                                     case 1:
                                         echo '一期';
@@ -205,6 +221,56 @@
                     layer.msg(res.msg, {icon: 5, time: 3000});
                 }
             });
+        });
+    }
+
+    function showHuiminReturn(projectId)
+    {
+        // 获取项目数据
+        $.post('{:url("admin/Project/getProjectDetail")}', {id: projectId}, function (res) {
+            if (res.code == '200') {
+                var data = res.data;
+                var huiminData = data.huimin_days_return || [];
+                
+                if (huiminData.length == 0) {
+                    layer.msg('暂无惠民金周期返利数据', {icon: 0, time: 2000});
+                    return;
+                }
+                
+                // 构建显示内容
+                var content = '<div style="max-height: 400px; overflow-y: auto;">';
+                content += '<table class="table table-bordered table-striped" style="margin-bottom: 0;">';
+                content += '<thead><tr><th>天数</th><th>振兴钱包</th><th>普惠金</th><th>惠民金</th><th>共富金</th><th>民生金</th></tr></thead>';
+                content += '<tbody>';
+                
+                for (var i = 0; i < huiminData.length; i++) {
+                    var item = huiminData[i];
+                    content += '<tr>';
+                    content += '<td>' + (item.day || '') + '</td>';
+                    content += '<td>' + (item.zhenxing_wallet || '0') + '</td>';
+                    content += '<td>' + (item.puhui || '0') + '</td>';
+                    content += '<td>' + (item.huimin_amount || '0') + '</td>';
+                    content += '<td>' + (item.gongfu_amount || '0') + '</td>';
+                    content += '<td>' + (item.minsheng_amount || '0') + '</td>';
+                    content += '</tr>';
+                }
+                
+                content += '</tbody></table></div>';
+                
+                // 显示弹框
+                layer.open({
+                    type: 1,
+                    title: '惠民金周期返利详情 - ' + data.name,
+                    area: ['800px', '500px'],
+                    content: content,
+                    btn: ['关闭'],
+                    yes: function(index) {
+                        layer.close(index);
+                    }
+                });
+            } else {
+                layer.msg(res.msg || '获取数据失败', {icon: 5, time: 3000});
+            }
         });
     }
 

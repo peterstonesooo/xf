@@ -365,4 +365,34 @@ class ProjectController extends AuthController
             return out(null, 10001, '发送通知失败：' . $e->getMessage());
         }
     }
+
+    /**
+     * 获取项目详情（用于弹框显示）
+     */
+    public function getProjectDetail()
+    {
+        $req = $this->validate(request(), [
+            'id' => 'require|number'
+        ]);
+
+        $project = Project::find($req['id']);
+        if (!$project) {
+            return out(null, 10001, '项目不存在');
+        }
+
+        // 处理惠民金周期返利数据
+        $huiminData = null;
+        if (!empty($project['huimin_days_return'])) {
+            // 检查是否已经是数组，如果是字符串则解析JSON
+            if (is_string($project['huimin_days_return'])) {
+                $huiminData = json_decode($project['huimin_days_return'], true);
+            } else {
+                $huiminData = $project['huimin_days_return'];
+            }
+        }
+
+        $project['huimin_days_return'] = $huiminData;
+
+        return out($project);
+    }
 }

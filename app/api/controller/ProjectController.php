@@ -57,7 +57,7 @@ class ProjectController extends AuthController
          }else{
              $discount = 1;
          }
-        $data = Project::field('id, name, name_background, intro, cover_img, details_img, single_amount,status, sum_amount, period, support_pay_methods, created_at,project_group_id,total_quota,remaining_quota,open_date,end_date,huimin_amount,gongfu_amount,daily_bonus_ratio,class,minsheng_amount,huimin_days_return,rebate_rate')
+        $data = Project::field('id, name, name_background, intro, cover_img, details_img, single_amount,status, sum_amount, period, support_pay_methods, created_at,project_group_id,total_quota,remaining_quota,open_date,end_date,huimin_amount,gongfu_amount,daily_bonus_ratio,class,minsheng_amount,huimin_days_return,rebate_rate,purchase_limit_per_user')
                 ->where('status', 1)
                 ->where('project_group_id',$req['project_group_id'] ?? 7)
                 ->order(['sort' => 'asc', 'id' => 'desc'])
@@ -87,42 +87,12 @@ class ProjectController extends AuthController
                 }else{
                     $order = Order::where('user_id', $user_id)->where('project_id', $item['id'])->count();
                 }
-                switch($item['class']){
-                    case 1:
-                        if($order > 0){
-                            $item['is_buy'] = 1;
-                        }else{
-                            $item['is_buy'] = 0;
-                        }
-                        break;
-                    case 2:
-                        if($order > 0){
-                            $item['is_buy'] = 1;
-                        }else{
-                            $item['is_buy'] = 0;
-                        }   
-                        break;
-                    case 3:
-                        if($order > 4){
-                            $item['is_buy'] = 1;
-                        }else{
-                            $item['is_buy'] = 0;    
-                        }
-                        break;
-                    case 4:
-                        if($order > 4){
-                            $item['is_buy'] = 1;
-                        }else{  
-                            $item['is_buy'] = 0;
-                        }
-                        break;
-                    case 5:
-                        if($order > 4){
-                            $item['is_buy'] = 1;
-                        }else{
-                            $item['is_buy'] = 0;
-                        }
-                        break;
+                if($item['purchase_limit_per_user'] > 0){   //每人限购
+                    if($order > $item['purchase_limit_per_user']){
+                        $item['is_buy'] = 1;
+                    }else{
+                        $item['is_buy'] = 0;
+                    }
                 }
             }
             

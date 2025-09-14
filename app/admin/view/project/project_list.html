@@ -28,22 +28,9 @@
         </select>
         <select name="class" class="form-control">
             <option value="">搜索项目期数</option>
-            <option value="1" <?php if (isset($req['class']) && $req['class'] == 1) { echo 'selected = "selected"'; } ?>>一期</option>
-            <option value="2" <?php if (isset($req['class']) && $req['class'] == 2) { echo 'selected = "selected"'; } ?>>二期</option>
-            <option value="3" <?php if (isset($req['class']) && $req['class'] == 3) { echo 'selected = "selected"'; } ?>>三期</option>
-            <option value="4" <?php if (isset($req['class']) && $req['class'] == 4) { echo 'selected = "selected"'; } ?>>四期</option>
-            <option value="5" <?php if (isset($req['class']) && $req['class'] == 5) { echo 'selected = "selected"'; } ?>>五期</option>
-            <option value="6" <?php if (isset($req['class']) && $req['class'] == 6) { echo 'selected = "selected"'; } ?>>六期</option>
-            <option value="7" <?php if (isset($req['class']) && $req['class'] == 7) { echo 'selected = "selected"'; } ?>>七期</option>
-            <option value="8" <?php if (isset($req['class']) && $req['class'] == 8) { echo 'selected = "selected"'; } ?>>八期</option>
-            <option value="9" <?php if (isset($req['class']) && $req['class'] == 9) { echo 'selected = "selected"'; } ?>>九期</option>
-            <option value="10" <?php if (isset($req['class']) && $req['class'] == 10) { echo 'selected = "selected"'; } ?>>十期</option>
-            <option value="11" <?php if (isset($req['class']) && $req['class'] == 11) { echo 'selected = "selected"'; } ?>>十一期</option>
-            <option value="12" <?php if (isset($req['class']) && $req['class'] == 12) { echo 'selected = "selected"'; } ?>>十二期</option>
-            <option value="13" <?php if (isset($req['class']) && $req['class'] == 13) { echo 'selected = "selected"'; } ?>>十三期</option>
-            <option value="14" <?php if (isset($req['class']) && $req['class'] == 14) { echo 'selected = "selected"'; } ?>>十四期</option>
-            <option value="15" <?php if (isset($req['class']) && $req['class'] == 15) { echo 'selected = "selected"'; } ?>>十五期</option>
-            <option value="16" <?php if (isset($req['class']) && $req['class'] == 16) { echo 'selected = "selected"'; } ?>>十六期</option>
+            <?php for ($i = 1; $i <= 30; $i++) { ?>
+                <option value="<?php echo $i; ?>" <?php if (isset($req['class']) && $req['class'] == $i) { echo 'selected = "selected"'; } ?>><?php echo $i; ?>期</option>
+            <?php } ?>
         </select>
         <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
         <a {:auth_show_judge('Project/addProject')} class="btn btn-flat btn-success m_10 f_r"
@@ -137,56 +124,7 @@
                                     }
                                     ?>
                                 </td>
-                                <td><?php switch($v['class']){
-                                    case 1:
-                                        echo '一期';
-                                        break;
-                                    case 2:
-                                        echo '二期';
-                                        break;
-                                    case 3:
-                                        echo '三期';
-                                        break;
-                                    case 4:
-                                        echo '四期';
-                                        break;
-                                    case 5:
-                                        echo '五期';
-                                        break;
-                                    case 6:
-                                        echo '六期';
-                                        break;
-                                    case 7:
-                                        echo '七期';
-                                        break;
-                                    case 8:
-                                        echo '八期';
-                                        break;
-                                    case 9:
-                                        echo '九期';
-                                        break;
-                                    case 10:
-                                        echo '十期';
-                                        break;
-                                    case 11:
-                                        echo '十一期';
-                                        break;
-                                    case 12:
-                                        echo '十二期';
-                                        break;
-                                    case 13:
-                                        echo '十三期';
-                                        break;
-                                    case 14:
-                                        echo '十四期';
-                                        break;
-                                    case 15:
-                                        echo '十五期';
-                                        break;
-                                    case 16:
-                                        echo '十六期';
-                                        break;
-                                } ?></td>
+                                <td><?php echo $v['class']; ?>期</td>
                                 <!-- <td>{$v['sort']}</td> -->
                                 <!-- <td>{$v['created_at']}</td> -->
                                 <td>

@@ -268,21 +268,38 @@
                 <div class="row dd_input_group" id="huimin_days_return_group" style="display: none;">
                     <div class="form-group">
                         <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">惠民金周期返利</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                        <div class="col-xs-7 col-sm-10 col-md-10 col-lg-10">
                             <div id="huimin_days_container">
                                 {if isset($data['huimin_days_return']) && !empty($data['huimin_days_return'])}
                                     {foreach $data['huimin_days_return'] as $index => $item}
-                                        <div class="day-amount-row" style="margin-bottom: 10px;">
-                                            <input type="number" min="1" name="huimin_days_return[days_{$index}]" class="form-control" style="width: 30%; display: inline-block; margin-right: 5px;" placeholder="天数" value="{$item.day}">
-                                            <input type="number" step="0.01" name="huimin_days_return[amount_{$index}]" class="form-control" style="width: 30%; display: inline-block; margin-right: 5px;" placeholder="金额" value="{if isset($item.zhenxing_wallet)}{$item.zhenxing_wallet}{elseif isset($item.puhui)}{$item.puhui}{elseif isset($item.huimin_amount)}{$item.huimin_amount}{elseif isset($item.gongfu_amount)}{$item.gongfu_amount}{elseif isset($item.minsheng_amount)}{$item.minsheng_amount}{elseif isset($item.huimin)}{$item.huimin}{/if}">
-                                            <select name="huimin_days_return[wallet_{$index}]" class="form-control" style="width: 25%; display: inline-block; margin-right: 5px;">
-                                                <option value="zhenxing_wallet" {if isset($item.zhenxing_wallet)}selected{/if}>振兴钱包</option>
-                                                <option value="puhui" {if isset($item.puhui)}selected{/if}>普惠金</option>
-                                                <option value="huimin_amount" {if isset($item.huimin_amount)}selected{/if}>惠民金</option>
-                                                <option value="gongfu_amount" {if isset($item.gongfu_amount)}selected{/if}>共富金</option>
-                                                <option value="minsheng_amount" {if isset($item.minsheng_amount)}selected{/if}>民生金</option>
-                                            </select>
+                                        <div class="day-amount-row" style="margin-bottom: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 5px; background-color: #f9f9f9;">
+                                            <div style="margin-bottom: 15px;">
+                                                <label style="font-weight: bold; margin-right: 10px;">天数:</label>
+                                                <input type="number" min="1" name="huimin_days_return[days_{$index}]" class="form-control" style="width: 120px; display: inline-block; margin-right: 15px;" placeholder="天数" value="{$item.day}">
                                             <button type="button" class="btn btn-danger btn-xs" onclick="removeDayAmount(this)">删除</button>
+                                            </div>
+                                            <div style="display: flex; gap: 15px;">
+                                                <div style="flex: 1;">
+                                                    <label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">振兴钱包</label>
+                                                    <input type="number" step="0.01" name="huimin_days_return[zhenxing_wallet_{$index}]" class="form-control" placeholder="请输入金额" value="{$item.zhenxing_wallet|default=''}">
+                                                </div>
+                                                <div style="flex: 1;">
+                                                    <label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">普惠金</label>
+                                                    <input type="number" step="0.01" name="huimin_days_return[puhui_{$index}]" class="form-control" placeholder="请输入金额" value="{$item.puhui|default=''}">
+                                                </div>
+                                                <div style="flex: 1;">
+                                                    <label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">惠民金</label>
+                                                    <input type="number" step="0.01" name="huimin_days_return[huimin_amount_{$index}]" class="form-control" placeholder="请输入金额" value="{$item.huimin_amount|default=''}">
+                                                </div>
+                                                <div style="flex: 1;">
+                                                    <label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">共富金</label>
+                                                    <input type="number" step="0.01" name="huimin_days_return[gongfu_amount_{$index}]" class="form-control" placeholder="请输入金额" value="{$item.gongfu_amount|default=''}">
+                                                </div>
+                                                <div style="flex: 1;">
+                                                    <label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">民生金</label>
+                                                    <input type="number" step="0.01" name="huimin_days_return[minsheng_amount_{$index}]" class="form-control" placeholder="请输入金额" value="{$item.minsheng_amount|default=''}">
+                                                </div>
+                                            </div>
                                         </div>
                                     {/foreach}
                                 {/if}
@@ -683,17 +700,34 @@
     function addHuiminDay() {
         var container = $('#huimin_days_container');
         var timestamp = new Date().getTime();
-        var newRow = '<div class="day-amount-row" style="margin-bottom: 10px;">' +
-            '<input type="number" min="1" name="huimin_days_return[days_' + timestamp + ']" class="form-control days-input" style="width: 30%; display: inline-block; margin-right: 5px;" placeholder="天数">' +
-            '<input type="number" step="0.01" name="huimin_days_return[amount_' + timestamp + ']" class="form-control amount-input" style="width: 30%; display: inline-block; margin-right: 5px;" placeholder="金额">' +
-            '<select name="huimin_days_return[wallet_' + timestamp + ']" class="form-control" style="width: 25%; display: inline-block; margin-right: 5px;">' +
-                '<option value="zhenxing_wallet">振兴钱包</option>' +
-                '<option value="puhui">普惠金</option>' +
-                '<option value="huimin_amount">惠民金</option>' +
-                '<option value="gongfu_amount">共富金</option>' +
-                '<option value="minsheng_amount">民生金</option>' +
-            '</select>' +
+        var newRow = '<div class="day-amount-row" style="margin-bottom: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 5px; background-color: #f9f9f9;">' +
+            '<div style="margin-bottom: 15px;">' +
+                '<label style="font-weight: bold; margin-right: 10px;">天数:</label>' +
+                '<input type="number" min="1" name="huimin_days_return[days_' + timestamp + ']" class="form-control days-input" style="width: 120px; display: inline-block; margin-right: 15px;" placeholder="天数">' +
             '<button type="button" class="btn btn-danger btn-xs" onclick="removeDayAmount(this)">删除</button>' +
+            '</div>' +
+            '<div style="display: flex; gap: 15px;">' +
+                '<div style="flex: 1;">' +
+                    '<label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">振兴钱包</label>' +
+                    '<input type="number" step="0.01" name="huimin_days_return[zhenxing_wallet_' + timestamp + ']" class="form-control" placeholder="请输入金额">' +
+                '</div>' +
+                '<div style="flex: 1;">' +
+                    '<label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">普惠金</label>' +
+                    '<input type="number" step="0.01" name="huimin_days_return[puhui_' + timestamp + ']" class="form-control" placeholder="请输入金额">' +
+                '</div>' +
+                '<div style="flex: 1;">' +
+                    '<label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">惠民金</label>' +
+                    '<input type="number" step="0.01" name="huimin_days_return[huimin_amount_' + timestamp + ']" class="form-control" placeholder="请输入金额">' +
+                '</div>' +
+                '<div style="flex: 1;">' +
+                    '<label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">共富金</label>' +
+                    '<input type="number" step="0.01" name="huimin_days_return[gongfu_amount_' + timestamp + ']" class="form-control" placeholder="请输入金额">' +
+                '</div>' +
+                '<div style="flex: 1;">' +
+                    '<label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">民生金</label>' +
+                    '<input type="number" step="0.01" name="huimin_days_return[minsheng_amount_' + timestamp + ']" class="form-control" placeholder="请输入金额">' +
+                '</div>' +
+            '</div>' +
             '</div>';
         container.append(newRow);
     }

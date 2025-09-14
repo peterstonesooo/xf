@@ -396,6 +396,7 @@ return array(
             11 => '体验钱包',//tiyan_wallet
             12 => '幸福助力卷',//xingfu_tickets
             13 => '普惠钱包',//puhui
+            14 => '振兴钱包',//zhenxing_wallet
         ),
         'status_map' =>
         array(

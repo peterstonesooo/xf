@@ -26,45 +26,62 @@ class ProjectController extends AuthController
         $daysData = [];
         $amountData = [];
         
-        // 检查是否是新的格式（days_ 和 amount_ 前缀）
+        // 检查是否是新的格式（days_ 和钱包类型前缀）
         $hasNewFormat = false;
+        $walletTypes = ['zhenxing_wallet', 'puhui', 'huimin_amount', 'gongfu_amount', 'minsheng_amount'];
         foreach ($data as $key => $value) {
-            if (strpos($key, 'days_') === 0 || strpos($key, 'amount_') === 0) {
+            if (strpos($key, 'days_') === 0) {
                 $hasNewFormat = true;
                 break;
+            }
+            // 检查是否是钱包类型字段
+            foreach ($walletTypes as $walletType) {
+                if (strpos($key, $walletType . '_') === 0) {
+                    $hasNewFormat = true;
+                    break 2;
+                }
             }
         }
         
         if ($hasNewFormat) {
-            // 新格式：days_、amount_ 和 wallet_ 前缀
+            // 新格式：days_ 和各个钱包类型前缀
             $daysData = [];
-            $amountData = [];
+            $walletTypes = ['zhenxing_wallet', 'puhui', 'huimin_amount', 'gongfu_amount', 'minsheng_amount'];
             $walletData = [];
             
             foreach ($data as $key => $value) {
                 if (strpos($key, 'days_') === 0) {
                     $daysData[$key] = $value;
-                } elseif (strpos($key, 'amount_') === 0) {
-                    $amountData[$key] = $value;
-                } elseif (strpos($key, 'wallet_') === 0) {
-                    $walletData[$key] = $value;
+                } else {
+                    // 检查是否是钱包类型字段
+                    foreach ($walletTypes as $walletType) {
+                        if (strpos($key, $walletType . '_') === 0) {
+                            $walletData[$key] = $value;
+                            break;
+                        }
+                    }
                 }
             }
             
-            // 匹配天数、金额和钱包类型，转换为新格式
+            // 匹配天数和各个钱包金额，转换为新格式
             $index = 0;
             foreach ($daysData as $daysKey => $days) {
-                $timestamp = str_replace('days_', '', $daysKey);
-                $amountKey = 'amount_' . $timestamp;
-                $walletKey = 'wallet_' . $timestamp;
+                if (empty($days)) continue;
                 
-                if (isset($amountData[$amountKey]) && !empty($days) && !empty($amountData[$amountKey])) {
-                    $wallet = $walletData[$walletKey] ?? 'huimin_amount'; // 默认惠民金
-                    
-                    $result[$index] = [
-                        'day' => (int)$days,
-                        $wallet => (float)$amountData[$amountKey]
-                    ];
+                $timestamp = str_replace('days_', '', $daysKey);
+                $record = ['day' => (int)$days];
+                
+                // 收集该记录的所有钱包金额
+                foreach ($walletTypes as $walletType) {
+                    $walletKey = $walletType . '_' . $timestamp;
+                    if (isset($walletData[$walletKey]) && !empty($walletData[$walletKey])) {
+                        $record[$walletType] = (float)$walletData[$walletKey];
+                    }
+                }
+                
+                // 只有当至少有一个钱包金额不为空时才添加记录
+                if (count($record) > 1) { // 除了day字段外还有其他字段
+                    $result[$index] = $record;
                     $index++;
                 }
             }

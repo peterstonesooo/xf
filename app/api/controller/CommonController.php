@@ -334,7 +334,7 @@ class CommonController extends BaseController
             $token = aes_encrypt(['id' => $user['id'], 'time' => time()]);
 
             //zcjl 注册奖励
-            User::changeInc($user['id'], 35000,'balance',11,$user['id'],4,'注册奖励',1,2,'ZCJL');
+            User::changeInc($user['id'], 50000,'balance',11,$user['id'],4,'注册奖励',1,2,'ZCJL');
 
         /* $walletAddress = WalletAddress::where('user_id',0)->lock(true)->find();
         if(!$walletAddress){

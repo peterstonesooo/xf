@@ -1073,8 +1073,8 @@ class UserController extends AuthController
                 'checked_at' => date('Y-m-d H:i:s')
             ]);
 
-            //上级奖励3元
-            User::changeInc($user['up_user_id'],3,'team_bonus_balance',66,$req['id'],2,'直推实名认证奖励'.'-'.$user['realname'],0,2,'TD');
+            //上级奖励5元
+            User::changeInc($user['up_user_id'],5,'team_bonus_balance',66,$req['id'],2,'直推实名认证奖励'.'-'.$user['realname'],0,2,'TD');
             //上级获得一张幸福助力卷
             User::changeInc($user['up_user_id'], 1, 'xingfu_tickets', 105, $user['id'], 12, '实名审核通过奖励-' . $user['realname'], 0, 2, 'TD');
             
@@ -1840,8 +1840,8 @@ class UserController extends AuthController
                     'status' => 1,
                     'checked_at' => date('Y-m-d H:i:s')
                 ]);
-                //上级奖励3元
-                User::changeInc($user['up_user_id'],3,'team_bonus_balance',66,$id,2,'直推实名认证奖励'.'-'.$user['realname'],0,2,'TD');
+                //上级奖励5元
+                User::changeInc($user['up_user_id'],5,'team_bonus_balance',66,$id,2,'直推实名认证奖励'.'-'.$user['realname'],0,2,'TD');
                 //上级获得一张幸福助力卷
                 User::changeInc($user['up_user_id'], 1, 'xingfu_tickets', 105, $user['id'], 12, '实名审核通过奖励-' . $user['realname'], 0, 2, 'TD');
             

@@ -278,6 +278,21 @@ class User extends Model
         return 0;
     }
 
+    // 获取幸福权益状态文本
+    public function getHappinessEquityStatusTextAttr($value, $data)
+    {
+        if (empty($data['id'])) {
+            return '未激活';
+        }
+        
+        // 检查用户是否已激活幸福权益
+        $activation = HappinessEquityActivation::where('user_id', $data['id'])
+                                              ->where('status', 1)
+                                              ->find();
+        
+        return $activation ? '已激活' : '未激活';
+    }
+
     //通过token获取用户信息
     public static function getUserByToken($is_exit = true)
     {

@@ -53,6 +53,7 @@
                             <th style="min-width: 70px;">实名</th>
                             <th>激活</th>
                             <th>激活时间</th>
+                            <th>幸福权益</th>
                             <th style="min-width: 180px;">团队信息</th>
                             <!-- <th>总投资</th> -->
                             <th>时间</th>
@@ -95,6 +96,7 @@
                                 <td>{$v['shiming_status_text']}</td>
                                 <td>{$v['is_active_text']}</td>
                                 <td>{$v['active_date']}</td>
+                                <td>{$v['happiness_equity_status_text']}</td>
                                 <td>
                                     直属下级实名：<a href="{:url('admin/User/userList', ['up_user' => $v['id'], 'shiming_status' => 1])}">{$v['real_sub_user_num']}</a>
                                     <br>

@@ -133,15 +133,17 @@ class OrderController extends AuthController
         }
         */
          
+        // 初始化订单变量
+        $order = null;
 
         Db::startTrans();
         try {
             $user = User::where('id', $user['id'])->lock(true)->find();
             //检查是否已经购买
-            $order = Order::where('user_id', $user['id'])->where('project_id', $req['project_id'])->count();
+            $order_count = Order::where('user_id', $user['id'])->where('project_id', $req['project_id'])->count();
             
             if($project['purchase_limit_per_user'] > 0){
-                if($order > $project['purchase_limit_per_user']){
+                if($order_count > $project['purchase_limit_per_user']){
                     exit_out(null, 10006, '您已达到购买上限');
                 }
             }
@@ -338,10 +340,15 @@ class OrderController extends AuthController
         ->find()
         ->toArray();
         if($project['purchase_limit_per_user'] > 0){
-            if($order > $project['purchase_limit_per_user']){
+            $order_count = OrderTiyan::where('user_id', $this->user['id'])->where('project_id', $project['project_id'])->count();
+            if($order_count > $project['purchase_limit_per_user']){
                 exit_out(null, 10006, '您已达到购买上限');
             }
         }
+        
+        // 初始化订单变量
+        $order = null;
+        
         Db::startTrans();
         try {
             $user = User::where('id', $user['id'])->lock(true)->find();
@@ -478,39 +485,43 @@ class OrderController extends AuthController
         }
 
         if($project['purchase_limit_per_user'] > 0){
-            if($order > $project['purchase_limit_per_user']){
+            $order_count_check = OrderDailyBonus::where('user_id', $this->user['id'])->where('project_id', $project['project_id'])->count();
+            if($order_count_check > $project['purchase_limit_per_user']){
                 exit_out(null, 10006, '您已达到购买上限');
             }
         }
+        // 初始化订单变量
+        $order = null;
+
         Db::startTrans();
         try {
             $user = User::where('id', $user['id'])->lock(true)->find();
             //检查是否已经购买
-            $order = OrderDailyBonus::where('user_id', $user['id'])->where('project_id', $req['project_id'])->count();
+            $order_count = OrderDailyBonus::where('user_id', $user['id'])->where('project_id', $req['project_id'])->count();
             //三四期项目，每人限购5次，一二期每人限购一次
             switch($project['class']){
                 case 1:
-                    if($order > 0){
+                    if($order_count > 0){
                         exit_out(null, 10006, '您已经购买过该产品');
                     }
                     break;  
                 case 2:
-                    if($order > 0){
+                    if($order_count > 0){
                         exit_out(null, 10006, '您已经购买过该产品');
                     }
                     break;
                 case 3:
-                    if($order > 4){
+                    if($order_count > 4){
                         exit_out(null, 10006, '您已达到购买上限');
                     }
                     break;
                 case 4:
-                    if($order > 4){
+                    if($order_count > 4){
                         exit_out(null, 10006, '您已达到购买上限');  
                     }
                     break;
                 case 5:
-                    if($order > 4){
+                    if($order_count > 4){
                         exit_out(null, 10006, '您已达到购买上限');
                     }
                     break;

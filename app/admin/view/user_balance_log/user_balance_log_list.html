@@ -24,6 +24,7 @@
         <input placeholder="结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
 
         <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <button type="button" class="btn btn-flat btn-success m_10" onclick="exportExcel()">导出Excel</button>
     </form>
 </div>
 
@@ -82,4 +83,28 @@
         laydate.render(start);
         laydate.render(end);
     });
+
+    // 导出Excel功能
+    function exportExcel() {
+        // 获取当前搜索条件
+        var form = document.querySelector('.form-inline');
+        var formData = new FormData(form);
+        
+        // 构建导出URL
+        var exportUrl = '{:url("exportUserBalanceLog")}?';
+        var params = [];
+        
+        for (var [key, value] of formData.entries()) {
+            if (value) {
+                params.push(key + '=' + encodeURIComponent(value));
+            }
+        }
+        
+        if (params.length > 0) {
+            exportUrl += params.join('&');
+        }
+        
+        // 打开新窗口下载文件
+        window.open(exportUrl, '_blank');
+    }
 </script>

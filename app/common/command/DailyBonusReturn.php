@@ -43,10 +43,22 @@ class DailyBonusReturn extends Command
                         }
                         $period = $order['period'];
                         //11期订单特殊处理
-                        if(in_array($order['project_id'],[50,51,52,53,54])){
+                        if($order['project_id'] >= 50){
                             $daily_huimin_amount = $order['huimin_amount'];
                             if($daily_huimin_amount>0){
                                 User::changeInc($order['user_id'],$daily_huimin_amount,'digit_balance',68,$order['id'],5, '日盈惠民金');
+                            }
+                            $daily_gongfu_amount = $order['gongfu_amount'];
+                            if($daily_gongfu_amount>0){
+                                User::changeInc($order['user_id'],$daily_gongfu_amount,'butie',67,$order['id'],3, '日盈共富金');
+                            }
+                            $daily_puhui_amount = $order['puhui'];
+                            if($daily_puhui_amount>0){
+                                User::changeInc($order['user_id'],$daily_puhui_amount,'puhui',119,$order['id'],13, '日盈普惠金');
+                            }
+                            $daily_zhenxing_wallet = $order['zhenxing_wallet'];
+                            if($daily_zhenxing_wallet>0){
+                                User::changeInc($order['user_id'],$daily_zhenxing_wallet,'zhenxing_wallet',120,$order['id'],14, '日盈振兴金');
                             }
                         }else{
                             $daily_gongfu_amount = round($order['gongfu_amount']/$period, 2);

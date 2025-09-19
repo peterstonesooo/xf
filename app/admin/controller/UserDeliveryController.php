@@ -22,7 +22,7 @@ class UserDeliveryController extends AuthController
             $list = $builder->select();
             if ($req['export'] == '地址导出') {
 
-                create_excel($list, ['user_id' => '用户id', 'name' => '实名', 'phone' => '手机号', 'address' => '地址'],'地址列表-'.date('YmdHis'));
+                create_excel($list, ['user_id' => '用户id', 'name' => '实名', 'phone' => '手机号', 'address' => '地址', 'door_num' => '门牌号'],'地址列表-'.date('YmdHis'));
             }
         }
 

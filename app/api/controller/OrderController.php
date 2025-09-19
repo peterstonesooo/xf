@@ -67,7 +67,7 @@ class OrderController extends AuthController
         if(!$ret){
             return out("服务繁忙，请稍后再试");
         } */
-        $project = Project::field('id project_id,name project_name,class,project_group_id,cover_img,single_amount,single_integral,total_num,daily_bonus_ratio,sum_amount,dividend_cycle,period,single_gift_equity,single_gift_digital_yuan,sham_buy_num,progress_switch,bonus_multiple,settlement_method,created_at,min_amount,max_amount,open_date,end_date,year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,class,minsheng_amount,huimin_days_return,purchase_limit_per_user')
+        $project = Project::field('id project_id,name project_name,class,project_group_id,cover_img,single_amount,single_integral,total_num,daily_bonus_ratio,sum_amount,dividend_cycle,period,single_gift_equity,single_gift_digital_yuan,sham_buy_num,progress_switch,bonus_multiple,settlement_method,created_at,min_amount,max_amount,open_date,end_date,year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,class,minsheng_amount,huimin_days_return,purchase_limit_per_user,zhenxing_wallet,puhui')
         ->where('id', $req['project_id'])
         ->lock(true)
         ->append(['all_total_buy_num'])
@@ -428,7 +428,7 @@ class OrderController extends AuthController
     public function placeOrderDailyBonus($req,$project){
         $user = $this->user;
         
-        $project = Project::field('id project_id,name project_name,class,project_group_id,cover_img,single_amount,single_integral,total_num,daily_bonus_ratio,sum_amount,dividend_cycle,period,single_gift_equity,single_gift_digital_yuan,sham_buy_num,progress_switch,bonus_multiple,settlement_method,created_at,min_amount,max_amount,open_date,end_date,year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,class,minsheng_amount,purchase_limit_per_user')
+        $project = Project::field('id project_id,name project_name,class,project_group_id,cover_img,single_amount,single_integral,total_num,daily_bonus_ratio,sum_amount,dividend_cycle,period,single_gift_equity,single_gift_digital_yuan,sham_buy_num,progress_switch,bonus_multiple,settlement_method,created_at,min_amount,max_amount,open_date,end_date,year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,class,minsheng_amount,purchase_limit_per_user,zhenxing_wallet,puhui')
         ->where('id', $req['project_id'])
         ->lock(true)
         ->append(['all_total_buy_num'])

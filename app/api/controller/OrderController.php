@@ -274,7 +274,7 @@ class OrderController extends AuthController
             throw $e;
         }
 
-        return out(['order_id' => $order['id'] ?? 0, 'trade_sn' => $trade_sn ?? '', 'type' => $ret['type'] ?? '', 'data' => $ret['data'] ?? '']);
+        return out(['order_id' => $order['id'] ?? 0, 'trade_sn' => $order_sn ?? '', 'type' =>  '', 'data' =>  '']);
 
     }
 
@@ -324,7 +324,7 @@ class OrderController extends AuthController
             throw $e;
         }
 
-        return out(['order_id' => $order['id'] ?? 0, 'trade_sn' => $trade_sn ?? '', 'type' => $ret['type'] ?? '', 'data' => $ret['data'] ?? '']);
+        return out(['order_id' => $order['id'] ?? 0, 'trade_sn' => $order_sn ?? '', 'type' =>  '', 'data' =>  '']);
 
     }
 
@@ -413,7 +413,7 @@ class OrderController extends AuthController
             throw $e;
         }
 
-        return out(['order_id' => $order['id'] ?? 0, 'trade_sn' => $trade_sn ?? '', 'type' => $ret['type'] ?? '', 'data' => $ret['data'] ?? '']);
+        return out(['order_id' => $order['id'] ?? 0, 'trade_sn' => $order_sn ?? '', 'type' =>  '', 'data' =>  '']);
 
     }
 
@@ -588,7 +588,7 @@ class OrderController extends AuthController
             throw $e;
         }
 
-        return out(['order_id' => $order['id'] ?? 0, 'trade_sn' => $trade_sn ?? '', 'type' => $ret['type'] ?? '', 'data' => $ret['data'] ?? '']);
+        return out(['order_id' => $order['id'] ?? 0, 'trade_sn' => $order_sn ?? '', 'type' =>  '', 'data' =>  '']);
 
     }
 

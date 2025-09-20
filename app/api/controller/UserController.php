@@ -1597,6 +1597,9 @@ class UserController extends AuthController
                             '9'=>'抽奖卷',
                             '10'=>'体验钱包预支金',
                             '11'=>'体验钱包',
+                            '12'=>'幸福助力卷',
+                            '13'=>'普惠钱包',
+                            '14'=>'振兴钱包',
                         ];
        // $log_type = $req['log_type'];
         $obj = UserBalanceLog::where('user_id', $user['id']);

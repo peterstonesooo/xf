@@ -2360,7 +2360,16 @@ class OrderController extends AuthController
                  ->find();
             }
         }
-            
+          
+        if($data['huimin_days_return'] && $data['huimin_days_return'] != null){
+            foreach($data['huimin_days_return'] as $v){
+                $data['puhui_together'] += isset($v['puhui']) ? $v['puhui'] : 0;
+                $data['huimin_together'] += isset($v['huimin']) ? $v['huimin'] : 0;
+                $data['gongfu_together'] += isset($v['gongfu']) ? $v['gongfu'] : 0;
+                $data['zhenxing_together'] += isset($v['zhenxing_wallet']) ? $v['zhenxing_wallet'] : 0;
+                $data['minsheng_together'] += isset($v['minsheng']) ? $v['minsheng'] : 0;
+            }
+        }
 
         // if($data['huimin_days_return'] && $data['huimin_days_return'] != null){
         //     $data['huimin_days_return'] = json_decode($data['huimin_days_return'], true);

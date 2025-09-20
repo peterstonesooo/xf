@@ -2332,8 +2332,16 @@ class OrderController extends AuthController
             'project_id'=>'require|number',
         ]);
         $user = $this->user;
+        
+        // 首先查找项目信息
+        $project = Project::where('id',$req['project_id'])->find();
+        if(!$project){
+            return out(null, 0, '项目不存在');
+        }
+        
+        $data = null;
+        
         if($req['project_group_id'] == 12){
-            $project = Project::where('id',$req['project_id'])->find();
             if($project['daily_bonus_ratio'] > 0){
                 $data = OrderDailyBonus::alias('o')->leftJoin('mp_project p', 'p.id = o.project_id')->where('o.user_id', $user['id'])
                 ->where('o.id', $req['order_id'])
@@ -2347,7 +2355,6 @@ class OrderController extends AuthController
             }
             
         }else{
-            $project = Project::where('id',$req['project_id'])->find();
             if($project['daily_bonus_ratio'] > 0){
                 $data = OrderDailyBonus::alias('o')->leftJoin('mp_project p', 'p.id = o.project_id')->where('o.user_id', $user['id'])
                 ->where('o.id', $req['order_id'])
@@ -2360,8 +2367,20 @@ class OrderController extends AuthController
                  ->find();
             }
         }
+        
+        // 检查订单是否存在
+        if(!$data){
+            return out(null, 0, '订单不存在');
+        }
+        
+        // 初始化累计金额字段
+        $data['puhui_together'] = 0;
+        $data['huimin_together'] = 0;
+        $data['gongfu_together'] = 0;
+        $data['zhenxing_together'] = 0;
+        $data['minsheng_together'] = 0;
           
-        if($data['huimin_days_return'] && $data['huimin_days_return'] != null){
+        if(!empty($data['huimin_days_return']) && is_array($data['huimin_days_return'])){
             foreach($data['huimin_days_return'] as $v){
                 $data['puhui_together'] += isset($v['puhui']) ? $v['puhui'] : 0;
                 $data['huimin_together'] += isset($v['huimin']) ? $v['huimin'] : 0;
@@ -2370,12 +2389,20 @@ class OrderController extends AuthController
                 $data['minsheng_together'] += isset($v['minsheng']) ? $v['minsheng'] : 0;
             }
         }else{
-            if($data['daily_bonus_ratio'] > 0){
-                $data['puhui_together'] = $data['puhui']*$data['period'];
-                $data['huimin_together'] = $data['huimin_amount']*$data['period'];
-                $data['gongfu_together'] = $data['gongfu_amount']*$data['period'];
-                $data['zhenxing_together'] = $data['zhenxing_wallet']*$data['period'];
-                $data['minsheng_together'] = $data['minsheng_amount']*$data['period'];
+            // 确保这些字段存在且有默认值
+            $data['puhui'] = $data['puhui'] ?? 0;
+            $data['huimin_amount'] = $data['huimin_amount'] ?? 0;
+            $data['gongfu_amount'] = $data['gongfu_amount'] ?? 0;
+            $data['zhenxing_wallet'] = $data['zhenxing_wallet'] ?? 0;
+            $data['minsheng_amount'] = $data['minsheng_amount'] ?? 0;
+            $data['period'] = $data['period'] ?? 1;
+            
+            if($project['daily_bonus_ratio'] > 0){
+                $data['puhui_together'] = $data['puhui'] * $data['period'];
+                $data['huimin_together'] = $data['huimin_amount'] * $data['period'];
+                $data['gongfu_together'] = $data['gongfu_amount'] * $data['period'];
+                $data['zhenxing_together'] = $data['zhenxing_wallet'] * $data['period'];
+                $data['minsheng_together'] = $data['minsheng_amount'] * $data['period'];
             }else{
                 $data['puhui_together'] = $data['puhui'];
                 $data['huimin_together'] = $data['huimin_amount'];

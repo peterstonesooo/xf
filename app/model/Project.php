@@ -113,4 +113,58 @@ class Project extends Model
 
         return '';
     }
+
+    /**
+     * 判断用户是否完成五福购买
+     * 五福是指project_group_id为7,8,9,10,11的五个产品组
+     * 每个组都需要至少购买一个当前启用中的产品才算完成五福购买
+     * 需要同时检查mp_order和mp_order_daily_bonus两个表
+     * @param int $userId 用户ID
+     * @return bool 是否已完成五福购买
+     */
+    public static function checkWufuPurchase($userId)
+    {
+        // 五福产品组ID
+        $wufuGroupIds = [7, 8, 9, 10, 11];
+        
+        foreach ($wufuGroupIds as $groupId) {
+            $hasPurchased = false;
+            
+            // 检查mp_order表中的购买记录
+            $orderPurchased = Order::alias('o')
+                ->join('project p', 'o.project_id = p.id')
+                ->where('o.user_id', $userId)
+                ->where('p.project_group_id', $groupId)
+                ->where('p.status', 1) // 产品状态为启用
+                ->where('o.status', '>=', 2) // 订单状态已支付
+                ->find();
+                
+            if (!empty($orderPurchased)) {
+                $hasPurchased = true;
+            }
+            
+            // 如果在mp_order表中没找到，再检查mp_order_daily_bonus表
+            if (!$hasPurchased) {
+                $dailyBonusPurchased = OrderDailyBonus::alias('o')
+                    ->join('project p', 'o.project_id = p.id')
+                    ->where('o.user_id', $userId)
+                    ->where('p.project_group_id', $groupId)
+                    ->where('p.status', 1) // 产品状态为启用
+                    ->where('o.status', '>=', 2) // 订单状态已支付
+                    ->find();
+                    
+                if (!empty($dailyBonusPurchased)) {
+                    $hasPurchased = true;
+                }
+            }
+            
+            // 如果任何一个产品组在两个表中都没有购买记录，返回false
+            if (!$hasPurchased) {
+                return false;
+            }
+        }
+        
+        // 所有五个产品组都有购买记录
+        return true;
+    }
 }

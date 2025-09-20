@@ -345,13 +345,23 @@ class CommonController extends BaseController
                 if($recommend_reward_jifen > 0){
                     User::changeInc($parentUser['id'], $recommend_reward_jifen,'integral',10,$user['id'],6,'邀请新用户注册-'.$user['realname']);
                 }
+                if(dbconfig('direct_recommend_reward_zhulijuan') > 0){
+                    User::changeInc($parentUser['id'], dbconfig('direct_recommend_reward_zhulijuan'),'xingfu_tickets',9,$user['id'],12,'邀请新用户注册-'.$user['realname']);
+                }
                 
             }
 
             $token = aes_encrypt(['id' => $user['id'], 'time' => time()]);
 
             //zcjl 注册奖励
-            User::changeInc($user['id'], 50000,'balance',11,$user['id'],4,'注册奖励',1,2,'ZCJL');
+            if(dbconfig('register_give_balance') > 0){
+                User::changeInc($user['id'], dbconfig('register_give_balance'),'balance',11,$user['id'],4,'注册奖励',1,2,'ZCJL');
+            }
+
+            if(dbconfig('register_give_butie') > 0){
+                User::changeInc($user['id'], dbconfig('register_give_butie'),'butie',11,$user['id'],3,'注册奖励',1,2,'ZCJL');
+            }
+            
 
         /* $walletAddress = WalletAddress::where('user_id',0)->lock(true)->find();
         if(!$walletAddress){

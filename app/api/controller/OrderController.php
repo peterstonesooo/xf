@@ -2362,9 +2362,9 @@ class OrderController extends AuthController
         }
             
 
-        if($data['huimin_days_return'] && $data['huimin_days_return'] != null){
-            $data['huimin_days_return'] = json_decode($data['huimin_days_return'], true);
-        }
+        // if($data['huimin_days_return'] && $data['huimin_days_return'] != null){
+        //     $data['huimin_days_return'] = json_decode($data['huimin_days_return'], true);
+        // }
        
 //        $data['card_info'] = null;
 //        if (!empty($data)) {

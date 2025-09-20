@@ -2369,6 +2369,20 @@ class OrderController extends AuthController
                 $data['zhenxing_together'] += isset($v['zhenxing_wallet']) ? $v['zhenxing_wallet'] : 0;
                 $data['minsheng_together'] += isset($v['minsheng']) ? $v['minsheng'] : 0;
             }
+        }else{
+            if($data['daily_bonus_ratio'] > 0){
+                $data['puhui_together'] = $data['puhui']*$data['period'];
+                $data['huimin_together'] = $data['huimin_amount']*$data['period'];
+                $data['gongfu_together'] = $data['gongfu_amount']*$data['period'];
+                $data['zhenxing_together'] = $data['zhenxing_wallet']*$data['period'];
+                $data['minsheng_together'] = $data['minsheng_amount']*$data['period'];
+            }else{
+                $data['puhui_together'] = $data['puhui'];
+                $data['huimin_together'] = $data['huimin_amount'];
+                $data['gongfu_together'] = $data['gongfu_amount'];
+                $data['zhenxing_together'] = $data['zhenxing_wallet'];
+                $data['minsheng_together'] = $data['minsheng_amount'];
+            }
         }
 
         // if($data['huimin_days_return'] && $data['huimin_days_return'] != null){

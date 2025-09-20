@@ -143,7 +143,7 @@ class OrderController extends AuthController
             $order_count = Order::where('user_id', $user['id'])->where('project_id', $req['project_id'])->count();
             
             if($project['purchase_limit_per_user'] > 0){
-                if($order_count > $project['purchase_limit_per_user']){
+                if($order_count >= $project['purchase_limit_per_user']){
                     exit_out(null, 10006, '您已达到购买上限');
                 }
             }
@@ -341,7 +341,7 @@ class OrderController extends AuthController
         ->toArray();
         if($project['purchase_limit_per_user'] > 0){
             $order_count = OrderTiyan::where('user_id', $this->user['id'])->where('project_id', $project['project_id'])->count();
-            if($order_count > $project['purchase_limit_per_user']){
+            if($order_count >= $project['purchase_limit_per_user']){
                 exit_out(null, 10006, '您已达到购买上限');
             }
         }
@@ -486,7 +486,7 @@ class OrderController extends AuthController
 
         if($project['purchase_limit_per_user'] > 0){
             $order_count_check = OrderDailyBonus::where('user_id', $this->user['id'])->where('project_id', $project['project_id'])->count();
-            if($order_count_check > $project['purchase_limit_per_user']){
+            if($order_count_check >= $project['purchase_limit_per_user']){
                 exit_out(null, 10006, '您已达到购买上限');
             }
         }

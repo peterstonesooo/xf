@@ -127,6 +127,13 @@ class ProjectController extends AuthController
                             }
                             $item['progress_rate'] = round($buy_orders / $item['remaining_quota'] * 100, 2);
                         }
+                    }else if($item['purchase_limit_per_user'] > 0){
+                        if($item['daily_bonus_ratio'] > 0){
+                            $buy_orders = OrderDailyBonus::where('project_id', $item['id'])->where('user_id', $user_id)->count();
+                        }else{
+                            $buy_orders = Order::where('project_id', $item['id'])->where('user_id', $user_id)->count();
+                        }
+                        $item['progress_rate'] = round($buy_orders / $item['purchase_limit_per_user'] * 100, 2);
                     }else{
                         if($status == 1){
                             $item['progress_rate'] = round((strtotime(date('Y-m-d H:i:0',time())) - strtotime(date('Y-m-d 00:00:00',time()))) / 86400 * 100, 2);
@@ -134,6 +141,7 @@ class ProjectController extends AuthController
                             $item['progress_rate'] = 0;
                         }
                     }
+                    
                     $item['status_name'] = $status_name;
                     $item['status'] = $status;
                 }

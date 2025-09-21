@@ -654,10 +654,10 @@ class UserController extends AuthController
         $user = $this->user;
 
         // 检查用户是否已激活幸福权益
-        $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
-        if (!$activation) {
-            return out(null, 10001, '请先完成幸福权益激活');
-        }
+        // $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
+        // if (!$activation) {
+        //     return out(null, 10001, '请先完成幸福权益激活');
+        // }
 
         // 检查转账配置
         $transferCheck = TransferConfig::checkTransferAllowed($req['type'], $req['money']);

@@ -40,11 +40,11 @@ class HomeController extends AuthController
         $data[] = $arr;
 
         $arr['title'] = '激活总人数';
-        $arr['value'] = User::where('is_active', 1)->count();
+        $arr['value'] = $this->getWufuActiveUsers();
         $arr['title1'] = '今日激活人数';
-        $arr['value1'] = User::where('is_active', 1)->where('active_time', '>=', strtotime($today))->count();
+        $arr['value1'] = $this->getWufuActiveUsers($today);
         $arr['title2'] = '昨日激活人数';
-        $arr['value2'] = User::where('is_active', 1)->where('active_time', '>=', strtotime($yesterday))->where('active_time', '<=', strtotime($yesterday_end))->count();
+        $arr['value2'] = $this->getWufuActiveUsers($yesterday, $yesterday_end);
         $arr['url'] = '';
         $data[] = $arr;
 
@@ -184,5 +184,53 @@ class HomeController extends AuthController
         $img_url = upload_file2('img_url',true,false);
 
         return out(['img_url' => env('app.img_host').$img_url, 'filename' => md5(time()).'.jpg']);
+    }
+
+    /**
+     * 获取五福临门激活用户数量
+     * @param string|null $startDate 开始日期
+     * @param string|null $endDate 结束日期
+     * @return int 激活用户数量
+     */
+    private function getWufuActiveUsers($startDate = null, $endDate = null)
+    {
+        // 获取五福临门板块的项目ID
+        $wufuProjectIds = Project::whereIn('project_group_id', [7, 8, 9, 10, 11])
+                                ->where('status', 1) // 启用状态
+                                ->column('id');
+
+        if (empty($wufuProjectIds)) {
+            return 0;
+        }
+
+        $query = Order::whereIn('project_id', $wufuProjectIds)
+                     ->where('status', 'in', [2, 4]); // 已支付或已完成状态
+
+        // 如果有日期范围限制
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+        } elseif ($startDate) {
+            $query->where('created_at', '>=', $startDate . ' 00:00:00');
+        }
+
+        // 获取用户ID列表
+        $orderUserIds = $query->column('user_id');
+
+        // 检查日返订单
+        $dailyQuery = OrderDailyBonus::whereIn('project_id', $wufuProjectIds)
+                                    ->where('status', 'in', [2, 4]); // 已支付或已完成状态
+
+        if ($startDate && $endDate) {
+            $dailyQuery->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+        } elseif ($startDate) {
+            $dailyQuery->where('created_at', '>=', $startDate . ' 00:00:00');
+        }
+
+        $dailyUserIds = $dailyQuery->column('user_id');
+
+        // 合并并去重用户ID
+        $allUserIds = array_unique(array_merge($orderUserIds, $dailyUserIds));
+
+        return count($allUserIds);
     }
 }

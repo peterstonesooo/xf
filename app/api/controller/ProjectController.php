@@ -606,7 +606,10 @@ class ProjectController extends AuthController
             }else{
                 $project['total_num'] = 1;
             }
-            
+            //如果是第10次定投，则设置下一次返利时间为下个月1号
+            if($project['total_num'] == 10){
+                $project['next_bonus_time'] = strtotime(date('Y-m-15 00:00:00', strtotime('+ 1month')));
+            }
             // 设置定投日期为本周一
             $project['date'] = $startTime;
 

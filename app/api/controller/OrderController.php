@@ -2391,13 +2391,13 @@ class OrderController extends AuthController
         }else{
             // 确保这些字段存在且有默认值
             $data['puhui'] = $data['puhui'] ?? 0;
-            $data['huimin_amount'] = $data['huimin_amount'] ?? 0;
-            $data['gongfu_amount'] = $data['gongfu_amount'] ?? 0;
+            $data['huimin_amount'] = $data['shoyi'] ?? 0;
+            $data['gongfu_amount'] = $data['buzhu'] ?? 0;
             $data['zhenxing_wallet'] = $data['zhenxing_wallet'] ?? 0;
             $data['minsheng_amount'] = $data['minsheng_amount'] ?? 0;
             $data['period'] = $data['period'] ?? 1;
             
-            if($project['daily_bonus_ratio'] > 0){
+            if($project['daily_bonus_ratio'] > 0){//每日返现
                 $data['puhui_together'] = $data['puhui'] * $data['period'];
                 $data['huimin_together'] = $data['huimin_amount'] * $data['period'];
                 $data['gongfu_together'] = $data['gongfu_amount'] * $data['period'];

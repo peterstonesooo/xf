@@ -167,7 +167,7 @@ class RollbackHappinessTeamReward extends Command
                         ->update(['remark' => $record['remark'] . '-已回滚','is_delete'=>1]);
                     
                     // 删除对应的团队奖励记录
-                    $this->deleteTeamRewardRecord($record);
+                    // $this->deleteTeamRewardRecord($record);
                     
                     // 提交事务
                     Db::commit();

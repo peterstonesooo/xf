@@ -128,6 +128,14 @@ class RujinPointsTask extends Command
                             $field = 'digit_balance';
                             $log_type = 5;
                             break;
+                        case 'puhui':
+                            $field = 'puhui';
+                            $log_type = 13;
+                            break;
+                        case 'zhenxing_wallet':
+                            $field = 'zhenxing_wallet';
+                            $log_type = 14;
+                            break;
                         default:
                             throw new Exception("未知的钱包类型: {$walletType}");
                     }

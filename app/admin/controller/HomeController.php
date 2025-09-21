@@ -195,7 +195,7 @@ class HomeController extends AuthController
     private function getWufuActiveUsers($startDate = null, $endDate = null)
     {
         // 获取五福临门板块的项目ID
-        $wufuProjectIds = Project::whereIn('project_group_id', [7, 8, 9, 10, 11])
+        $wufuProjectIds = Project::whereIn('project_group_id', [7, 8, 9, 10, 11,12])
                                 ->where('status', 1) // 启用状态
                                 ->column('id');
 

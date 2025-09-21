@@ -439,13 +439,13 @@ if (!function_exists('upload_file3')) {
                             // 限制文件大小(单位b)，这里限制为4M
                             'fileSize' => 2 * 1024 * 1024,
                             // 限制文件后缀，多个后缀以英文逗号分割
-                            'fileExt'  => 'xls,xlsx',
+                            'fileExt'  => 'xls,xlsx,csv',
                         ]
                     ],
                     [
                         
                         'file.fileSize' => '文件太大',
-                        'file.fileExt' => '不支持的文件后缀，请上传xls或者xlsx文件',
+                        'file.fileExt' => '不支持的文件后缀，请上传xls、xlsx或csv文件',
                     ]
                 )->check(['file' => $file]);
             }catch (\think\exception\ValidateException $e){

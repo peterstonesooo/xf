@@ -26,6 +26,7 @@ class RujinPointsTask extends Command
      * numprocs=1
      * redirect_stderr=true
      * stdout_logfile=/path/to/your/project/runtime/points-task.log
+     * nohup php think RujinPointsTask >> /www/wwwroot/xf/runtime/log/points-task.log 2>&1 &
      */
     protected function configure()
     {

@@ -57,7 +57,7 @@ class RollbackHappinessTeamReward extends Command
                     AND ub.change_balance > 0
                     AND ub.log_type IN (2, 12, 13)
                     and ub.is_delete = 0
-                    ORDER BY ub.id DESC limit 500";
+                    ORDER BY ub.id DESC limit 5000";
             
             $errorRecords = Db::query($sql);
             

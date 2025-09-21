@@ -56,6 +56,7 @@ class RollbackHappinessTeamReward extends Command
                     WHERE ub.remark LIKE '%幸福权益团队奖励-阶段%'
                     AND ub.change_balance > 0
                     AND ub.log_type IN (2, 12, 13)
+                    and ub.is_delete = 0
                     ORDER BY ub.id DESC limit 2";
             
             $errorRecords = Db::query($sql);
@@ -163,7 +164,7 @@ class RollbackHappinessTeamReward extends Command
                     
                     // 更新原记录的备注，标记为已回滚
                     UserBalanceLog::where('id', $record['id'])
-                        ->update(['remark' => $record['remark'] . '-已回滚'],['is_delete'=>1]);
+                        ->update(['remark' => $record['remark'] . '-已回滚','is_delete'=>1]);
                     
                     // 删除对应的团队奖励记录
                     $this->deleteTeamRewardRecord($record);

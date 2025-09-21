@@ -169,12 +169,12 @@ class HappinessEquityController extends AuthController
                 
                 // 在事务外检查并发放团队奖励（避免事务冲突）
                 // 获取用户的三级上级，分别检查他们的团队奖励
-                $upUserIds = User::getThreeUpUserId($user['id']);
-                foreach ($upUserIds as $upUserId) {
-                    if ($upUserId > 0) {
-                        self::checkAndDistributeTeamRewards($upUserId);
-                    }
-                }
+                // $upUserIds = User::getThreeUpUserId($user['id']);
+                // foreach ($upUserIds as $upUserId) {
+                //     if ($upUserId > 0) {
+                //         self::checkAndDistributeTeamRewards($upUserId);
+                //     }
+                // }
                 
                 return out([
                     'activation_sn' => $activation['activation_sn'],

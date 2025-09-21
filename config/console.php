@@ -56,5 +56,7 @@ return [
         'repair:balance-log' => 'app\common\command\RepairBalanceLog',
         'repair:balance-log-error' => 'app\common\command\RepairBalanceLogError',
         'correct:balance-log' => 'app\common\command\CorrectBalanceLog',
+        'rollback:gongfu-bonus' => 'app\common\command\RollbackGongfuBonus',
+        'rollback:happiness-team-reward' => 'app\common\command\RollbackHappinessTeamReward',
     ],
 ];

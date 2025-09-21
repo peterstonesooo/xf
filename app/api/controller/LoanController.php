@@ -151,6 +151,11 @@ class LoanController extends AuthController
                 return out(null, 404, '贷款梯度不存在或已禁用');
             }
 
+            // 新添加逻辑：需要完成开放的所有五福窗口申领
+            if (!Project::checkAllOpenWufuCompleted($user['id'])) {
+                return out(null, 400, '您需要先完成五福全系列申领');
+            }
+
             // 检查用户资格和计算最大贷款限额
             $maxLoanAmount = $this->checkUserQualificationAndGetMaxAmount($user['id']);
             if ($maxLoanAmount === false) {
@@ -1086,4 +1091,5 @@ class LoanController extends AuthController
             return false;
         }
     }
+
 }

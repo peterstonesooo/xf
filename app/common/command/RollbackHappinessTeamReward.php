@@ -55,7 +55,7 @@ class RollbackHappinessTeamReward extends Command
                     LEFT JOIN mp_user AS u ON(u.id = ub.user_id)
                     WHERE ub.remark LIKE '%幸福权益团队奖励-阶段%'
                     AND ub.change_balance > 0
-                    AND ub.log_type IN (2, 12, 13)
+                    AND ub.log_type IN (2, 12)
                     and ub.is_delete = 0
                     ORDER BY ub.id DESC limit 2";
             

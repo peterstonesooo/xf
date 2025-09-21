@@ -313,10 +313,10 @@ class CapitalController extends AuthController
             }
         }
         if(in_array($req['type'], [1,4])){
-            $hasWufuPurchase = Project::checkWufuPurchase($user['id']);
-            if (!$hasWufuPurchase) {
-                return out(null, 10001, '请选择任意五福窗口完成申领');
-            }
+            // $hasWufuPurchase = Project::checkWufuPurchase($user['id']);
+            // if (!$hasWufuPurchase) {
+            //     return out(null, 10001, '请选择任意五福窗口完成申领');
+            // }
         }
         
 

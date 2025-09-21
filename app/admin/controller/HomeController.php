@@ -202,6 +202,14 @@ class HomeController extends AuthController
         if (empty($wufuProjectIds)) {
             return 0;
         }
+        //从2025-09-21 00:00:00开始统计
+        if(empty($startDate)) {
+            $startDate = '2025-09-21 00:00:00';
+        }
+        //如果开始日期小于2025-09-21 00:00:00，则从2025-09-21 00:00:00开始统计
+        if($startDate < '2025-09-21 00:00:00') {
+            $startDate = '2025-09-21 00:00:00';
+        }
 
         $query = Order::whereIn('project_id', $wufuProjectIds)
                      ->where('status', 'in', [2, 4]); // 已支付或已完成状态

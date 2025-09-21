@@ -98,7 +98,7 @@ class OrderController extends AuthController
         }
 
 
-        /*
+        
         if(in_array($project['project_group_id'], [7,8,9,10,11])){
             if(!$project['open_date'] || !$project['end_date']){
                 // 判断今天是星期几
@@ -131,7 +131,7 @@ class OrderController extends AuthController
                 }
             }
         }
-        */
+        
          
         // 初始化订单变量
         $order = null;

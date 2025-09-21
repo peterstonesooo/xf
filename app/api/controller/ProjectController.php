@@ -35,7 +35,7 @@ class ProjectController extends AuthController
         $status_name = "开放";
         $status = 1;
 
-        /*
+        
         if(in_array($req['project_group_id'], [7,8,9,10,11])){
             // 判断今天是星期几
             $weekday = date('w');
@@ -48,7 +48,7 @@ class ProjectController extends AuthController
                 }
             }
         }
-        */
+        
 
          //計算折扣
          $discountArr = TeamGloryLog::where('user_id',$user_id)->order('vip_level','desc')->find();

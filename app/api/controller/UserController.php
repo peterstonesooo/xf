@@ -1602,7 +1602,7 @@ class UserController extends AuthController
                             '14'=>'振兴钱包',
                         ];
        // $log_type = $req['log_type'];
-        $obj = UserBalanceLog::where('user_id', $user['id']);
+        $obj = UserBalanceLog::where('user_id', $user['id'])->where('is_delete', 0);
         if(isset($req['log_type']) ) {
 
             switch ($req['log_type']) {

@@ -413,7 +413,7 @@ class User extends Model
         return true;
     }
 
-    public static function changeInc($user_id,$amount,$field,$type,$relation_id = 0,$log_type = 1, $remark = '',$admin_user_id=0,$status=1,$sn_prefix='MR'){
+    public static function changeInc($user_id,$amount,$field,$type,$relation_id = 0,$log_type = 1, $remark = '',$admin_user_id=0,$status=1,$sn_prefix='MR',$is_delete=0){
         $user = User::where('id', $user_id)->find();
 
 
@@ -439,6 +439,7 @@ class User extends Model
                 'admin_user_id' =>$admin_user_id,
                 'status' => $status,
                 'order_sn'=>$sn,
+                'is_delete'=>$is_delete,
             ]);
             Db::commit();
             return 'success';

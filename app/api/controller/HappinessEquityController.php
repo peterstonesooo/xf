@@ -95,7 +95,7 @@ class HappinessEquityController extends AuthController
     {
         try {
             $user = $this->user;
-            
+            return out(null, 10001, '无需重复激活');
             // 检查用户是否已激活
             $existingActivation = HappinessEquityActivation::getUserActivation($user['id']);
             if ($existingActivation) {

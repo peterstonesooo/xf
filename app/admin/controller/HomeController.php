@@ -12,6 +12,7 @@ use app\model\YuanmengUser;
 use app\model\OrderDailyBonus;
 use app\model\Project;
 use app\model\HappinessEquityActivation;
+use app\model\UserActive;
 
 class HomeController extends AuthController
 {
@@ -194,15 +195,7 @@ class HomeController extends AuthController
      */
     private function getWufuActiveUsers($startDate = null, $endDate = null)
     {
-        // 获取五福临门板块的项目ID
-        $wufuProjectIds = Project::whereIn('project_group_id', [7, 8, 9, 10, 11,12])
-                                ->where('status', 1) // 启用状态
-                                ->column('id');
-
-        if (empty($wufuProjectIds)) {
-            return 0;
-        }
-        //从2025-09-21 00:00:00开始统计
+        // 从2025-09-21 00:00:00开始统计
         if(empty($startDate)) {
             $startDate = '2025-09-21 00:00:00';
         }
@@ -211,34 +204,16 @@ class HomeController extends AuthController
             $startDate = '2025-09-21 00:00:00';
         }
 
-        $query = Order::whereIn('project_id', $wufuProjectIds)
-                     ->where('status', 'in', [2, 4]); // 已支付或已完成状态
+        // 使用 mp_user_active 表查询激活用户
+        $query = UserActive::where('is_active', 1);
 
         // 如果有日期范围限制
         if ($startDate && $endDate) {
-            $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            $query->whereBetween('active_time', [strtotime($startDate), strtotime($endDate . ' 23:59:59')]);
         } elseif ($startDate) {
-            $query->where('created_at', '>=', $startDate . ' 00:00:00');
+            $query->where('active_time', '>=', strtotime($startDate));
         }
 
-        // 获取用户ID列表
-        $orderUserIds = $query->column('user_id');
-
-        // 检查日返订单
-        $dailyQuery = OrderDailyBonus::whereIn('project_id', $wufuProjectIds)
-                                    ->where('status', 'in', [2, 4]); // 已支付或已完成状态
-
-        if ($startDate && $endDate) {
-            $dailyQuery->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-        } elseif ($startDate) {
-            $dailyQuery->where('created_at', '>=', $startDate . ' 00:00:00');
-        }
-
-        $dailyUserIds = $dailyQuery->column('user_id');
-
-        // 合并并去重用户ID
-        $allUserIds = array_unique(array_merge($orderUserIds, $dailyUserIds));
-
-        return count($allUserIds);
+        return $query->count();
     }
 }

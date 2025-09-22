@@ -7,7 +7,7 @@ use think\facade\Db;
 
 class UserActive extends Model
 {
-    protected $name = 'mp_user_active';
+    protected $name = 'user_active';
     protected $pk = 'id';
     
     // 自动时间戳

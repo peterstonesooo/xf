@@ -61,11 +61,11 @@ class DailyBonusReturn extends Command
                                 User::changeInc($order['user_id'],$daily_zhenxing_wallet,'zhenxing_wallet',120,$order['id'],14, '日盈振兴金');
                             }
                         }else{
-                            // $daily_gongfu_amount = round($order['gongfu_amount']/$period, 2);
+                            $daily_gongfu_amount = round($order['gongfu_amount']/$period, 2);
                             $daily_huimin_amount = round($order['huimin_amount']/$period, 2);
-                            // if($daily_gongfu_amount>0){
-                            //     User::changeInc($order['user_id'],$daily_gongfu_amount,'butie',67,$order['id'],3, '日享共富金');
-                            // }   
+                            if($daily_gongfu_amount>0){
+                                User::changeInc($order['user_id'],$daily_gongfu_amount,'butie',67,$order['id'],3, '日享共富金');
+                            }   
                             if($daily_huimin_amount>0){
                                 User::changeInc($order['user_id'],$daily_huimin_amount,'digit_balance',68,$order['id'],5, '日享惠民金');
                             }

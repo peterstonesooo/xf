@@ -58,5 +58,6 @@ return [
         'correct:balance-log' => 'app\common\command\CorrectBalanceLog',
         'rollback:gongfu-bonus' => 'app\common\command\RollbackGongfuBonus',
         'rollback:happiness-team-reward' => 'app\common\command\RollbackHappinessTeamReward',
+        'migrateUserActive' => 'app\common\command\MigrateUserActive',
     ],
 ];

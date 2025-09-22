@@ -16,14 +16,14 @@ class UserActive extends Model
     // 字段类型转换
     protected $type = [
         'id' => 'integer',
-        'up_user_id' => 'integer',
+        'user_id' => 'integer',
         'is_active' => 'integer',
         'active_time' => 'integer',
     ];
     
     // 字段默认值
     protected $default = [
-        'up_user_id' => 0,
+        'user_id' => 0,
         'is_active' => 0,
         'active_time' => 0,
     ];
@@ -33,7 +33,7 @@ class UserActive extends Model
      */
     public static function isUserActive($userId)
     {
-        return self::where('up_user_id', $userId)
+        return self::where('user_id', $userId)
                    ->where('is_active', 1)
                    ->find();
     }
@@ -44,7 +44,7 @@ class UserActive extends Model
     public static function activateUser($userId, $upUserId = 0)
     {
         // 检查用户是否已经激活
-        $existing = self::where('up_user_id', $userId)->find();
+        $existing = self::where('user_id', $userId)->find();
         
         if ($existing) {
             // 如果已经激活，不重复操作
@@ -53,7 +53,7 @@ class UserActive extends Model
         
         // 创建激活记录
         return self::create([
-            'up_user_id' => $userId,
+            'user_id' => $userId,
             'is_active' => 1,
             'active_time' => time()
         ]);
@@ -64,6 +64,6 @@ class UserActive extends Model
      */
     public static function getUserActivation($userId)
     {
-        return self::where('up_user_id', $userId)->find();
+        return self::where('user_id', $userId)->find();
     }
 }

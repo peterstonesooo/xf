@@ -269,7 +269,7 @@ class OrderDailyBonus extends Model
             }
             
             // 添加 mp_user_active 表激活记录
-            UserActive::activateUser($order['user_id'], $order['up_user_id']);
+            UserActive::activateUser($order['user_id']);
 
             User::where('id',$user_id)->inc('invest_amount',$order['price'])->update();
             //判断是否活动时间内记录活动累计消费 4.30-5.6

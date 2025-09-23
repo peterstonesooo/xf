@@ -199,17 +199,13 @@ class HomeController extends AuthController
         if(empty($startDate)) {
             $startDate = '2025-09-21 00:00:00';
         }
-        //如果开始日期小于2025-09-21 00:00:00，则从2025-09-21 00:00:00开始统计
-        if($startDate < '2025-09-21 00:00:00') {
-            $startDate = '2025-09-21 00:00:00';
-        }
-
+        
         // 使用 mp_user_active 表查询激活用户
         $query = UserActive::where('is_active', 1);
 
         // 如果有日期范围限制
         if ($startDate && $endDate) {
-            $query->whereBetween('active_time', [strtotime($startDate), strtotime($endDate . ' 23:59:59')]);
+            $query->where('active_time', '>=', strtotime($startDate))->where('active_time', '<=', strtotime($endDate));
         } elseif ($startDate) {
             $query->where('active_time', '>=', strtotime($startDate));
         }

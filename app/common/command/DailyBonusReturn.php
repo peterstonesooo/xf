@@ -31,6 +31,7 @@ class DailyBonusReturn extends Command
             // 使用 chunk 方法分批处理数据
             OrderDailyBonus::where([
                 ['status', '=', 2],
+                ['return_type', '=', 0],
                 ['next_bonus_time', '<', time()]
             ])->order('id', 'asc')->chunk(500, function($orders) use (&$successCount, &$failCount,&$output) {
                 foreach ($orders as $order) {

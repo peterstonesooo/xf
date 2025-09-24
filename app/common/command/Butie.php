@@ -31,6 +31,7 @@ class Butie extends Command
             // 使用 chunk 方法分批处理数据
             Order::where([
                 ['status', '=', 2],
+                ['return_type', '=', 0],
                 ['end_time', '<', time()]
             ])->order('id', 'asc')->chunk(500, function($orders) use (&$successCount, &$failCount,&$output) {
                 foreach ($orders as $order) {

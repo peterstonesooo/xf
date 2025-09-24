@@ -101,7 +101,7 @@ class VoteController extends AuthController
                 'total' => $list->total(),
                 'page' => $page,
                 'limit' => $limit
-            ], 1, '获取成功');
+            ]);
             
         } catch (\Exception $e) {
             return out('', 0, '系统错误：' . $e->getMessage());

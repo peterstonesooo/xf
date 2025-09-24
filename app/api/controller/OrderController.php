@@ -38,9 +38,17 @@ class OrderController extends AuthController
     public function yudingComplete(){
         $req = $this->validate(request(), [
             'order_id' => 'require|number',
+            'project_id' => 'require|number',
+            'pay_password|支付密码' => 'require',
         ]);
 
         $user = $this->user;
+        if (empty($user['pay_password'])) {
+            return out(null, 10001, '请先设置支付密码');
+        }
+        if (!empty($req['pay_password']) && $user['pay_password'] !== sha1(md5($req['pay_password']))) {
+            return out(null, 10001, '支付密码错误');
+        }
         $order = Order::where('id', $req['order_id'])
             ->where('status', 2)
             ->where('return_type', 1)
@@ -48,7 +56,7 @@ class OrderController extends AuthController
         if(!$order){
             return out(null, 10001, '订单不存在');
         }
-        if(time() > strtotime($order['end_time'])){
+        if(time() > $order['end_time']){
             return out(null, 10002, '订单已过期');
         }
 
@@ -258,21 +266,25 @@ class OrderController extends AuthController
                 //抽奖机会加一
                 User::where('id',$user['id'])->inc('order_lottery_tickets',1)->update();
                 // 给上3级团队奖
-                $relation = UserRelation::where('sub_user_id', $user['id'])->select();
-                $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
-                foreach ($relation as $v) {
-                    $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount'], 2);
-                    if($reward > 0){
-                        User::changeInc($v['user_id'],$reward,'team_bonus_balance',8,$order['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
-                        RelationshipRewardLog::insert([
-                            'uid' => $v['user_id'],
-                            'reward' => $reward,
-                            'son' => $user['id'],
-                            'son_lay' => $v['level'],
-                            'created_at' => date('Y-m-d H:i:s')
-                        ]);
+                if($project['return_type'] == 0){
+                    $relation = UserRelation::where('sub_user_id', $user['id'])->select();
+                    $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
+                    foreach ($relation as $v) {
+                        $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount'], 2);
+                        if($reward > 0){
+                            User::changeInc($v['user_id'],$reward,'team_bonus_balance',8,$order['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
+                            RelationshipRewardLog::insert([
+                                'uid' => $v['user_id'],
+                                'reward' => $reward,
+                                'son' => $user['id'],
+                                'son_lay' => $v['level'],
+                                'created_at' => date('Y-m-d H:i:s')
+                            ]);
+                        }
                     }
                 }
+                
+
                 if(in_array($project['class'], [11,12,13,14])){
                     if($project['gongfu_amount'] > 0){
                         User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,'共富专项金',0,1);

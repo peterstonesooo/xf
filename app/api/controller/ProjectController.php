@@ -149,6 +149,19 @@ class ProjectController extends AuthController
                 $item['status_name'] = $status_name;
                 $item['status'] = $status;
             }
+            //预定订单状态和时间
+            $item['order_status'] = 0;
+            $item['order_end_time'] = 0;
+            $item['order_id'] = 0;
+            if($item['return_type'] == 1){
+                $order = Order::where('project_id', $item['id'])->where('user_id', $user_id)
+                ->where('status', '>', 1)->find();
+                if($order){
+                    $item['order_id'] = $order['id'];
+                    $item['order_status'] = $order['status'];
+                    $item['order_end_time'] = $order['end_time'];
+                }
+            }
             if($item['daily_bonus_ratio'] > 0){
                 $item['daily_huimin_amount'] = round($item['huimin_amount']/$item['period'], 2);
                 $item['daily_gongfu_amount'] = round($item['gongfu_amount']/$item['period'], 2);

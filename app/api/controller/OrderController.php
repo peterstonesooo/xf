@@ -35,6 +35,54 @@ use think\facade\Db;
 class OrderController extends AuthController
 {
 
+    public function yudingComplete(){
+        $req = $this->validate(request(), [
+            'order_id' => 'require|number',
+        ]);
+
+        $user = $this->user;
+        $order = Order::where('id', $req['order_id'])
+            ->where('status', 2)
+            ->where('return_type', 1)
+            ->find();
+        if(!$order){
+            return out(null, 10001, '订单不存在');
+        }
+        if(time() > strtotime($order['end_time'])){
+            return out(null, 10002, '订单已过期');
+        }
+
+        $yuding_amount = $order['yuding_amount'];
+        if($yuding_amount > $user['topup_balance']){
+            return out(null, 10003, '余额不足');
+        }
+        Db::startTrans();
+        try {
+            User::changeInc($user['id'],-$yuding_amount,'topup_balance',121,$order['id'],1,$order['project_name'],0,1);
+            if($order['zhenxing_wallet'] > 0){
+                User::changeInc($user['id'],$order['zhenxing_wallet'],'zhenxing_wallet',52,$order['id'],14,$order['project_name'],0,1);
+            }
+            if($order['puhui'] > 0){
+                User::changeInc($user['id'],$order['puhui'],'puhui',52,$order['id'],13,$order['project_name'],0,1);
+            }
+            $order['status'] = 4;
+            $order->save();
+            Db::commit();
+        } catch (Exception $e) {
+            Db::rollback();
+            throw $e;
+        }
+
+
+
+        
+
+        $order->save();
+
+        return out();
+    }
+
+
     public function placeOrder()
     {
         $req = $this->validate(request(), [
@@ -2362,7 +2410,9 @@ class OrderController extends AuthController
             if($project['daily_bonus_ratio'] > 0){
                 $data = OrderDailyBonus::alias('o')->leftJoin('mp_project p', 'p.id = o.project_id')->where('o.user_id', $user['id'])
                 ->where('o.id', $req['order_id'])
-                ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,p.dividend_cycle,o.zhenxing_wallet,o.puhui,o.huimin_days_return')
+                ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,
+                o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,
+                p.dividend_cycle,o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type')
                  ->find();
             }else{
                 if($req['project_id'] == 3){
@@ -2373,7 +2423,9 @@ class OrderController extends AuthController
                 }else{
                     $data = Order::alias('o')->leftJoin('mp_project p', 'p.id = o.project_id')->where('o.user_id', $user['id'])
                     ->where('o.id', $req['order_id'])
-                    ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,p.dividend_cycle,o.zhenxing_wallet,o.puhui,o.huimin_days_return')
+                    ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,
+                    o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,p.dividend_cycle,
+                    o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type')
                      ->find();
                 }
             }
@@ -2382,12 +2434,16 @@ class OrderController extends AuthController
             if($project['daily_bonus_ratio'] > 0){
                 $data = OrderDailyBonus::alias('o')->leftJoin('mp_project p', 'p.id = o.project_id')->where('o.user_id', $user['id'])
                 ->where('o.id', $req['order_id'])
-                ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,p.dividend_cycle,o.zhenxing_wallet,o.puhui,o.huimin_days_return')
+                ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,
+                o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,
+                p.dividend_cycle,o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type')
                  ->find();
             }else{
                 $data = Order::alias('o')->leftJoin('mp_project p', 'p.id = o.project_id')->where('o.user_id', $user['id'])
                 ->where('o.id', $req['order_id'])
-                ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,p.dividend_cycle,o.zhenxing_wallet,o.puhui,o.huimin_days_return')
+                ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,
+                o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,p.dividend_cycle,
+                o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type')
                  ->find();
             }
         }

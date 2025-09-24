@@ -57,7 +57,7 @@ class OrderController extends AuthController
             return out(null, 10001, '订单不存在');
         }
         if(time() > $order['end_time']){
-            return out(null, 10002, '订单已过期');
+            return out(null, 10002, '您尚未在规定时间内进行预订');
         }
 
         $yuding_amount = $order['yuding_amount'];

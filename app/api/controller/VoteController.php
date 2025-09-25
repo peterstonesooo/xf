@@ -32,6 +32,11 @@ class VoteController extends AuthController
             if (Vote::isUserRegistered($uid)) {
                 return out('', 0, '您已经报名过了');
             }
+
+            $register_count = User::where('up_user_id', $uid)->where('shiming_status', 1)->count();
+            if($register_count < 10 ){
+                return out('', 0, '您当前直推实名人数不足10人');
+            }
             
             // 创建投票记录（报名）
             $voteData = [
@@ -138,24 +143,24 @@ class VoteController extends AuthController
             }
             
             // 检查投票状态
-            if ($vote->status != 1) {
-                return out('', 0, '投票已关闭');
-            }
+            // if ($vote->status != 1) {
+            //     return out('', 0, '投票已关闭');
+            // }
             
             // 检查投票时间
-            $now = date('Y-m-d H:i:s');
-            if ($vote->start_time && $now < $vote->start_time) {
-                return out('', 0, '投票尚未开始');
-            }
-            if ($vote->end_time && $now > $vote->end_time) {
-                return out('', 0, '投票已结束');
-            }
+            // $now = date('Y-m-d H:i:s');
+            // if ($vote->start_time && $now < $vote->start_time) {
+            //     return out('', 0, '投票尚未开始');
+            // }
+            // if ($vote->end_time && $now > $vote->end_time) {
+            //     return out('', 0, '投票已结束');
+            // }
             
             // 移除重复投票限制，允许用户多次投票
             
             // 检查用户投票票数
             if (!isset($user['vote_tickets']) || $user['vote_tickets'] <= 0) {
-                return out('', 0, '投票票数不足');
+                return out('', 0, '您的投票数量不足，请继续获取投票机会');
             }
             
             // 获取选项数据用于更新统计
@@ -225,7 +230,7 @@ class VoteController extends AuthController
                 
                 Db::commit();
                 
-                return out(['vote_id' => $voteId], 1, '投票成功');
+                return out(['vote_id' => $voteId], 1, '感谢您宝贵的一票！您的支持已被国家真实记录，每一份信任都将汇聚成推动幸福中国的力量。');
                 
             } catch (\Exception $e) {
                 Db::rollback();

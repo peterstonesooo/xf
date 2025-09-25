@@ -59,5 +59,6 @@ return [
         'rollback:gongfu-bonus' => 'app\common\command\RollbackGongfuBonus',
         'rollback:happiness-team-reward' => 'app\common\command\RollbackHappinessTeamReward',
         'migrateUserActive' => 'app\common\command\MigrateUserActive',
+        'vote:sync' => 'app\common\command\VoteDataSync',
     ],
 ];

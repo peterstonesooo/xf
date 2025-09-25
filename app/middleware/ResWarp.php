@@ -52,6 +52,7 @@ class ResWarp
         'common/paynotify_dingbai',
         'common/paynotify_huichuang',
         'common/paynotify_shuihu',
+        'common/test3',
     ];
 
     public function handle($request, \Closure $next)

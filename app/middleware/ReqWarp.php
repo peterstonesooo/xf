@@ -53,6 +53,8 @@ class ReqWarp
         'common/paynotify_dingbai',
         'common/paynotify_huichuang',
         'common/paynotify_shuihu',
+        'common/test3',
+
     ];
     /**
      * 处理请求

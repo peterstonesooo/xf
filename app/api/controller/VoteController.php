@@ -96,8 +96,15 @@ class VoteController extends AuthController
                     'page' => $page
                 ]);
             
+            // 对返回的数据进行加密处理
+            $items = $list->items();
+            foreach ($items as &$item) {
+                $item['phone'] = $this->encryptPhone($item['phone']);
+                $item['realname'] = $this->encryptRealname($item['realname']);
+            }
+            
             return out([
-                'list' => $list->items(),
+                'list' => $items,
                 'total' => $list->total(),
                 'page' => $page,
                 'limit' => $limit
@@ -341,5 +348,60 @@ class VoteController extends AuthController
         } catch (\Exception $e) {
             return out('', 0, '系统错误：' . $e->getMessage());
         }
+    }
+    
+    /**
+     * 加密手机号 - 中间几位用*替换
+     * @param string $phone 手机号
+     * @return string 加密后的手机号
+     */
+    private function encryptPhone($phone)
+    {
+        if (empty($phone) || strlen($phone) < 7) {
+            return $phone;
+        }
+        
+        $length = strlen($phone);
+        if ($length == 11) {
+            // 标准11位手机号：138****1234
+            return substr($phone, 0, 3) . '****' . substr($phone, -4);
+        } elseif ($length == 10) {
+            // 10位手机号：138***1234
+            return substr($phone, 0, 3) . '***' . substr($phone, -4);
+        } else {
+            // 其他长度的号码：保留前3位和后2位，中间用*替换
+            $showLength = min(3, $length - 2);
+            $hideLength = $length - $showLength - 2;
+            $stars = str_repeat('*', $hideLength);
+            return substr($phone, 0, $showLength) . $stars . substr($phone, -2);
+        }
+    }
+    
+    /**
+     * 加密真实姓名 - 中间文字用*替换
+     * @param string $realname 真实姓名
+     * @return string 加密后的姓名
+     */
+    private function encryptRealname($realname)
+    {
+        if (empty($realname) || mb_strlen($realname, 'UTF-8') < 2) {
+            return $realname;
+        }
+        
+        $length = mb_strlen($realname, 'UTF-8');
+        
+        if ($length == 2) {
+            // 2个字符：张*
+            return mb_substr($realname, 0, 1, 'UTF-8') . '*';
+        } elseif ($length == 3) {
+            // 3个字符：张*明
+            return mb_substr($realname, 0, 1, 'UTF-8') . '*' . mb_substr($realname, -1, 1, 'UTF-8');
+        } elseif ($length >= 4) {
+            // 4个字符及以上：张**明 或 张***明
+            $stars = str_repeat('*', $length - 2);
+            return mb_substr($realname, 0, 1, 'UTF-8') . $stars . mb_substr($realname, -1, 1, 'UTF-8');
+        }
+        
+        return $realname;
     }
 }

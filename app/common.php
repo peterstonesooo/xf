@@ -837,3 +837,17 @@ function get_device_token(){
     // 组合并哈希
     return hash('sha256', $timestamp . $random);
 }
+
+
+function getRealIp(){
+    $forwardedFor = request()->header('x-forwarded-for');
+    if ($forwardedFor) {
+        $ip = explode(',', $forwardedFor)[0];
+    } else {
+        $ip = request()->ip();
+    }
+    if(strlen($ip)>100){
+        $ip = substr($ip,0,100);
+    }
+    return $ip;
+}

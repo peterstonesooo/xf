@@ -28,22 +28,9 @@
         </select>
         <select name="class" class="form-control">
             <option value="">搜索项目期数</option>
-            <option value="1" <?php if (isset($req['class']) && $req['class'] == 1) { echo 'selected = "selected"'; } ?>>一期</option>
-            <option value="2" <?php if (isset($req['class']) && $req['class'] == 2) { echo 'selected = "selected"'; } ?>>二期</option>
-            <option value="3" <?php if (isset($req['class']) && $req['class'] == 3) { echo 'selected = "selected"'; } ?>>三期</option>
-            <option value="4" <?php if (isset($req['class']) && $req['class'] == 4) { echo 'selected = "selected"'; } ?>>四期</option>
-            <option value="5" <?php if (isset($req['class']) && $req['class'] == 5) { echo 'selected = "selected"'; } ?>>五期</option>
-            <option value="6" <?php if (isset($req['class']) && $req['class'] == 6) { echo 'selected = "selected"'; } ?>>六期</option>
-            <option value="7" <?php if (isset($req['class']) && $req['class'] == 7) { echo 'selected = "selected"'; } ?>>七期</option>
-            <option value="8" <?php if (isset($req['class']) && $req['class'] == 8) { echo 'selected = "selected"'; } ?>>八期</option>
-            <option value="9" <?php if (isset($req['class']) && $req['class'] == 9) { echo 'selected = "selected"'; } ?>>九期</option>
-            <option value="10" <?php if (isset($req['class']) && $req['class'] == 10) { echo 'selected = "selected"'; } ?>>十期</option>
-            <option value="11" <?php if (isset($req['class']) && $req['class'] == 11) { echo 'selected = "selected"'; } ?>>十一期</option>
-            <option value="12" <?php if (isset($req['class']) && $req['class'] == 12) { echo 'selected = "selected"'; } ?>>十二期</option>
-            <option value="13" <?php if (isset($req['class']) && $req['class'] == 13) { echo 'selected = "selected"'; } ?>>十三期</option>
-            <option value="14" <?php if (isset($req['class']) && $req['class'] == 14) { echo 'selected = "selected"'; } ?>>十四期</option>
-            <option value="15" <?php if (isset($req['class']) && $req['class'] == 15) { echo 'selected = "selected"'; } ?>>十五期</option>
-            <option value="16" <?php if (isset($req['class']) && $req['class'] == 16) { echo 'selected = "selected"'; } ?>>十六期</option>
+            <?php for ($i = 1; $i <= 30; $i++) { ?>
+                <option value="<?php echo $i; ?>" <?php if (isset($req['class']) && $req['class'] == $i) { echo 'selected = "selected"'; } ?>><?php echo $i; ?>期</option>
+            <?php } ?>
         </select>
         <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
         <a {:auth_show_judge('Project/addProject')} class="btn btn-flat btn-success m_10 f_r"
@@ -63,17 +50,15 @@
                             <th>分组ID</th>
                             <th>封面图</th>
                             <th>项目名称</th>
-                            <th>申购金额</th>
-                            <th>惠民金</th>
-                            <th>共富金</th>
+                            <th>金额信息</th>
                             <th>返佣比例</th>
                             <th>返利方式</th>
                             <th>申购周期</th>
                             <th>是否启用</th>
                             <!-- <th>是否推荐</th> -->
                             <!-- <th>支付方式</th> -->
-                            <th>工作日份额数</th>
-                            <th>周末份额数</th>
+                            <th>限额信息</th>
+                            <th>惠民金周期返利</th>
                             <th>项目期数</th>
                             <!-- <th>排序号</th> -->
                             <!-- <th>创建时间</th> -->
@@ -85,9 +70,13 @@
                                 <td>{$groups[$v['project_group_id']]}</td>
                                 <td><img src="{$v['cover_img']}" onclick="seePhoto('{$v['cover_img']}')" style="max-width: 80px;"></td>
                                 <td>{$v['name']}</td>
-                                <td>{$v['single_amount']}</td>
-                                <td>{$v['huimin_amount']}</td>
-                                <td>{$v['gongfu_amount']}</td>
+                                <td style="font-size: 12px; line-height: 1.4;">
+                                    普惠金：{$v['puhui']|default='0'}<br>
+                                    振兴金：{$v['zhenxing_wallet']|default='0'}<br>
+                                    惠民金：{$v['huimin_amount']|default='0'}<br>
+                                    共富金：{$v['gongfu_amount']|default='0'}<br>
+                                    购买金额：{$v['single_amount']|default='0'}
+                                </td>
                                 <td>{$v['rebate_rate']}</td>
                                 <td><?php echo isset($v['daily_bonus_ratio']) && $v['daily_bonus_ratio'] > 0 ? '每日返利' : '到期返利'; ?></td>
                                 <td>{$v['period']}</td>
@@ -118,59 +107,24 @@
                                     </div>
                                 </td> -->
                                 <!-- <td>{$v['support_pay_methods_text']}</td> -->
-                                <!-- <td>工作日{$v['total_quota']}</br>周末{$v['remaining_quota']}</td> -->
-                                <td>{$v['total_quota']}</td>
-                                <td>{$v['remaining_quota']}</td>
-                                <td><?php switch($v['class']){
-                                    case 1:
-                                        echo '一期';
-                                        break;
-                                    case 2:
-                                        echo '二期';
-                                        break;
-                                    case 3:
-                                        echo '三期';
-                                        break;
-                                    case 4:
-                                        echo '四期';
-                                        break;
-                                    case 5:
-                                        echo '五期';
-                                        break;
-                                    case 6:
-                                        echo '六期';
-                                        break;
-                                    case 7:
-                                        echo '七期';
-                                        break;
-                                    case 8:
-                                        echo '八期';
-                                        break;
-                                    case 9:
-                                        echo '九期';
-                                        break;
-                                    case 10:
-                                        echo '十期';
-                                        break;
-                                    case 11:
-                                        echo '十一期';
-                                        break;
-                                    case 12:
-                                        echo '十二期';
-                                        break;
-                                    case 13:
-                                        echo '十三期';
-                                        break;
-                                    case 14:
-                                        echo '十四期';
-                                        break;
-                                    case 15:
-                                        echo '十五期';
-                                        break;
-                                    case 16:
-                                        echo '十六期';
-                                        break;
-                                } ?></td>
+                                <td style="font-size: 12px; line-height: 1.4;">
+                                    工作日限额：{$v['total_quota']|default='0'}<br>
+                                    周末限额：{$v['remaining_quota']|default='0'}<br>
+                                    每人限购数：{$v['purchase_limit_per_user']|default='0'}<br>
+                                    开始时间：{$v['start_time']|default=''}<br>
+                                    结束时间：{$v['end_time']|default=''}
+                                </td>
+                                <td>
+                                    <?php 
+                                    $huiminData = isset($v['huimin_days_return']) && !empty($v['huimin_days_return']) ? $v['huimin_days_return'] : '';
+                                    if (!empty($huiminData)) {
+                                        echo '<a href="javascript:;" onclick="showHuiminReturn(' . $v['id'] . ')" class="btn btn-xs btn-info">点击弹框查看</a>';
+                                    } else {
+                                        echo '<span style="color: #999;">无数据</span>';
+                                    }
+                                    ?>
+                                </td>
+                                <td><?php echo $v['class']; ?>期</td>
                                 <!-- <td>{$v['sort']}</td> -->
                                 <!-- <td>{$v['created_at']}</td> -->
                                 <td>
@@ -205,6 +159,56 @@
                     layer.msg(res.msg, {icon: 5, time: 3000});
                 }
             });
+        });
+    }
+
+    function showHuiminReturn(projectId)
+    {
+        // 获取项目数据
+        $.post('{:url("admin/Project/getProjectDetail")}', {id: projectId}, function (res) {
+            if (res.code == '200') {
+                var data = res.data;
+                var huiminData = data.huimin_days_return || [];
+                
+                if (huiminData.length == 0) {
+                    layer.msg('暂无惠民金周期返利数据', {icon: 0, time: 2000});
+                    return;
+                }
+                
+                // 构建显示内容
+                var content = '<div style="max-height: 400px; overflow-y: auto;">';
+                content += '<table class="table table-bordered table-striped" style="margin-bottom: 0;">';
+                content += '<thead><tr><th>天数</th><th>振兴钱包</th><th>普惠金</th><th>惠民金</th><th>共富金</th><th>民生金</th></tr></thead>';
+                content += '<tbody>';
+                
+                for (var i = 0; i < huiminData.length; i++) {
+                    var item = huiminData[i];
+                    content += '<tr>';
+                    content += '<td>' + (item.day || '') + '</td>';
+                    content += '<td>' + (item.zhenxing_wallet || '0') + '</td>';
+                    content += '<td>' + (item.puhui || '0') + '</td>';
+                    content += '<td>' + (item.huimin_amount || '0') + '</td>';
+                    content += '<td>' + (item.gongfu_amount || '0') + '</td>';
+                    content += '<td>' + (item.minsheng_amount || '0') + '</td>';
+                    content += '</tr>';
+                }
+                
+                content += '</tbody></table></div>';
+                
+                // 显示弹框
+                layer.open({
+                    type: 1,
+                    title: '惠民金周期返利详情 - ' + data.name,
+                    area: ['800px', '500px'],
+                    content: content,
+                    btn: ['关闭'],
+                    yes: function(index) {
+                        layer.close(index);
+                    }
+                });
+            } else {
+                layer.msg(res.msg || '获取数据失败', {icon: 5, time: 3000});
+            }
         });
     }
 

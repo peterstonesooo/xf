@@ -35,6 +35,62 @@ use think\facade\Db;
 class OrderController extends AuthController
 {
 
+    public function yudingComplete(){
+        $req = $this->validate(request(), [
+            'order_id' => 'require|number',
+            'project_id' => 'require|number',
+            'pay_password|支付密码' => 'require',
+        ]);
+
+        $user = $this->user;
+        if (empty($user['pay_password'])) {
+            return out(null, 10001, '请先设置支付密码');
+        }
+        if (!empty($req['pay_password']) && $user['pay_password'] !== sha1(md5($req['pay_password']))) {
+            return out(null, 10001, '支付密码错误');
+        }
+        $order = Order::where('id', $req['order_id'])
+            ->where('status', 2)
+            ->where('return_type', 1)
+            ->find();
+        if(!$order){
+            return out(null, 10001, '订单不存在');
+        }
+        if(time() > $order['end_time']){
+            return out(null, 10002, '您尚未在规定时间内进行预订');
+        }
+
+        $yuding_amount = $order['yuding_amount'];
+        if($yuding_amount > $user['topup_balance']){
+            return out(null, 10003, '余额不足');
+        }
+        Db::startTrans();
+        try {
+            User::changeInc($user['id'],-$yuding_amount,'topup_balance',121,$order['id'],1,$order['project_name'],0,1);
+            if($order['zhenxing_wallet'] > 0){
+                User::changeInc($user['id'],$order['zhenxing_wallet'],'zhenxing_wallet',52,$order['id'],14,$order['project_name'],0,1);
+            }
+            if($order['puhui'] > 0){
+                User::changeInc($user['id'],$order['puhui'],'puhui',52,$order['id'],13,$order['project_name'],0,1);
+            }
+            $order['status'] = 4;
+            $order->save();
+            Db::commit();
+        } catch (Exception $e) {
+            Db::rollback();
+            throw $e;
+        }
+
+
+
+        
+
+        $order->save();
+
+        return out();
+    }
+
+
     public function placeOrder()
     {
         $req = $this->validate(request(), [
@@ -67,7 +123,12 @@ class OrderController extends AuthController
         if(!$ret){
             return out("服务繁忙，请稍后再试");
         } */
-        $project = Project::field('id project_id,name project_name,class,project_group_id,cover_img,single_amount,single_integral,total_num,daily_bonus_ratio,sum_amount,dividend_cycle,period,single_gift_equity,single_gift_digital_yuan,sham_buy_num,progress_switch,bonus_multiple,settlement_method,created_at,min_amount,max_amount,open_date,end_date,year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,class,minsheng_amount,huimin_days_return')
+        $project = Project::field('id project_id,name project_name,class,project_group_id,cover_img,single_amount,single_integral,total_num,daily_bonus_ratio,sum_amount,dividend_cycle,period,single_gift_equity,
+                                    single_gift_digital_yuan,sham_buy_num,progress_switch,bonus_multiple,
+                                    settlement_method,created_at,min_amount,max_amount,open_date,end_date,
+                                    year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,class,
+                                    minsheng_amount,huimin_days_return,purchase_limit_per_user,zhenxing_wallet,
+                                    puhui,yuding_amount,return_type')
         ->where('id', $req['project_id'])
         ->lock(true)
         ->append(['all_total_buy_num'])
@@ -93,12 +154,12 @@ class OrderController extends AuthController
             return $this->placeOrderTiyanDailyBonus($req,$project);
         }
         //如果是体验项目，逻辑单独处理
-        if($project['project_group_id'] == 12 && $project['daily_bonus_ratio'] == 0 && $project['huimin_days_return'] == null){
+        if($project['project_group_id'] == 12 && $project['project_id'] == 3 ){
             return $this->placeOrder1($project);
         }
 
 
-        /*
+        
         if(in_array($project['project_group_id'], [7,8,9,10,11])){
             if(!$project['open_date'] || !$project['end_date']){
                 // 判断今天是星期几
@@ -131,36 +192,21 @@ class OrderController extends AuthController
                 }
             }
         }
-        */
+        
          
+        // 初始化订单变量
+        $order = null;
 
         Db::startTrans();
         try {
             $user = User::where('id', $user['id'])->lock(true)->find();
             //检查是否已经购买
-            $order = Order::where('user_id', $user['id'])->where('project_id', $req['project_id'])->count();
-            //三四期项目，每人限购5次，一二期每人限购一次
-            switch($project['class']){
-                case 1:
-                    if($order > 0){
-                        exit_out(null, 10006, '您已经购买过该产品');
-                    }
-                    break;
-                case 2:
-                    if($order > 0){
-                        exit_out(null, 10006, '您已经购买过该产品');    
-                    }
-                    break;
-                case 3:
-                    if($order > 4){
-                        exit_out(null, 10006, '您已达到购买上限');
-                    }
-                    break;
-                case 4:
-                    if($order > 4){
-                        exit_out(null, 10006, '您已达到购买上限');
-                    }
-                    break;
+            $order_count = Order::where('user_id', $user['id'])->where('project_id', $req['project_id'])->count();
+            
+            if($project['purchase_limit_per_user'] > 0){
+                if($order_count >= $project['purchase_limit_per_user']){
+                    exit_out(null, 10006, '您已达到购买上限');
+                }
             }
 
             //計算折扣
@@ -213,26 +259,32 @@ class OrderController extends AuthController
                 // 扣余额
                 User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$project['project_name'],0,1);
                 if($project['dividend_cycle'] < 1 || empty($project['dividend_cycle'])){
-                    User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,$project['project_name'].'共富金');
+                    if($project['gongfu_amount'] > 0){
+                        User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,$project['project_name'].'共富金');
+                    }
                 }
                 //抽奖机会加一
                 User::where('id',$user['id'])->inc('order_lottery_tickets',1)->update();
                 // 给上3级团队奖
-                $relation = UserRelation::where('sub_user_id', $user['id'])->select();
-                $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
-                foreach ($relation as $v) {
-                    $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount'], 2);
-                    if($reward > 0){
-                        User::changeInc($v['user_id'],$reward,'team_bonus_balance',8,$order['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
-                        RelationshipRewardLog::insert([
-                            'uid' => $v['user_id'],
-                            'reward' => $reward,
-                            'son' => $user['id'],
-                            'son_lay' => $v['level'],
-                            'created_at' => date('Y-m-d H:i:s')
-                        ]);
+                if($project['return_type'] == 0){
+                    $relation = UserRelation::where('sub_user_id', $user['id'])->select();
+                    $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
+                    foreach ($relation as $v) {
+                        $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount'], 2);
+                        if($reward > 0){
+                            User::changeInc($v['user_id'],$reward,'team_bonus_balance',8,$order['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
+                            RelationshipRewardLog::insert([
+                                'uid' => $v['user_id'],
+                                'reward' => $reward,
+                                'son' => $user['id'],
+                                'son_lay' => $v['level'],
+                                'created_at' => date('Y-m-d H:i:s')
+                            ]);
+                        }
                     }
                 }
+                
+
                 if(in_array($project['class'], [11,12,13,14])){
                     if($project['gongfu_amount'] > 0){
                         User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,'共富专项金',0,1);
@@ -291,7 +343,7 @@ class OrderController extends AuthController
             throw $e;
         }
 
-        return out(['order_id' => $order['id'] ?? 0, 'trade_sn' => $trade_sn ?? '', 'type' => $ret['type'] ?? '', 'data' => $ret['data'] ?? '']);
+        return out(['order_id' => $order['id'] ?? 0, 'trade_sn' => $order_sn ?? '', 'type' =>  '', 'data' =>  '']);
 
     }
 
@@ -341,19 +393,33 @@ class OrderController extends AuthController
             throw $e;
         }
 
-        return out(['order_id' => $order['id'] ?? 0, 'trade_sn' => $trade_sn ?? '', 'type' => $ret['type'] ?? '', 'data' => $ret['data'] ?? '']);
+        return out(['order_id' => $order['id'] ?? 0, 'trade_sn' => $order_sn ?? '', 'type' =>  '', 'data' =>  '']);
 
     }
 
     //体验项目每日分红订单
     public function placeOrderTiyanDailyBonus($req,$project){
         $user = $this->user;
-        $project = Project::field('id project_id,name project_name,class,project_group_id,cover_img,single_amount,single_integral,total_num,daily_bonus_ratio,sum_amount,dividend_cycle,period,single_gift_equity,single_gift_digital_yuan,sham_buy_num,progress_switch,bonus_multiple,settlement_method,created_at,min_amount,max_amount,open_date,end_date,year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,minsheng_amount')
+        $project = Project::field('id project_id,name project_name,class,project_group_id,
+        cover_img,single_amount,single_integral,total_num,daily_bonus_ratio,sum_amount
+        dividend_cycle,period,single_gift_equity,single_gift_digital_yuan,sham_buy_num,
+        progress_switch,bonus_multiple,settlement_method,created_at,min_amount,max_amount,
+        open_date,end_date,year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,
+        minsheng_amount,purchase_limit_per_user,yuding_amount,return_type')
         ->where('id', $req['project_id'])
         ->lock(true)
         ->append(['all_total_buy_num'])
         ->find()
         ->toArray();
+        if($project['purchase_limit_per_user'] > 0){
+            $order_count = OrderDailyBonus::where('user_id', $user['id'])->where('project_id', $project['project_id'])->count();
+            if($order_count >= $project['purchase_limit_per_user']){
+                exit_out(null, 10006, '您已达到购买上限');
+            }
+        }
+        
+        // 初始化订单变量
+        $order = null;
         
         Db::startTrans();
         try {
@@ -426,7 +492,7 @@ class OrderController extends AuthController
             throw $e;
         }
 
-        return out(['order_id' => $order['id'] ?? 0, 'trade_sn' => $trade_sn ?? '', 'type' => $ret['type'] ?? '', 'data' => $ret['data'] ?? '']);
+        return out(['order_id' => $order['id'] ?? 0, 'trade_sn' => $order_sn ?? '', 'type' =>  '', 'data' =>  '']);
 
     }
 
@@ -434,7 +500,12 @@ class OrderController extends AuthController
     public function placeOrderDailyBonus($req,$project){
         $user = $this->user;
         
-        $project = Project::field('id project_id,name project_name,class,project_group_id,cover_img,single_amount,single_integral,total_num,daily_bonus_ratio,sum_amount,dividend_cycle,period,single_gift_equity,single_gift_digital_yuan,sham_buy_num,progress_switch,bonus_multiple,settlement_method,created_at,min_amount,max_amount,open_date,end_date,year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,class,minsheng_amount')
+        $project = Project::field('id project_id,name project_name,class,project_group_id,cover_img,
+        single_amount,single_integral,total_num,daily_bonus_ratio,sum_amount,dividend_cycle,period,
+        single_gift_equity,single_gift_digital_yuan,sham_buy_num,progress_switch,bonus_multiple,
+        settlement_method,created_at,min_amount,max_amount,open_date,end_date,year_income,total_quota,
+        remaining_quota,gongfu_amount,huimin_amount,class,minsheng_amount,purchase_limit_per_user,
+        zhenxing_wallet,puhui,yuding_amount,return_type')
         ->where('id', $req['project_id'])
         ->lock(true)
         ->append(['all_total_buy_num'])
@@ -490,35 +561,44 @@ class OrderController extends AuthController
             }
         }
 
+        if($project['purchase_limit_per_user'] > 0){
+            $order_count_check = OrderDailyBonus::where('user_id', $this->user['id'])->where('project_id', $project['project_id'])->count();
+            if($order_count_check >= $project['purchase_limit_per_user']){
+                exit_out(null, 10006, '您已达到购买上限');
+            }
+        }
+        // 初始化订单变量
+        $order = null;
+
         Db::startTrans();
         try {
             $user = User::where('id', $user['id'])->lock(true)->find();
             //检查是否已经购买
-            $order = OrderDailyBonus::where('user_id', $user['id'])->where('project_id', $req['project_id'])->count();
+            $order_count = OrderDailyBonus::where('user_id', $user['id'])->where('project_id', $req['project_id'])->count();
             //三四期项目，每人限购5次，一二期每人限购一次
             switch($project['class']){
                 case 1:
-                    if($order > 0){
+                    if($order_count > 0){
                         exit_out(null, 10006, '您已经购买过该产品');
                     }
                     break;  
                 case 2:
-                    if($order > 0){
+                    if($order_count > 0){
                         exit_out(null, 10006, '您已经购买过该产品');
                     }
                     break;
                 case 3:
-                    if($order > 4){
+                    if($order_count > 4){
                         exit_out(null, 10006, '您已达到购买上限');
                     }
                     break;
                 case 4:
-                    if($order > 4){
+                    if($order_count > 4){
                         exit_out(null, 10006, '您已达到购买上限');  
                     }
                     break;
                 case 5:
-                    if($order > 4){
+                    if($order_count > 4){
                         exit_out(null, 10006, '您已达到购买上限');
                     }
                     break;
@@ -596,7 +676,7 @@ class OrderController extends AuthController
             throw $e;
         }
 
-        return out(['order_id' => $order['id'] ?? 0, 'trade_sn' => $trade_sn ?? '', 'type' => $ret['type'] ?? '', 'data' => $ret['data'] ?? '']);
+        return out(['order_id' => $order['id'] ?? 0, 'trade_sn' => $order_sn ?? '', 'type' =>  '', 'data' =>  '']);
 
     }
 
@@ -2329,36 +2409,113 @@ class OrderController extends AuthController
             'project_id'=>'require|number',
         ]);
         $user = $this->user;
+        
+        // 首先查找项目信息
+        $project = Project::where('id',$req['project_id'])->find();
+        if(!$project){
+            return out(null, 0, '项目不存在');
+        }
+        
+        $data = null;
+        
         if($req['project_group_id'] == 12){
-            $project = Project::where('id',$req['project_id'])->find();
             if($project['daily_bonus_ratio'] > 0){
                 $data = OrderDailyBonus::alias('o')->leftJoin('mp_project p', 'p.id = o.project_id')->where('o.user_id', $user['id'])
                 ->where('o.id', $req['order_id'])
-                ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,p.dividend_cycle')
+                ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,
+                o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,
+                p.dividend_cycle,o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type')
                  ->find();
             }else{
-                $data = Order::alias('o')->leftJoin('mp_project p', 'p.id = o.project_id')->where('o.user_id', $user['id'])
-                ->where('o.id', $req['order_id'])
-                ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,p.dividend_cycle')
-                 ->find();
+                if($req['project_id'] == 3){
+                    $data = OrderTiyan::alias('o')->leftJoin('mp_project p', 'p.id = o.project_id')->where('o.user_id', $user['id'])
+                    ->where('o.id', $req['order_id'])
+                    ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,p.dividend_cycle,o.zhenxing_wallet,o.puhui,o.huimin_days_return')
+                     ->find();
+                }else{
+                    $data = Order::alias('o')->leftJoin('mp_project p', 'p.id = o.project_id')->where('o.user_id', $user['id'])
+                    ->where('o.id', $req['order_id'])
+                    ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,
+                    o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,p.dividend_cycle,
+                    o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type')
+                     ->find();
+                }
             }
             
         }else{
-            $project = Project::where('id',$req['project_id'])->find();
             if($project['daily_bonus_ratio'] > 0){
                 $data = OrderDailyBonus::alias('o')->leftJoin('mp_project p', 'p.id = o.project_id')->where('o.user_id', $user['id'])
                 ->where('o.id', $req['order_id'])
-                ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,p.dividend_cycle')
+                ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,
+                o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,
+                p.dividend_cycle,o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type')
                  ->find();
             }else{
                 $data = Order::alias('o')->leftJoin('mp_project p', 'p.id = o.project_id')->where('o.user_id', $user['id'])
                 ->where('o.id', $req['order_id'])
-                ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,p.dividend_cycle')
+                ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,
+                o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,p.dividend_cycle,
+                o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type')
                  ->find();
             }
         }
+        
+        // 检查订单是否存在
+        if(!$data){
+            return out(null, 0, '订单不存在');
+        }
+        
+        // 初始化累计金额字段
+        $data['puhui_together'] = 0;
+        $data['huimin_together'] = 0;
+        $data['gongfu_together'] = 0;
+        $data['zhenxing_together'] = 0;
+        $data['minsheng_together'] = 0;
+          
+        if(!empty($data['huimin_days_return']) && is_array($data['huimin_days_return'])){
+            foreach($data['huimin_days_return'] as $v){
+                $data['puhui_together'] += isset($v['puhui']) ? $v['puhui'] : 0;
+                $data['huimin_together'] += isset($v['huimin']) ? $v['huimin'] : 0;
+                $data['gongfu_together'] += isset($v['gongfu']) ? $v['gongfu'] : 0;
+                $data['zhenxing_together'] += isset($v['zhenxing_wallet']) ? $v['zhenxing_wallet'] : 0;
+                $data['minsheng_together'] += isset($v['minsheng']) ? $v['minsheng'] : 0;
+            }
+        }else{
+            // 确保这些字段存在且有默认值
+            $data['puhui'] = $data['puhui'] ?? 0;
+            $data['huimin_amount'] = $data['shoyi'] ?? 0;
+            $data['gongfu_amount'] = $data['buzhu'] ?? 0;
+            $data['zhenxing_wallet'] = $data['zhenxing_wallet'] ?? 0;
+            $data['minsheng_amount'] = $data['minsheng_amount'] ?? 0;
+            $data['period'] = $data['period'] ?? 1;
             
+            if($project['daily_bonus_ratio'] > 0){//每日返现
+                if($data['period'] <=100 ){
+                    $data['puhui_together'] = $data['puhui'] * $data['period'];
+                    $data['huimin_together'] = $data['huimin_amount'] * $data['period'];
+                    $data['gongfu_together'] = $data['gongfu_amount'] * $data['period'];
+                    $data['zhenxing_together'] = $data['zhenxing_wallet'] * $data['period'];
+                    $data['minsheng_together'] = $data['minsheng_amount'] * $data['period'];
+                }else{
+                    $data['puhui_together'] = $data['puhui'];
+                    $data['huimin_together'] = $data['huimin_amount'];
+                    $data['gongfu_together'] = $data['gongfu_amount'];
+                    $data['zhenxing_together'] = $data['zhenxing_wallet'];
+                    $data['minsheng_together'] = $data['minsheng_amount'];
+                }
+                
+            }else{
+                $data['puhui_together'] = $data['puhui'];
+                $data['huimin_together'] = $data['huimin_amount'];
+                $data['gongfu_together'] = $data['gongfu_amount'];
+                $data['zhenxing_together'] = $data['zhenxing_wallet'];
+                $data['minsheng_together'] = $data['minsheng_amount'];
+            }
+        }
 
+        // if($data['huimin_days_return'] && $data['huimin_days_return'] != null){
+        //     $data['huimin_days_return'] = json_decode($data['huimin_days_return'], true);
+        // }
        
 //        $data['card_info'] = null;
 //        if (!empty($data)) {

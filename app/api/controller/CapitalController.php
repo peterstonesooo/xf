@@ -9,7 +9,9 @@ use app\model\Order5;
 use app\model\PayAccount;
 use app\model\Payment;
 use app\model\Order;
+use app\model\OrderDailyBonus;
 use app\model\PaymentConfig;
+use app\model\Project;
 use app\model\User;
 use app\model\PrivateTransferLog;
 use app\model\UserRelation;
@@ -296,25 +298,32 @@ class CapitalController extends AuthController
             'type|提现钱包'=>'require|number', //1现金余额，2债券收益，3释放提现额度，4普惠钱包
         ]);
         $user = $this->user;
-
-        // 检查用户是否已激活幸福权益
-        $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
-        if (!$activation) {
-            return out(null, 10001, '请先完成幸福权益激活');
+        
+        if($req['type'] == 2){
+            // 检查用户是否已激活幸福权益
+            $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
+            if (!$activation) {
+                // 检查是否完成任意五福购买
+                $hasWufuPurchase = Project::checkWufuPurchase($user['id']);
+                if (!$hasWufuPurchase) {
+                    return out(null, 10001, '请选择任意五福窗口完成申领');
+                }else{
+                    return out(null, 10001, '连续签到60天，即可开启提现。');
+                }
+            }
         }
+        if(in_array($req['type'], [1,4])){
+            // $hasWufuPurchase = Project::checkWufuPurchase($user['id']);
+            // if (!$hasWufuPurchase) {
+            //     return out(null, 10001, '请选择任意五福窗口完成申领');
+            // }
+        }
+        
 
-        // if (empty($user['ic_number'])) {
-        //     return out(null, 10001, '请先完成实名认证');
-        // }
         if (empty($user['pay_password'])) {
             return out(null, 801, '请先设置支付密码');
         }
 
-       // $pay_type = $req['pay_channel'] - 1;
-        // $payAccount = PayAccount::where('user_id', $user['id'])->where('id',$req['bank_id'])->find();
-        // if (empty($payAccount)) {
-        //     return out(null, 802, '请先设置此收款方式');
-        // }
         $payAccount = UserBank::where('user_id', $user['id'])->where('id',$req['bank_id'])->find();
         if (empty($payAccount)) {
             return out(null, 802, '请先设置此收款方式');
@@ -323,28 +332,6 @@ class CapitalController extends AuthController
         if (sha1(md5($req['pay_password'])) !== $user['pay_password']) {
             return out(null, 10001, '支付密码错误');
         }
-        // if ($req['pay_channel'] == 4 && dbconfig('bank_withdrawal_switch') == 0) {
-        //     return out(null, 10001, '暂未开启银行卡提现');
-        // }
-        // if ($req['pay_channel'] == 3 && dbconfig('alipay_withdrawal_switch') == 0) {
-        //     return out(null, 10001, '暂未开启支付宝提现');
-        // }
-/*         if ($req['pay_channel'] == 7 && dbconfig('digital_withdrawal_switch') == 0) {
-            return out(null, 10001, '连续签到30天才可提现国务院津贴');
-        } */
-
-        // 判断单笔限额
-//        if (dbconfig('single_withdraw_max_amount') < $req['amount']) {
-//            return out(null, 10001, '单笔最高提现'.dbconfig('single_withdraw_max_amount').'元');
-//        }
-//        if (dbconfig('single_withdraw_min_amount') > $req['amount']) {
-//            return out(null, 10001, '单笔最低提现'.dbconfig('single_withdraw_min_amount').'元');
-//        }
-        // 每天提现时间为8：00-20：00 早上8点到晚上20点
-//        $timeNum = (int)date('Hi');
-//        if ($timeNum < 1000 || $timeNum > 1700) {
-//            return out(null, 10001, '提现时间为早上10:00到晚上17:00');
-//        }
         
         $now = (int)date("H");
         //当前时间大于9点，当前时间小于21点
@@ -358,25 +345,6 @@ class CapitalController extends AuthController
         if ($req['amount'] >= 100000) {
             return out(null, 10001, '单笔提现最高小于100000元');
         }
-        // 每天1次
-        // $daynums = Capital::where('user_id',$user['id'])->where('created_at','like','%'.date('Y-m-d').'%')->count();
-
-        // if (1 <= $daynums){
-        //     return out(null, 10001, '今天已提现过');
-        // }
-
-//        if($req['type'] == 2){
-//            $isBought = Order::where('user_id', $user['id'])->where('project_group_id', 4)->find();
-//            if ($isBought == NULL) {
-//                return out(null, 10001, '请先完成2024二期生育保障建设任意申领');
-//            }
-//        }
-
-        //资金来源凭证
-//        $pingZheng = Order5::where('user_id', $user['id'])->count();
-//        if ($pingZheng == 0) {
-//            return out(null, 10001, '请先完成资金来源证明开具');
-//        }
 
         Db::startTrans();
         try {
@@ -405,13 +373,7 @@ class CapitalController extends AuthController
            }elseif ($req['type'] == 2){
                $field = 'digit_balance';
                $log_type = 5;
-               
-               // 检查日期，9月16号之前不允许提现
-               $currentDate = date('Y-m-d');
-               $allowDate = '2024-09-16';
-            //    if ($currentDate < $allowDate) {
-                   return out(null, 10001, '本次周期结束后即可进行提现');
-               // }
+            //    return out(null, 10001, '本次周期结束后即可进行提现');
            }elseif ($req['type'] == 3){
                $field = 'tiyan_wallet';
                $log_type = 11;
@@ -916,6 +878,9 @@ class CapitalController extends AuthController
                 case 11:
                     $v['log_type_text'] = '体验钱包';
                     break;
+                case 13:
+                    $v['log_type_text'] = '普惠钱包';
+                    break;
             }
             $v['withdrawStatusText'] = $v->withdrawStatusText;
             // }
@@ -1207,4 +1172,5 @@ class CapitalController extends AuthController
             return out(null, 801, '请先参与体验金活动');
         }
     }
+
 }

@@ -35,7 +35,7 @@ class ProjectController extends AuthController
         $status_name = "开放";
         $status = 1;
 
-        /*
+        
         if(in_array($req['project_group_id'], [7,8,9,10,11])){
             // 判断今天是星期几
             $weekday = date('w');
@@ -48,7 +48,7 @@ class ProjectController extends AuthController
                 }
             }
         }
-        */
+        
 
          //計算折扣
          $discountArr = TeamGloryLog::where('user_id',$user_id)->order('vip_level','desc')->find();
@@ -57,7 +57,7 @@ class ProjectController extends AuthController
          }else{
              $discount = 1;
          }
-        $data = Project::field('id, name, name_background, intro, cover_img, details_img, single_amount,status, sum_amount, period, support_pay_methods, created_at,project_group_id,total_quota,remaining_quota,open_date,end_date,huimin_amount,gongfu_amount,daily_bonus_ratio,class,minsheng_amount,huimin_days_return,rebate_rate')
+        $data = Project::field('id, name, name_background, intro, cover_img, details_img, single_amount,status, sum_amount, period, support_pay_methods, created_at,project_group_id,total_quota,remaining_quota,open_date,end_date,huimin_amount,gongfu_amount,daily_bonus_ratio,class,minsheng_amount,huimin_days_return,rebate_rate,purchase_limit_per_user,zhenxing_wallet,puhui,return_type')
                 ->where('status', 1)
                 ->where('project_group_id',$req['project_group_id'] ?? 7)
                 ->order(['sort' => 'asc', 'id' => 'desc'])
@@ -87,42 +87,12 @@ class ProjectController extends AuthController
                 }else{
                     $order = Order::where('user_id', $user_id)->where('project_id', $item['id'])->count();
                 }
-                switch($item['class']){
-                    case 1:
-                        if($order > 0){
-                            $item['is_buy'] = 1;
-                        }else{
-                            $item['is_buy'] = 0;
-                        }
-                        break;
-                    case 2:
-                        if($order > 0){
-                            $item['is_buy'] = 1;
-                        }else{
-                            $item['is_buy'] = 0;
-                        }   
-                        break;
-                    case 3:
-                        if($order > 4){
-                            $item['is_buy'] = 1;
-                        }else{
-                            $item['is_buy'] = 0;    
-                        }
-                        break;
-                    case 4:
-                        if($order > 4){
-                            $item['is_buy'] = 1;
-                        }else{  
-                            $item['is_buy'] = 0;
-                        }
-                        break;
-                    case 5:
-                        if($order > 4){
-                            $item['is_buy'] = 1;
-                        }else{
-                            $item['is_buy'] = 0;
-                        }
-                        break;
+                if($item['purchase_limit_per_user'] > 0){   //每人限购
+                    if($order > $item['purchase_limit_per_user']){
+                        $item['is_buy'] = 1;
+                    }else{
+                        $item['is_buy'] = 0;
+                    }
                 }
             }
             
@@ -157,6 +127,13 @@ class ProjectController extends AuthController
                             }
                             $item['progress_rate'] = round($buy_orders / $item['remaining_quota'] * 100, 2);
                         }
+                    }else if($item['purchase_limit_per_user'] > 0){
+                        if($item['daily_bonus_ratio'] > 0){
+                            $buy_orders = OrderDailyBonus::where('project_id', $item['id'])->where('user_id', $user_id)->count();
+                        }else{
+                            $buy_orders = Order::where('project_id', $item['id'])->where('user_id', $user_id)->count();
+                        }
+                        $item['progress_rate'] = round($buy_orders / $item['purchase_limit_per_user'] * 100, 2);
                     }else{
                         if($status == 1){
                             $item['progress_rate'] = round((strtotime(date('Y-m-d H:i:0',time())) - strtotime(date('Y-m-d 00:00:00',time()))) / 86400 * 100, 2);
@@ -164,12 +141,26 @@ class ProjectController extends AuthController
                             $item['progress_rate'] = 0;
                         }
                     }
+                    
                     $item['status_name'] = $status_name;
                     $item['status'] = $status;
                 }
             }else{
                 $item['status_name'] = $status_name;
                 $item['status'] = $status;
+            }
+            //预定订单状态和时间
+            $item['order_status'] = 0;
+            $item['order_end_time'] = 0;
+            $item['order_id'] = 0;
+            if($item['return_type'] == 1){
+                $order = Order::where('project_id', $item['id'])->where('user_id', $user_id)
+                ->where('status', '>', 1)->find();
+                if($order){
+                    $item['order_id'] = $order['id'];
+                    $item['order_status'] = $order['status'];
+                    $item['order_end_time'] = $order['end_time'];
+                }
             }
             if($item['daily_bonus_ratio'] > 0){
                 $item['daily_huimin_amount'] = round($item['huimin_amount']/$item['period'], 2);
@@ -191,7 +182,7 @@ class ProjectController extends AuthController
         ]);
 
         $data = Project::where('id', $req['project_id'])
-            ->field('cover_img,name,single_amount,period,huimin_amount,gongfu_amount,minsheng_amount,rebate_rate,total_quota,remaining_quota,daily_bonus_ratio')->find()->toArray();
+            ->field('cover_img,name,single_amount,period,huimin_amount,gongfu_amount,minsheng_amount,rebate_rate,total_quota,remaining_quota,daily_bonus_ratio,zhenxing_wallet,puhui')->find()->toArray();
         
         if($data['daily_bonus_ratio'] > 0){
             $order =  OrderDailyBonus::where('project_id', $req['project_id'])->where('user_id', $this->user->id)->where('status','>',1)->find();

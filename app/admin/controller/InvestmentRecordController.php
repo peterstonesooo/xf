@@ -17,32 +17,58 @@ class InvestmentRecordController extends AuthController
     {
         $req = request()->param();
         
-        $builder = InvestmentRecord::with(['user', 'gradient']);
+        $builder = InvestmentRecord::alias('ir');
         
         // 搜索条件
         if (!empty($req['user_id'])) {
-            $builder->where('user_id', $req['user_id']);
+            $builder->where('ir.user_id', $req['user_id']);
         }
         if (!empty($req['phone'])) {
-            $builder->whereHas('user', function($query) use ($req) {
-                $query->where('phone', 'like', '%' . $req['phone'] . '%');
-            });
+            // 修复 whereHas 查询问题，改用 JOIN 查询
+            $builder->join('user u', 'ir.user_id = u.id')
+                   ->where('u.phone', 'like', '%' . $req['phone'] . '%');
         }
         if (isset($req['status']) && $req['status'] !== '') {
-            $builder->where('status', $req['status']);
+            $builder->where('ir.status', $req['status']);
         }
         if (!empty($req['wallet_type'])) {
-            $builder->where('wallet_type', $req['wallet_type']);
+            $builder->where('ir.wallet_type', $req['wallet_type']);
         }
         if (!empty($req['gradient_id'])) {
-            $builder->where('gradient_id', $req['gradient_id']);
+            $builder->where('ir.gradient_id', $req['gradient_id']);
         }
         
-        $builder->order('id desc');
+        $builder->order('ir.id desc');
         
-        $data = $builder->paginate(['query' => $req])->each(function ($item, $key) {
+        // 设置分页参数
+        $data = $builder->paginate([
+            'list_rows' => 15,  // 每页显示15条记录
+            'query' => $req
+        ])->each(function ($item, $key) {
+            // 确保状态和时间正确显示
             $item->status_text = $item->getStatusTextAttr(null, $item->toArray());
             $item->wallet_type_text = $item->getWalletTypeTextAttr(null, $item->toArray());
+            
+            // 手动获取用户和梯度信息，因为使用了 JOIN 查询
+            $item->user = User::find($item->user_id);
+            $item->gradient = InvestmentGradient::find($item->gradient_id);
+            
+            // 格式化时间显示
+            if ($item->created_at) {
+                $item->created_at = date('Y-m-d H:i:s', strtotime($item->created_at));
+            }
+            if ($item->start_date) {
+                $item->start_date = date('Y-m-d', strtotime($item->start_date));
+            }
+            if ($item->end_date) {
+                $item->end_date = date('Y-m-d', strtotime($item->end_date));
+            }
+            
+            // 调试状态信息
+            if (!isset($item->status_text) || empty($item->status_text)) {
+                $item->status_text = '状态未知(' . ($item->status ?? 'null') . ')';
+            }
+            
             return $item;
         });
 
@@ -86,32 +112,44 @@ class InvestmentRecordController extends AuthController
     {
         $req = request()->param();
         
-        $builder = InvestmentRecord::with(['user', 'gradient']);
+        $builder = InvestmentRecord::alias('ir');
         
         // 搜索条件
         if (!empty($req['user_id'])) {
-            $builder->where('user_id', $req['user_id']);
+            $builder->where('ir.user_id', $req['user_id']);
         }
         if (!empty($req['phone'])) {
-            $builder->whereHas('user', function($query) use ($req) {
-                $query->where('phone', 'like', '%' . $req['phone'] . '%');
-            });
+            // 修复 whereHas 查询问题，改用 JOIN 查询
+            $builder->join('user u', 'ir.user_id = u.id')
+                   ->where('u.phone', 'like', '%' . $req['phone'] . '%');
         }
         if (isset($req['status']) && $req['status'] !== '') {
-            $builder->where('status', $req['status']);
+            $builder->where('ir.status', $req['status']);
         }
         if (!empty($req['wallet_type'])) {
-            $builder->where('wallet_type', $req['wallet_type']);
+            $builder->where('ir.wallet_type', $req['wallet_type']);
         }
         if (!empty($req['gradient_id'])) {
-            $builder->where('gradient_id', $req['gradient_id']);
+            $builder->where('ir.gradient_id', $req['gradient_id']);
         }
         
-        $builder->order('id desc');
+        $builder->order('ir.id desc');
         
         $data = $builder->select()->each(function ($item, $key) {
             $item->status_text = $item->getStatusTextAttr(null, $item->toArray());
             $item->wallet_type_text = $item->getWalletTypeTextAttr(null, $item->toArray());
+            
+            // 格式化时间显示
+            if ($item->created_at) {
+                $item->created_at = date('Y-m-d H:i:s', strtotime($item->created_at));
+            }
+            if ($item->start_date) {
+                $item->start_date = date('Y-m-d', strtotime($item->start_date));
+            }
+            if ($item->end_date) {
+                $item->end_date = date('Y-m-d', strtotime($item->end_date));
+            }
+            
             return $item;
         });
 

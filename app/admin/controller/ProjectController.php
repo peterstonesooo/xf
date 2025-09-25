@@ -26,35 +26,62 @@ class ProjectController extends AuthController
         $daysData = [];
         $amountData = [];
         
-        // 检查是否是新的格式（days_ 和 amount_ 前缀）
+        // 检查是否是新的格式（days_ 和钱包类型前缀）
         $hasNewFormat = false;
+        $walletTypes = ['zhenxing_wallet', 'puhui', 'huimin_amount', 'gongfu_amount', 'minsheng_amount'];
         foreach ($data as $key => $value) {
-            if (strpos($key, 'days_') === 0 || strpos($key, 'amount_') === 0) {
+            if (strpos($key, 'days_') === 0) {
                 $hasNewFormat = true;
                 break;
+            }
+            // 检查是否是钱包类型字段
+            foreach ($walletTypes as $walletType) {
+                if (strpos($key, $walletType . '_') === 0) {
+                    $hasNewFormat = true;
+                    break 2;
+                }
             }
         }
         
         if ($hasNewFormat) {
-            // 新格式：days_ 和 amount_ 前缀
+            // 新格式：days_ 和各个钱包类型前缀
+            $daysData = [];
+            $walletTypes = ['zhenxing_wallet', 'puhui', 'huimin_amount', 'gongfu_amount', 'minsheng_amount'];
+            $walletData = [];
+            
             foreach ($data as $key => $value) {
                 if (strpos($key, 'days_') === 0) {
                     $daysData[$key] = $value;
-                } elseif (strpos($key, 'amount_') === 0) {
-                    $amountData[$key] = $value;
+                } else {
+                    // 检查是否是钱包类型字段
+                    foreach ($walletTypes as $walletType) {
+                        if (strpos($key, $walletType . '_') === 0) {
+                            $walletData[$key] = $value;
+                            break;
+                        }
+                    }
                 }
             }
             
-            // 匹配天数和金额，转换为新格式
+            // 匹配天数和各个钱包金额，转换为新格式
             $index = 0;
             foreach ($daysData as $daysKey => $days) {
+                if (empty($days)) continue;
+                
                 $timestamp = str_replace('days_', '', $daysKey);
-                $amountKey = 'amount_' . $timestamp;
-                if (isset($amountData[$amountKey]) && !empty($days) && !empty($amountData[$amountKey])) {
-                    $result[$index] = [
-                        'day' => (int)$days,
-                        'huimin' => (float)$amountData[$amountKey]
-                    ];
+                $record = ['day' => (int)$days];
+                
+                // 收集该记录的所有钱包金额
+                foreach ($walletTypes as $walletType) {
+                    $walletKey = $walletType . '_' . $timestamp;
+                    if (isset($walletData[$walletKey]) && !empty($walletData[$walletKey])) {
+                        $record[$walletType] = (float)$walletData[$walletKey];
+                    }
+                }
+                
+                // 只有当至少有一个钱包金额不为空时才添加记录
+                if (count($record) > 1) { // 除了day字段外还有其他字段
+                    $result[$index] = $record;
                     $index++;
                 }
             }
@@ -149,6 +176,9 @@ class ProjectController extends AuthController
             'huimin_amount|惠民金' => 'float',
             'gongfu_amount|共富金' => 'float',
             'minsheng_amount|民生金' => 'float',
+            'zhenxing_wallet|振兴钱包' => 'float',
+            'puhui|普惠金' => 'float',
+            'purchase_limit_per_user|每人限购数量' => 'integer|>=:0',
             'rebate_rate|返佣比例' => 'float',
             // 'virtually_progress|虚拟进度' => 'integer',
             'total_quota|总名额' => 'max:32',
@@ -220,6 +250,9 @@ class ProjectController extends AuthController
             'huimin_amount|惠民金' => 'float',
             'gongfu_amount|共富金' => 'float',
             'minsheng_amount|民生金' => 'float',
+            'zhenxing_wallet|振兴钱包' => 'float',
+            'puhui|普惠金' => 'float',
+            'purchase_limit_per_user|每人限购数量' => 'integer|>=:0',
             'rebate_rate|返佣比例' => 'float',
             // 'virtually_progress|虚拟进度' => 'integer',
             'total_quota|总名额' => 'max:32',
@@ -331,5 +364,35 @@ class ProjectController extends AuthController
             Db::rollback();
             return out(null, 10001, '发送通知失败：' . $e->getMessage());
         }
+    }
+
+    /**
+     * 获取项目详情（用于弹框显示）
+     */
+    public function getProjectDetail()
+    {
+        $req = $this->validate(request(), [
+            'id' => 'require|number'
+        ]);
+
+        $project = Project::find($req['id']);
+        if (!$project) {
+            return out(null, 10001, '项目不存在');
+        }
+
+        // 处理惠民金周期返利数据
+        $huiminData = null;
+        if (!empty($project['huimin_days_return'])) {
+            // 检查是否已经是数组，如果是字符串则解析JSON
+            if (is_string($project['huimin_days_return'])) {
+                $huiminData = json_decode($project['huimin_days_return'], true);
+            } else {
+                $huiminData = $project['huimin_days_return'];
+            }
+        }
+
+        $project['huimin_days_return'] = $huiminData;
+
+        return out($project);
     }
 }

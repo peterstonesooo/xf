@@ -26,6 +26,7 @@ class RujinPointsTask extends Command
      * numprocs=1
      * redirect_stderr=true
      * stdout_logfile=/path/to/your/project/runtime/points-task.log
+     * nohup php think RujinPointsTask >> /www/wwwroot/xf/runtime/log/points-task.log 2>&1 &
      */
     protected function configure()
     {
@@ -127,6 +128,14 @@ class RujinPointsTask extends Command
                         case 'digit_balance':
                             $field = 'digit_balance';
                             $log_type = 5;
+                            break;
+                        case 'puhui':
+                            $field = 'puhui';
+                            $log_type = 13;
+                            break;
+                        case 'zhenxing_wallet':
+                            $field = 'zhenxing_wallet';
+                            $log_type = 14;
                             break;
                         default:
                             throw new Exception("未知的钱包类型: {$walletType}");

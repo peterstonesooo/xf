@@ -278,6 +278,21 @@ class User extends Model
         return 0;
     }
 
+    // 获取幸福权益状态文本
+    public function getHappinessEquityStatusTextAttr($value, $data)
+    {
+        if (empty($data['id'])) {
+            return '未激活';
+        }
+        
+        // 检查用户是否已激活幸福权益
+        $activation = HappinessEquityActivation::where('user_id', $data['id'])
+                                              ->where('status', 1)
+                                              ->find();
+        
+        return $activation ? '已激活' : '未激活';
+    }
+
     //通过token获取用户信息
     public static function getUserByToken($is_exit = true)
     {
@@ -398,7 +413,7 @@ class User extends Model
         return true;
     }
 
-    public static function changeInc($user_id,$amount,$field,$type,$relation_id = 0,$log_type = 1, $remark = '',$admin_user_id=0,$status=1,$sn_prefix='MR'){
+    public static function changeInc($user_id,$amount,$field,$type,$relation_id = 0,$log_type = 1, $remark = '',$admin_user_id=0,$status=1,$sn_prefix='MR',$is_delete=0){
         $user = User::where('id', $user_id)->find();
 
 
@@ -424,6 +439,7 @@ class User extends Model
                 'admin_user_id' =>$admin_user_id,
                 'status' => $status,
                 'order_sn'=>$sn,
+                'is_delete'=>$is_delete,
             ]);
             Db::commit();
             return 'success';

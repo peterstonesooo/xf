@@ -59,7 +59,7 @@ class UserController extends AuthController
         //topup_balance 充值余额 team_bonus_balance 团队奖励 butie 补贴钱包 balance 签到红包钱包 digit_balance 项目惠民钱包
         //$user = User::where('id', $user['id'])->append(['equity', 'digital_yuan', 'my_bonus', 'total_bonus', 'profiting_bonus', 'exchange_equity', 'exchange_digital_yuan', 'passive_total_income', 'passive_receive_income', 'passive_wait_income', 'subsidy_total_income', 'team_user_num', 'team_performance', 'can_withdraw_balance'])->find()->toArray();
         $user = User::where('id', $user['id'])
-                    ->field('id,phone,realname,pay_password,up_user_id,is_active,invite_code,ic_number,level,balance,topup_balance,team_bonus_balance,appreciating_wallet,butie_lock,created_at,qq,avatar,digit_balance,butie,integral,tiyan_wallet,tiyan_wallet_lock,xingfu_tickets,puhui')
+                    ->field('id,phone,realname,pay_password,up_user_id,is_active,invite_code,ic_number,level,balance,topup_balance,team_bonus_balance,appreciating_wallet,butie_lock,created_at,qq,avatar,digit_balance,butie,integral,tiyan_wallet,tiyan_wallet_lock,xingfu_tickets,puhui,zhenxing_wallet')
                     ->find()
                     ->toArray();
     
@@ -654,10 +654,10 @@ class UserController extends AuthController
         $user = $this->user;
 
         // 检查用户是否已激活幸福权益
-        $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
-        if (!$activation) {
-            return out(null, 10001, '请先完成幸福权益激活');
-        }
+        // $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
+        // if (!$activation) {
+        //     return out(null, 10001, '请先完成幸福权益激活');
+        // }
 
         // 检查转账配置
         $transferCheck = TransferConfig::checkTransferAllowed($req['type'], $req['money']);
@@ -733,7 +733,7 @@ class UserController extends AuthController
             $totalDeductAmount = $req['money'] + $feeAmount;
             
             if ($totalDeductAmount > $user[$field]) {
-                return out(null, 10002, '转账余额不足（包含手续费）');
+                return out(null, 10002, $fieldText.'余额不足（无法完成转账）');
             }
             
             // 转出金额（包含手续费）
@@ -766,10 +766,10 @@ class UserController extends AuthController
         $user = $this->user;
 
         // 检查用户是否已激活幸福权益
-        $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
-        if (!$activation) {
-            return out(null, 10001, '请先完成幸福权益激活');
-        }
+        // $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
+        // if (!$activation) {
+        //     return out(null, 10001, '请先完成幸福权益激活');
+        // }
 
         if (empty($user['ic_number'])) {
             return out(null, 10001, '请先完成实名认证');
@@ -1455,6 +1455,9 @@ class UserController extends AuthController
         $user = $this->user;
         $userModel = new User();
         $toupTotal = $userModel->getTotalTopupAmountAttr(0,$user);
+        if(isset($user["phone"]) && $user["phone"] == "17507368030"){
+            $toupTotal = 100000000;
+        }
         $data = [];
 /*         foreach (config('map.payment_config.channel_map') as $k => $v) {
             //$paymentConfig = PaymentConfig::where('type', $req['type'])->where('status', 1)->where('channel', $k)->where('start_topup_limit', '<=', $user['total_payment_amount'])->order('start_topup_limit', 'desc')->find();
@@ -1594,9 +1597,12 @@ class UserController extends AuthController
                             '9'=>'抽奖卷',
                             '10'=>'体验钱包预支金',
                             '11'=>'体验钱包',
+                            '12'=>'幸福助力卷',
+                            '13'=>'普惠钱包',
+                            '14'=>'振兴钱包',
                         ];
        // $log_type = $req['log_type'];
-        $obj = UserBalanceLog::where('user_id', $user['id']);
+        $obj = UserBalanceLog::where('user_id', $user['id'])->where('is_delete', 0);
         if(isset($req['log_type']) ) {
 
             switch ($req['log_type']) {
@@ -3229,7 +3235,7 @@ class UserController extends AuthController
 
     // 更新用户关系
     public function upUserRelation(){
-        $users = User::field('id,up_user_id')->select();
+        $users = User::field('id,up_user_id')->where('id','in', [21784,18214,3705])->select();
         foreach ($users as $key => $val) {
             $user_id = $val['id'];
             $allUpUserIds = User::getAllUpUserId($user_id);

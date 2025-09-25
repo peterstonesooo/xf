@@ -38,11 +38,11 @@ class SettleMonthlyReturns extends Command
                     try {
 
                         $type = 61;
-                        $logType = 3;
+                        $logType = 13;
                         
                         $ret = '3000';
-                        User::changeInc($order['user_id'],$ret,'butie',$type,$order['user_id'],$logType, '定投分红');
-                        $order['next_bonus_time'] = strtotime(date('Y-m-1 00:00:00', strtotime('+ 1month')));
+                        User::changeInc($order['user_id'],$ret,'puhui',$type,$order['user_id'],$logType, '民生基金返还');
+                        $order['next_bonus_time'] = strtotime(date('Y-m-15 00:00:00', strtotime('+ 1month')));
                         $order['period_change_day'] = $order['period_change_day'] + 1;
                         if($order['period_change_day']+1 >= 240){
                             $order['status'] = 4;

@@ -31,6 +31,7 @@ class Butie extends Command
             // 使用 chunk 方法分批处理数据
             Order::where([
                 ['status', '=', 2],
+                ['return_type', '=', 0],
                 ['end_time', '<', time()]
             ])->order('id', 'asc')->chunk(500, function($orders) use (&$successCount, &$failCount,&$output) {
                 foreach ($orders as $order) {
@@ -39,14 +40,49 @@ class Butie extends Command
                         if($order['huimin_days_return'] && $order['huimin_days_return'] != null){
                             $period_change_day = $order['period_change_day'];
                             $huimin_days_return = is_string($order['huimin_days_return']) ? json_decode($order['huimin_days_return'], true) : $order['huimin_days_return'];
+                            if (empty($huimin_days_return) || !is_array($huimin_days_return)) {
+                                $output->writeln("订单ID {$order['id']}: huimin_days_return数据异常，跳过处理。数据内容: " . json_encode($order['huimin_days_return']));
+                                continue;
+                            }
                             $len = count($huimin_days_return);//4次返现
                             if($period_change_day >= $len){
+                                $output->writeln("订单ID {$order['id']}: period_change_day({$period_change_day}) >= 数组长度({$len})，跳过处理");
                                 continue;
                             }else{
-                                $ret = $huimin_days_return[$period_change_day]['huimin'];
-                                if($ret>0){
-                                    User::changeInc($order['user_id'],$ret,'digit_balance',59,$order['id'],5, '购买商品到期分红');
+                                // 验证当前索引的数组元素是否存在且为数组
+                                if (!isset($huimin_days_return[$period_change_day]) || !is_array($huimin_days_return[$period_change_day])) {
+                                    $output->writeln("订单ID {$order['id']}: 索引{$period_change_day}的数据异常，跳过处理。数据: " . json_encode($huimin_days_return[$period_change_day] ?? 'N/A'));
+                                    continue;
                                 }
+
+                                $rethuimin = isset($huimin_days_return[$period_change_day]['huimin']) ? $huimin_days_return[$period_change_day]['huimin'] : 0;
+                                if($rethuimin>0){
+                                    //如果项目id是70 特殊处理
+                                    if($order['project_id']==70){
+                                        User::changeInc($order['user_id'],$rethuimin,'puhui',59,$order['id'],13, '福泽普惠专享');
+                                    }else{
+                                        User::changeInc($order['user_id'],$rethuimin,'digit_balance',59,$order['id'],5, '购买商品到期分红');
+                                    }
+                                }
+                                $retpuhui = isset($huimin_days_return[$period_change_day]['puhui']) ? $huimin_days_return[$period_change_day]['puhui'] : 0;
+                                if($retpuhui>0){
+                                    User::changeInc($order['user_id'],$retpuhui,'puhui',59,$order['id'],13, '福泽普惠专享');
+                                }
+                                $retgongfu = isset($huimin_days_return[$period_change_day]['gongfu']) ? $huimin_days_return[$period_change_day]['gongfu'] : 0;
+                                if($retgongfu>0){
+                                    User::changeInc($order['user_id'],$retgongfu,'butie',59,$order['id'],3, '购买商品到期分红');
+                                }
+                                $retminsheng = isset($huimin_days_return[$period_change_day]['minsheng']) ? $huimin_days_return[$period_change_day]['minsheng'] : 0;
+                                if($retminsheng>0){
+                                    User::changeInc($order['user_id'],$retminsheng,'balance',59,$order['id'],4, '购买商品到期分红');
+                                }
+                                $retzhenxing = isset($huimin_days_return[$period_change_day]['zhenxing_wallet']) ? $huimin_days_return[$period_change_day]['zhenxing_wallet'] : 0;
+                                if($retzhenxing>0){
+                                    User::changeInc($order['user_id'],$retzhenxing,'zhenxing_wallet',59,$order['id'],14, '购买商品到期分红');
+                                }
+
+
+
                                 if($period_change_day+1 == $len){
                                     $order->status = 4;
                                     $order->period_change_day = $period_change_day+1;
@@ -106,8 +142,13 @@ class Butie extends Command
                     } catch (\Exception $e) {
                         Db::rollback();
                         $failCount++;
-//                        Log::error('收益结算失败，订单ID：' . $order->id . '，错误信息：' . $e->getMessage());
-                        $output->writeln( $e->getMessage());
+                        $output->writeln("订单ID {$order['id']} 处理失败: " . $e->getMessage());
+                        $output->writeln("订单数据: " . json_encode([
+                            'project_id' => $order['project_id'] ?? 'N/A',
+                            'user_id' => $order['user_id'] ?? 'N/A',
+                            'period_change_day' => $order['period_change_day'] ?? 'N/A',
+                            'huimin_days_return' => $order['huimin_days_return'] ?? 'N/A'
+                        ]));
                     }
                 }
             });

@@ -17,28 +17,28 @@ class InvestmentReturnController extends AuthController
     {
         $req = request()->param();
         
-        $builder = InvestmentReturnRecord::with(['user', 'investment']);
+        $builder = InvestmentReturnRecord::alias('ir');
         
         // 搜索条件
         if (!empty($req['user_id'])) {
-            $builder->where('user_id', $req['user_id']);
+            $builder->where('ir.user_id', $req['user_id']);
         }
         if (!empty($req['phone'])) {
-            $builder->whereHas('user', function($query) use ($req) {
-                $query->where('phone', 'like', '%' . $req['phone'] . '%');
-            });
+            // 修复 whereHas 查询问题，改用 JOIN 查询
+            $builder->join('user u', 'ir.user_id = u.id')
+                   ->where('u.phone', 'like', '%' . $req['phone'] . '%');
         }
         if (!empty($req['return_type'])) {
-            $builder->where('return_type', $req['return_type']);
+            $builder->where('ir.return_type', $req['return_type']);
         }
         if (!empty($req['wallet_type'])) {
-            $builder->where('wallet_type', $req['wallet_type']);
+            $builder->where('ir.wallet_type', $req['wallet_type']);
         }
         if (!empty($req['investment_id'])) {
-            $builder->where('investment_id', $req['investment_id']);
+            $builder->where('ir.investment_id', $req['investment_id']);
         }
         
-        $builder->order('id desc');
+        $builder->order('ir.id desc');
         
         $data = $builder->paginate(['query' => $req])->each(function ($item, $key) {
             $item->return_type_text = $item->getReturnTypeTextAttr(null, $item->toArray());
@@ -82,28 +82,28 @@ class InvestmentReturnController extends AuthController
     {
         $req = request()->param();
         
-        $builder = InvestmentReturnRecord::with(['user', 'investment']);
+        $builder = InvestmentReturnRecord::alias('ir');
         
         // 搜索条件
         if (!empty($req['user_id'])) {
-            $builder->where('user_id', $req['user_id']);
+            $builder->where('ir.user_id', $req['user_id']);
         }
         if (!empty($req['phone'])) {
-            $builder->whereHas('user', function($query) use ($req) {
-                $query->where('phone', 'like', '%' . $req['phone'] . '%');
-            });
+            // 修复 whereHas 查询问题，改用 JOIN 查询
+            $builder->join('user u', 'ir.user_id = u.id')
+                   ->where('u.phone', 'like', '%' . $req['phone'] . '%');
         }
         if (!empty($req['return_type'])) {
-            $builder->where('return_type', $req['return_type']);
+            $builder->where('ir.return_type', $req['return_type']);
         }
         if (!empty($req['wallet_type'])) {
-            $builder->where('wallet_type', $req['wallet_type']);
+            $builder->where('ir.wallet_type', $req['wallet_type']);
         }
         if (!empty($req['investment_id'])) {
-            $builder->where('investment_id', $req['investment_id']);
+            $builder->where('ir.investment_id', $req['investment_id']);
         }
         
-        $builder->order('id desc');
+        $builder->order('ir.id desc');
         
         $data = $builder->select()->each(function ($item, $key) {
             $item->return_type_text = $item->getReturnTypeTextAttr(null, $item->toArray());

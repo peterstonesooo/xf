@@ -57,7 +57,8 @@ class SettingController extends AuthController
         if (in_array($setting['key'], ['chat_group_id_qrcode-c','download_url_qrcode-c'])) {
             $req['value'] = upload_file('qrcode_img');
         }else{
-           if(empty($req['value'])){
+           // 修复：使用 !isset() 和 === '' 来检查空值，允许0值
+           if(!isset($req['value']) || $req['value'] === ''){
                 return out(['code' => 1, 'msg' => '配置值不能为空']);
            }
         }

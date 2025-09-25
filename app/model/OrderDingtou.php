@@ -16,7 +16,7 @@ class OrderDingtou extends Model
         if($order['total_num'] == 10){
             $order['status'] = 2;
             //下个月一号返利
-            $order['next_bonus_time'] = strtotime(date('Y-m-1 00:00:00', strtotime('+ 1month')));
+            $order['next_bonus_time'] = strtotime(date('Y-m-15 00:00:00', strtotime('+ 1month')));
         }else{
             $order['status'] = 2;
         }

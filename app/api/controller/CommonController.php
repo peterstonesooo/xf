@@ -325,16 +325,44 @@ class CommonController extends BaseController
             //保存层级关系
             if (!empty($parentUser)){
                 UserRelation::saveUserRelation($user['id']);
-                $recommend_reward = dbconfig('direct_recommend_reward_amount');
-                $recommend_reward_jifen = dbconfig('direct_recommend_reward_jifen');
-                User::changeInc($parentUser['id'], $recommend_reward,'butie',9,$user['id'],3,'邀请新用户注册-'.$user['realname']);
-                User::changeInc($parentUser['id'], $recommend_reward_jifen,'integral',10,$user['id'],6,'邀请新用户注册-'.$user['realname']);
+                // $recommend_reward = dbconfig('direct_recommend_reward_amount');
+                // $recommend_reward_jifen = dbconfig('direct_recommend_reward_jifen');
+                // $direct_recommend_reward_zhenxing = dbconfig('direct_recommend_reward_zhenxing');
+                // $direct_recommend_reward_team_bonus_balance = dbconfig('direct_recommend_reward_team_bonus_balance');
+                //振兴钱包
+                // if($direct_recommend_reward_zhenxing > 0){
+                //     User::changeInc($parentUser['id'], $direct_recommend_reward_zhenxing,'zhenxing_wallet',9,$user['id'],14,'邀请新用户注册-'.$user['realname']);
+                // }
+                //荣誉金改实名发放
+                // if($direct_recommend_reward_team_bonus_balance > 0){
+                //     User::changeInc($parentUser['id'], $direct_recommend_reward_team_bonus_balance,'team_bonus_balance',9,$user['id'],2,'邀请新用户注册-'.$user['realname']);
+                // }
+                //稳盈钱包
+                // if($recommend_reward > 0){
+                //     User::changeInc($parentUser['id'], $recommend_reward,'butie',9,$user['id'],3,'邀请新用户注册-'.$user['realname']);
+                // }
+                //积分
+                // if($recommend_reward_jifen > 0){
+                //     User::changeInc($parentUser['id'], $recommend_reward_jifen,'integral',10,$user['id'],6,'邀请新用户注册-'.$user['realname']);
+                // }
+                //助力卷改实名发放
+                // if(dbconfig('direct_recommend_reward_zhulijuan') > 0){
+                //     User::changeInc($parentUser['id'], dbconfig('direct_recommend_reward_zhulijuan'),'xingfu_tickets',9,$user['id'],12,'邀请新用户注册-'.$user['realname']);
+                // }
+                
             }
 
             $token = aes_encrypt(['id' => $user['id'], 'time' => time()]);
 
             //zcjl 注册奖励
-            User::changeInc($user['id'], 35000,'balance',11,$user['id'],4,'注册奖励',1,2,'ZCJL');
+            if(dbconfig('register_give_balance') > 0){
+                User::changeInc($user['id'], dbconfig('register_give_balance'),'balance',11,$user['id'],4,'注册奖励',1,2,'ZCJL');
+            }
+
+            if(dbconfig('register_give_butie') > 0){
+                User::changeInc($user['id'], dbconfig('register_give_butie'),'butie',11,$user['id'],3,'注册奖励',1,2,'ZCJL');
+            }
+            
 
         /* $walletAddress = WalletAddress::where('user_id',0)->lock(true)->find();
         if(!$walletAddress){

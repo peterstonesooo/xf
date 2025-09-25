@@ -261,6 +261,9 @@ class OrderDailyBonus extends Model
             ]);
         }
 
+        //份额减一
+        Project::where('id', $order['project_id'])->inc('remaining_stock', -1)->update();
+
             //购买产品和恢复资产用户激活
             if ($order['user']['is_active'] == 0 ) {
                 User::where('id', $order['user_id'])->update(['is_active' => 1, 'active_time' => time()]);

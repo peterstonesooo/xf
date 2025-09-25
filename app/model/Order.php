@@ -271,6 +271,8 @@ class Order extends Model
                 'next_bonus_time' => strtotime(date('Y-m-d 00:00:00', strtotime('+ 1day')))
             ]);
         }
+        //份额减一
+        Project::where('id', $order['project_id'])->inc('remaining_stock', -1)->update();
 
             //购买产品和恢复资产用户激活
             if ($order['user']['is_active'] == 0 ) {

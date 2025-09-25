@@ -183,7 +183,7 @@ class VoteController extends AuthController
             Db::startTrans();
             try {
                 // 消耗投票票数
-                User::changeInc($uid, -1, 'vote_tickets', 20, $voteId, 1, '投票消耗票数', 0, 2, 'VT');
+                User::changeInc($uid, -1, 'vote_tickets', 122, $voteId, 15, '投票消耗票数', 0, 2, 'VT');
                 
                 // 创建投票记录
                 $recordData = [

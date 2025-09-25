@@ -289,6 +289,7 @@ return array(
             119 => '日盈普惠金',
             120 => '日盈振兴金',
             121 => '预定补足余额',
+            122 => '投票',
         ),
         'balance_type_map' =>
         array(
@@ -379,6 +380,7 @@ return array(
             119 => '日盈普惠金',
             120 => '日盈振兴金',
             121 => '预定补足余额',
+            122 => '投票',
 
         ),
         'integral_type_map' =>
@@ -404,6 +406,7 @@ return array(
             12 => '幸福助力卷',//xingfu_tickets
             13 => '普惠钱包',//puhui
             14 => '振兴钱包',//zhenxing_wallet
+            15 => '投票奖励',//vote_tickets
         ),
         'status_map' =>
         array(

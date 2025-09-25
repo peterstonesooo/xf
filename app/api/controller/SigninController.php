@@ -108,7 +108,8 @@ class SigninController extends AuthController
                 ]);
                 User::changeInc($user['id'], $signin_1_amount, 'balance', 17 ,$signin['id'] , 4,'签到民生补贴');
                 User::changeInc($user['id'], $signin_1_jifen, 'integral', 17 ,$signin['id'] , 6,'签到积分');
-                
+                //投票奖励
+                User::changeInc($user['id'],1,'vote_tickets',17,$signin['id'],15,'签到投票奖励');
                 $date['continue_days']  = $continue_days;
                 //User::changeInc($user['id'],100,'yixiaoduizijin',17,$signin['id'],7);
           //  }
@@ -193,7 +194,8 @@ class SigninController extends AuthController
 
             User::changeInc($user['id'], $signin_1_amount, 'balance', 55 ,$signin['id'] , 4,'补签民生补贴');
             User::changeInc($user['id'], -$sign_back_jif, 'integral', 55 ,$signin['id'] , 6,'补签积分');
-            
+            //投票奖励
+            User::changeInc($user['id'],1,'vote_tickets',55,$signin['id'],15,'补签投票奖励');
             //后面连续签到字段更新
             // 获取该用户从补签日期开始的所有签到记录，并按日期升序排序
             $signinRecords = UserSignin::where('user_id', $user['id'])

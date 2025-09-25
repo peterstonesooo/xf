@@ -128,7 +128,7 @@ class OrderController extends AuthController
                                     settlement_method,created_at,min_amount,max_amount,open_date,end_date,
                                     year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,class,
                                     minsheng_amount,huimin_days_return,purchase_limit_per_user,zhenxing_wallet,
-                                    puhui,yuding_amount,return_type')
+                                    puhui,yuding_amount,return_type,remaining_stock')
         ->where('id', $req['project_id'])
         ->lock(true)
         ->append(['all_total_buy_num'])
@@ -140,8 +140,8 @@ class OrderController extends AuthController
                 return out(null, 10004, '尚未开放');
             }
         }
-        //今日禁止购买
-        if(in_array($project['project_id'], [29,34,36])){
+        
+        if($project['remaining_stock'] <= 0){
             return out(null, 10004, '名额已满');
         }
         

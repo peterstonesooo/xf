@@ -203,6 +203,7 @@ class UserController extends AuthController
             }
 
             $data['user_id'] = $user['id'];
+            $data['from_wallet'] = 'integral';
             $data['creat_time'] = date('Y-m-d H:i:s',time());
             $duihuan = UserPointsSwap::create($data);
             // 扣除用户积分
@@ -216,61 +217,45 @@ class UserController extends AuthController
             return out([], 1, '购买失败：' . $e->getMessage());
         }
         return out();
-//        $req = $this->validate(request(), [
-//            'type|类型' => 'require', //1签到红包，2项目收益
-//            'amount|金额' => 'require|number',
-//        ]);
-//        $user = $this->user;
-//        if($req['amount'] < 100) {
-//            return out(null, 10001, '兑换金额需要满100元');
-//        }
-//
-//        if($req['type'] == 1) {
-//            $field = 'balance';
-//            $log_type = 4;
-//        } elseif ($req['type'] == 2) {
-//            $field = 'digit_balance';
-//            $log_type = 5;
-//        } else {
-//            return out(null, 10001, '请选择钱包类型');
-//        }
-//
-//        $user = User::where('id', $user['id'])->find();
-//        if ($user[$field] < $req['amount']) {
-//            return out(null, 10001, '金额不足');
-//        }
-//        Db::startTrans();
-//        try {
-//
-//            User::changeInc($user['id'], -abs($req['amount']), $field,51,$user['id'],$log_type);
-//            User::changeInc($user['id'], abs($req['amount']), 'team_bonus_balance',51,$user['id'],2);
-//
-//            Db::commit();
-//        } catch (Exception $e) {
-//            Db::rollback();
-//            throw $e;
-//        }
-//        return out();
 
     }
 
     public function xingfuDuihuan(){
+        $req = $this->validate(request(), [
+            'type|类型' => 'require|number|in:1,2',  //1兑换抽奖券，2兑换投票权
+        ]);
         $user = $this->user;
         $user = User::where('id', $user['id'])->find();
-        if($user['xingfu_tickets'] < 5) {
-            return out(null, 10001, '幸福助力劵不足5张');
+        if($req['type'] == 1){
+            // 检查用户积分是否足够
+            if($user['xingfu_tickets'] < 5) {
+                return out(null, 10001, '幸福助力劵不足5张');
+            }
+            $data['use_points'] = 5;
+            $data['to_wallet'] = 'lottery_tickets';
+            $data['money'] = 1;
+            $log_type = 9;
+        }else{
+            if($user['xingfu_tickets'] < 1) {
+                return out(null, 10001, '幸福助力劵不足');
+            }
+            $data['use_points'] = 1;
+            $data['to_wallet'] = 'vote_tickets';
+            $data['money'] = dbconfig('xingfu_to_vote_tickets');
+            $log_type = 15;
         }
+
+        
+        
         Db::startTrans();
         try {
-            $data['use_points'] = 5;
-            $data['to_wallet'] = 'xingfu_lottery_tickets';
-            $data['money'] = 1;
+            $data['from_wallet'] = 'xingfu_tickets';
             $data['user_id'] = $user['id'];
             $data['creat_time'] = date('Y-m-d H:i:s',time());
             $duihuan = UserPointsSwap::create($data);
 
             User::changeInc($user['id'],-5,'xingfu_tickets',106,$user['id'],12,'幸福助力卷兑换',0,2,'TD');
-            User::changeInc($user['id'],1,'lottery_tickets',106,$user['id'],9,'幸福助力卷兑换',0,2,'TD');
+            User::changeInc($user['id'],1,'lottery_tickets',106,$user['id'],$log_type,'幸福助力卷兑换',0,2,'TD');
             Db::commit();
         } catch (Exception $e) {
             Db::rollback();
@@ -279,10 +264,26 @@ class UserController extends AuthController
         return out();
     }
 
+
+
     public function duihuanList(){
        $data = UserPointsSwap::where('user_id',$this->user['id'])->order('creat_time desc')->paginate();
        foreach($data as $k => $v){
-        $v['type'] = $v['to_wallet'] == 'lottery_tickets' ? '抽奖卷' : '荣誉金';
+            if($v['to_wallet'] == 'lottery_tickets' ){
+                $v['type'] ='抽奖卷';
+            }elseif($v['to_wallet'] == 'team_bonus_balance'){
+                $v['type'] = '荣誉金';
+            }elseif($v['to_wallet'] == 'vote_tickets'){
+                $v['type'] = '投票权';
+            }
+            //判断来源
+            if($v['from_wallet']=='xingfu_tickets'){
+                $v['from_type'] = '助力劵';
+            }elseif($v['from_wallet']=='integral'){
+                $v['from_type'] = '积分';
+            }elseif($v['from_wallet']=='vote_tickets'){
+                $v['from_type'] = '投票权';
+            }
        }
        return out($data);
     }

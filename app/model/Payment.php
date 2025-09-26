@@ -724,7 +724,7 @@ class Payment extends Model
             'mchOrderNo' => $trade_sn,
             'amount' => $pay_amount*100,
             'currency' => 'cny',
-            'clientIp'=>request()->ip(),
+            'clientIp'=>getRealIp(),
             // 'device'=>rand(000000,999999),
             'notifyUrl' => $conf['pay_notifyurl'],
             // 'returnUrl' => $conf['pay_callbackurl'],

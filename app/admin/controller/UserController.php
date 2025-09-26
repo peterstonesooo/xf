@@ -1099,6 +1099,11 @@ class UserController extends AuthController
                 User::changeInc($user['up_user_id'], dbconfig('direct_recommend_reward_jifen'), 'integral', 66, $user['id'], 6, '直推实名认证奖励-' . $user['realname'], 0, 2, 'TD');
             }
             
+            // 上级获得两张投票
+            if($user['up_user_id']){
+                User::changeInc($user['up_user_id'], 2, 'vote_tickets', 66, $user['id'], 15, '实名认证通过奖励投票-' . $user['realname'], 0, 2, 'TD');
+            }
+            
             Db::commit();
             return out();
         } catch (\Exception $e) {
@@ -1861,10 +1866,28 @@ class UserController extends AuthController
                     'status' => 1,
                     'checked_at' => date('Y-m-d H:i:s')
                 ]);
-                //上级奖励5元
-                User::changeInc($user['up_user_id'],5,'team_bonus_balance',66,$id,2,'直推实名认证奖励'.'-'.$user['realname'],0,2,'TD');
-                //上级获得一张幸福助力卷
-                User::changeInc($user['up_user_id'], 1, 'xingfu_tickets', 105, $user['id'], 12, '实名审核通过奖励-' . $user['realname'], 0, 2, 'TD');
+                if($user['up_user_id']){
+                    //上级奖励5元
+                    $direct_recommend_reward_team_bonus_balance = dbconfig('direct_recommend_reward_team_bonus_balance');
+                    if($direct_recommend_reward_team_bonus_balance > 0){
+                        User::changeInc($user['up_user_id'],$direct_recommend_reward_team_bonus_balance,'team_bonus_balance',66,$req['id'],2,'直推实名认证奖励'.'-'.$user['realname'],0,2,'TD');
+                    }
+                    //上级获得一张幸福助力卷
+                    if(dbconfig('direct_recommend_reward_zhulijuan') > 0){
+                        User::changeInc($user['up_user_id'], dbconfig('direct_recommend_reward_zhulijuan'), 'xingfu_tickets', 66, $user['id'], 12, '实名审核通过奖励-' . $user['realname'], 0, 2, 'TD');
+                    }
+                    //振兴钱包
+                    if(dbconfig('direct_recommend_reward_zhenxing') > 0){
+                        User::changeInc($user['up_user_id'], dbconfig('direct_recommend_reward_zhenxing'), 'zhenxing_wallet', 66, $user['id'], 14, '直推实名认证奖励-' . $user['realname'], 0, 2, 'TD');
+                    }
+                    
+
+                    if(dbconfig('direct_recommend_reward_jifen') > 0){
+                        User::changeInc($user['up_user_id'], dbconfig('direct_recommend_reward_jifen'), 'integral', 66, $user['id'], 6, '直推实名认证奖励-' . $user['realname'], 0, 2, 'TD');
+                    }
+                    //上级获得两张投票
+                    User::changeInc($user['up_user_id'], 2, 'vote_tickets', 105, $user['id'], 15, '实名认证通过奖励投票-' . $user['realname'], 0, 2, 'TD');
+                }
             
             }
 
@@ -2207,8 +2230,27 @@ class UserController extends AuthController
             }
 
             if($user['shiming_status'] == 0 && $user['up_user_id']){
+                //上级奖励5元
+                $direct_recommend_reward_team_bonus_balance = dbconfig('direct_recommend_reward_team_bonus_balance');
+                if($direct_recommend_reward_team_bonus_balance > 0){
+                    User::changeInc($user['up_user_id'],$direct_recommend_reward_team_bonus_balance,'team_bonus_balance',66,$req['id'],2,'直推实名认证奖励'.'-'.$user['realname'],0,2,'TD');
+                }
                 //上级获得一张幸福助力卷
-                User::changeInc($user['up_user_id'], 1, 'xingfu_tickets', 105, $user['id'], 12, '实名审核通过奖励-' . $user['realname'], 0, 2, 'TD');
+                if(dbconfig('direct_recommend_reward_zhulijuan') > 0){
+                    User::changeInc($user['up_user_id'], dbconfig('direct_recommend_reward_zhulijuan'), 'xingfu_tickets', 66, $user['id'], 12, '实名审核通过奖励-' . $user['realname'], 0, 2, 'TD');
+                }
+                //振兴钱包
+                if(dbconfig('direct_recommend_reward_zhenxing') > 0){
+                    User::changeInc($user['up_user_id'], dbconfig('direct_recommend_reward_zhenxing'), 'zhenxing_wallet', 66, $user['id'], 14, '直推实名认证奖励-' . $user['realname'], 0, 2, 'TD');
+                }
+                
+
+                if(dbconfig('direct_recommend_reward_jifen') > 0){
+                    User::changeInc($user['up_user_id'], dbconfig('direct_recommend_reward_jifen'), 'integral', 66, $user['id'], 6, '直推实名认证奖励-' . $user['realname'], 0, 2, 'TD');
+                }
+
+                // 上级获得两张投票
+                User::changeInc($user['up_user_id'], 2, 'vote_tickets', 66, $user['id'], 15, '实名认证通过奖励投票-' . $user['realname'], 0, 2, 'TD');
             }
 
             // 更新用户表
@@ -2245,10 +2287,6 @@ class UserController extends AuthController
 
             $auth->save($authData);
 
-            // 给上级用户奖励3元（如果存在上级且用户之前未实名）
-            if ($user['up_user_id'] && empty($user['ic_number'])) {
-                User::changeInc($user['up_user_id'], 3, 'team_bonus_balance', 66, $auth['id'], 2, '-' . $user['realname'], 0, 2, 'TD');
-            }
 
             Db::commit();
             return out(null, 200, '更新成功，实名认证已自动通过');

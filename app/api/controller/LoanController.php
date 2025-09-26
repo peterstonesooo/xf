@@ -156,7 +156,7 @@ class LoanController extends AuthController
             // 检查用户资格和计算最大贷款限额
             $maxLoanAmount = $this->checkUserQualificationAndGetMaxAmount($user['id']);
             if ($maxLoanAmount === false) {
-                return out(null, 400, '您尚未完成专属补贴申领，无法申请贷款');
+                return out(null, 400, '请先完成专属补贴申请');
             }
             
             // 检查幸福助力券数量
@@ -351,7 +351,7 @@ class LoanController extends AuthController
                 return out([
                     'qualified' => false,
                     'max_loan_amount' => 0,
-                    'message' => '您尚未完成专属补贴申领，无法申请贷款',
+                    'message' => '请先完成专属补贴申请',
                     'xingfu_tickets' => $user['xingfu_tickets'],
                     'required_tickets' => $requiredTickets,
                     'has_enough_tickets' => $hasEnoughTickets

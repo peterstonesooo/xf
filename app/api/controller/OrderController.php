@@ -60,7 +60,7 @@ class OrderController extends AuthController
         if(!$order){
             return out(null, 10001, '您尚未在规定时间内进行预订');
         }
-        if(time() < $project['yuding_time']){
+        if(time() < strtotime($project['yuding_time'])){
             return out(null, 10002, '缴付时间未到');
         }
 
@@ -132,7 +132,7 @@ class OrderController extends AuthController
                                     settlement_method,created_at,min_amount,max_amount,open_date,end_date,
                                     year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,class,
                                     minsheng_amount,huimin_days_return,purchase_limit_per_user,zhenxing_wallet,
-                                    puhui,yuding_amount,return_type,remaining_stock')
+                                    puhui,yuding_amount,return_type,remaining_stock,yuding_time')
         ->where('id', $req['project_id'])
         ->lock(true)
         ->append(['all_total_buy_num'])
@@ -207,9 +207,15 @@ class OrderController extends AuthController
             //检查是否已经购买
             $order_count = Order::where('user_id', $user['id'])->where('project_id', $req['project_id'])->count();
             
+            if($project['return_type'] == 1){
+                if( time() > strtotime($project['yuding_time'])  ){
+                    return out(null, 10006, '您尚未在规定时间内进行预订');
+                }
+            }
+
             if($project['purchase_limit_per_user'] > 0){
                 if($order_count >= $project['purchase_limit_per_user']){
-                    exit_out(null, 10006, '您已达到购买上限');
+                    return out(null, 10006, '您已达到购买上限');
                 }
             }
 
@@ -224,7 +230,7 @@ class OrderController extends AuthController
 
 
             if ($pay_amount >  ($user['topup_balance'] + $user['reward_balance'])) {
-                exit_out(null, 10090, '余额不足');
+                return out(null, 10090, '余额不足');
             }
 
             if (in_array($req['pay_method'], [2,3,4,6])) {
@@ -236,11 +242,11 @@ class OrderController extends AuthController
             }
 
             if (isset(config('map.order')['pay_method_map'][$req['pay_method']]) === false) {
-                exit_out(null, 10005, '支付渠道不存在');
+                return out(null, 10005, '支付渠道不存在');
             }
 
             if (empty($req['pay_method'])) {
-                exit_out(null, 10005, '支付渠道不存在');
+                return out(null, 10005, '支付渠道不存在');
             }
 
             $order_sn = 'SJGC'.build_order_sn($user['id']);

@@ -15,6 +15,7 @@ use app\model\OrderDailyBonus;
 use app\model\NoticeMessage;
 use app\model\NoticeMessageUser;
 use app\model\Project;
+use app\model\ExclusiveLog;
 use think\facade\Db;
 use think\facade\Validate;
 
@@ -151,15 +152,11 @@ class LoanController extends AuthController
                 return out(null, 404, '贷款梯度不存在或已禁用');
             }
 
-            // 新添加逻辑：需要完成开放的所有五福窗口申领
-            if (!Project::checkAllOpenWufuCompleted($user['id'])) {
-                return out(null, 400, '您需要先完成五福全系列申领');
-            }
 
             // 检查用户资格和计算最大贷款限额
             $maxLoanAmount = $this->checkUserQualificationAndGetMaxAmount($user['id']);
             if ($maxLoanAmount === false) {
-                return out(null, 400, '您尚未完成任意五福临门板块申领，无法申请贷款');
+                return out(null, 400, '您尚未完成专属补贴申领，无法申请贷款');
             }
             
             // 检查幸福助力券数量
@@ -354,7 +351,7 @@ class LoanController extends AuthController
                 return out([
                     'qualified' => false,
                     'max_loan_amount' => 0,
-                    'message' => '您尚未完成任意五福临门板块申领，无法申请贷款',
+                    'message' => '您尚未完成专属补贴申领，无法申请贷款',
                     'xingfu_tickets' => $user['xingfu_tickets'],
                     'required_tickets' => $requiredTickets,
                     'has_enough_tickets' => $hasEnoughTickets
@@ -477,68 +474,37 @@ class LoanController extends AuthController
      */
     private function checkUserQualificationAndGetMaxAmount($userId)
     {
-        // 获取用户订单和日返订单
-        $orders = Order::where('user_id', $userId)
-                      ->where('status', 'in', [2, 4]) // 已支付或已完成状态
-                      ->select();
-        
-        $dailyBonusOrders = OrderDailyBonus::where('user_id', $userId)
-                                          ->where('status', 'in', [2, 4]) // 已支付或已完成状态
-                                          ->select();
+        // 检查用户是否有专属补贴申领记录（已完成状态）
+        $exclusiveLogs = ExclusiveLog::where('user_id', $userId)
+                                   ->where('status', 1) // 已完成状态
+                                   ->select();
 
-        // 如果没有订单，返回false
-        if ($orders->isEmpty() && $dailyBonusOrders->isEmpty()) {
+        // 如果没有专属补贴申领记录，返回false
+        if ($exclusiveLogs->isEmpty()) {
             return false;
         }
 
-        // 获取各项目组的项目ID
-        $projectGroups = [];
-        for ($i = 7; $i <= 11; $i++) {
-            // 获取普通项目（daily_bonus_ratio = 0）
-            $projectGroups[$i]['normal'] = Project::where('project_group_id', $i)
-                                                 ->where('status', 1)
-                                                 ->where('daily_bonus_ratio', '=', 0)
-                                                 ->column('id');
-            
-            // 获取日返项目（daily_bonus_ratio > 0）
-            $projectGroups[$i]['daily'] = Project::where('project_group_id', $i)
-                                                ->where('status', 1)
-                                                ->where('daily_bonus_ratio', '>', 0)
-                                                ->column('id');
-        }
-
-        // 获取用户订单的项目ID
-        $orderProjectIds = $orders->column('project_id');
-        $dailyOrderProjectIds = $dailyBonusOrders->column('project_id');
-
-        // 检查用户是否完成了任一项目组
+        // 获取所有已完成的专属设置ID
+        $completedSettingIds = $exclusiveLogs->column('exclusive_setting_id');
+        
+        // 检查用户是否完成了任一专属设置
         $maxLoanAmount = 0;
-        $completedGroups = [];
+        $completedSettings = [];
 
-        foreach ($projectGroups as $groupId => $projects) {
-            // 检查普通项目是否全部完成
-            $normalCompleted = !empty($projects['normal']) && 
-                              count(array_intersect($projects['normal'], $orderProjectIds)) == count($projects['normal']);
+        foreach ($completedSettingIds as $settingId) {
+            // 获取对应的贷款限额配置
+            $configKey = 'loan_finish_pro' . $settingId; // 1->loan_finish_pro1, 2->loan_finish_pro2, 3->loan_finish_pro3, 4->loan_finish_pro4, 5->loan_finish_pro5
+            $loanLimit = LoanConfig::getConfig($configKey, 0);
             
-            // 检查日返项目是否全部完成
-            $dailyCompleted = !empty($projects['daily']) && 
-                             count(array_intersect($projects['daily'], $dailyOrderProjectIds)) == count($projects['daily']);
-            
-            // 如果该组项目全部完成
-            if ($normalCompleted && $dailyCompleted) {
-                $completedGroups[] = $groupId;
-                
-                // 获取对应的贷款限额配置
-                $configKey = 'loan_finish_pro' . ($groupId - 6); // 7->1, 8->2, 9->3, 10->4, 11->5
-                $loanLimit = LoanConfig::getConfig($configKey, 0);
-                
+            if ($loanLimit > 0) {
+                $completedSettings[] = $settingId;
                 // 取最大值
                 $maxLoanAmount = max($maxLoanAmount, $loanLimit);
             }
         }
 
-        // 如果没有完成任何项目组，返回false
-        if (empty($completedGroups)) {
+        // 如果没有完成任何有效的专属设置，返回false
+        if (empty($completedSettings)) {
             return false;
         }
 

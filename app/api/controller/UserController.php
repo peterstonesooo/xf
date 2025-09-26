@@ -231,17 +231,17 @@ class UserController extends AuthController
             if($user['xingfu_tickets'] < 5) {
                 return out(null, 10001, '幸福助力劵不足5张');
             }
-            $data['use_points'] = 5;
-            $data['to_wallet'] = 'lottery_tickets';
-            $data['money'] = 1;
+            $use_points = 5;
+            $to_wallet = 'lottery_tickets';
+            $money = 1;
             $log_type = 9;
         }else{
             if($user['xingfu_tickets'] < 1) {
                 return out(null, 10001, '幸福助力劵不足');
             }
-            $data['use_points'] = 1;
-            $data['to_wallet'] = 'vote_tickets';
-            $data['money'] = dbconfig('xingfu_to_vote_tickets');
+            $use_points = 1;
+            $to_wallet = 'vote_tickets';
+            $money = dbconfig('xingfu_to_vote_tickets');
             $log_type = 15;
         }
 
@@ -249,13 +249,16 @@ class UserController extends AuthController
         
         Db::startTrans();
         try {
+            $data['money'] = $money;
+            $data['use_points'] = $use_points;
+            $data['to_wallet'] = $to_wallet;
             $data['from_wallet'] = 'xingfu_tickets';
             $data['user_id'] = $user['id'];
             $data['creat_time'] = date('Y-m-d H:i:s',time());
             $duihuan = UserPointsSwap::create($data);
 
-            User::changeInc($user['id'],-5,'xingfu_tickets',106,$user['id'],12,'幸福助力卷兑换',0,2,'TD');
-            User::changeInc($user['id'],1,'lottery_tickets',106,$user['id'],$log_type,'幸福助力卷兑换',0,2,'TD');
+            User::changeInc($user['id'],-$use_points,'xingfu_tickets',106,$user['id'],12,'幸福助力卷兑换',0,2,'TD');
+            User::changeInc($user['id'],$money,$to_wallet,106,$user['id'],$log_type,'幸福助力卷兑换',0,2,'TD');
             Db::commit();
         } catch (Exception $e) {
             Db::rollback();

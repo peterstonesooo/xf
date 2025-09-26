@@ -57,7 +57,7 @@ class ProjectController extends AuthController
          }else{
              $discount = 1;
          }
-        $data = Project::field('id, name, name_background, intro, cover_img, details_img, single_amount,status, sum_amount, period, support_pay_methods, created_at,project_group_id,total_quota,remaining_quota,open_date,end_date,huimin_amount,gongfu_amount,daily_bonus_ratio,class,minsheng_amount,huimin_days_return,rebate_rate,purchase_limit_per_user,zhenxing_wallet,puhui,return_type,total_stock,remaining_stock')
+        $data = Project::field('id, name, name_background, intro, cover_img, details_img, single_amount,status, sum_amount, period, support_pay_methods, created_at,project_group_id,total_quota,remaining_quota,open_date,end_date,huimin_amount,gongfu_amount,daily_bonus_ratio,class,minsheng_amount,huimin_days_return,rebate_rate,purchase_limit_per_user,zhenxing_wallet,puhui,return_type,total_stock,remaining_stock,yuding_time')
                 ->where('status', 1)
                 ->where('project_group_id',$req['project_group_id'] ?? 7)
                 ->order(['sort' => 'asc', 'id' => 'desc'])
@@ -151,7 +151,7 @@ class ProjectController extends AuthController
             }
             //预定订单状态和时间
             $item['order_status'] = 0;
-            $item['order_end_time'] = 0;
+            $item['order_end_time'] = $item['yuding_time'];
             $item['order_id'] = 0;
             if($item['return_type'] == 1){
                 $order = Order::where('project_id', $item['id'])->where('user_id', $user_id)
@@ -159,7 +159,6 @@ class ProjectController extends AuthController
                 if($order){
                     $item['order_id'] = $order['id'];
                     $item['order_status'] = $order['status'];
-                    $item['order_end_time'] = $order['end_time'];
                 }
             }
             if($item['daily_bonus_ratio'] > 0){

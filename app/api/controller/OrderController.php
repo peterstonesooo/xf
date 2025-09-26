@@ -53,11 +53,15 @@ class OrderController extends AuthController
             ->where('status', 2)
             ->where('return_type', 1)
             ->find();
-        if(!$order){
-            return out(null, 10001, '订单不存在');
+        $project = Project::where('id', $order['project_id'])->find();
+        if(!$project){
+            return out(null, 10002, '项目不存在');
         }
-        if(time() > $order['end_time']){
-            return out(null, 10002, '您尚未在规定时间内进行预订');
+        if(!$order){
+            return out(null, 10001, '您尚未在规定时间内进行预订');
+        }
+        if(time() < $project['yuding_time']){
+            return out(null, 10002, '缴付时间未到');
         }
 
         $yuding_amount = $order['yuding_amount'];

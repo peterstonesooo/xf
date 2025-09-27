@@ -267,7 +267,11 @@ class OrderController extends AuthController
             if ($req['pay_method']==1) {
 
                 // 扣余额
-                User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$project['project_name'],0,1);
+                $remark = $project['project_name'];
+                if($project['return_type'] == 1){
+                    $remark = $project['project_name'].'（预定）';
+                }
+                User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$remark,0,1);
                 if($project['dividend_cycle'] < 1 || empty($project['dividend_cycle'])){
                     if($project['gongfu_amount'] > 0){
                         User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,$project['project_name'].'共富金');

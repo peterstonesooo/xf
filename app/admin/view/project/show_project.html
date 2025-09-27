@@ -440,6 +440,26 @@
                         </div>
                     </div>
                 </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">总份额</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="number" name="total_stock" class="form-control" placeholder="请输入总份额"
+                                   value="{$data['total_stock']??''}" min="0">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">份</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">剩余份额</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="number" name="remaining_stock" class="form-control" placeholder="请输入剩余份额"
+                                   value="{$data['remaining_stock']??''}" min="0">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">份</div>
+                    </div>
+                </div>
                 <!--
                 <div class="row dd_input_group">
                     <div class="form-group">

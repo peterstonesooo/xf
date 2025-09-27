@@ -95,7 +95,7 @@ class VoteController extends AuthController
             
             $list = Vote::where($where)
                 ->field('id,uid,phone,realname,title,content,total_votes,view_count,create_time')
-                ->order('create_time desc')
+                ->order('total_votes desc')
                 ->paginate([
                     'list_rows' => $limit,
                     'page' => $page

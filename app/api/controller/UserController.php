@@ -222,8 +222,14 @@ class UserController extends AuthController
 
     public function xingfuDuihuan(){
         $req = $this->validate(request(), [
-            'type|类型' => 'require|number|in:1,2',  //1兑换抽奖券，2兑换投票权
+            'type|类型' => 'number',  //1兑换抽奖券，2兑换投票权
         ]);
+        if(!isset($req['type'])){
+            $req['type'] = 1;
+        }
+        if(!in_array($req['type'], [1,2])){
+            return out(null, 10001, '类型错误');
+        }
         $user = $this->user;
         $user = User::where('id', $user['id'])->find();
         if($req['type'] == 1){

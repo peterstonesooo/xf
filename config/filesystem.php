@@ -27,7 +27,7 @@ return [
             'secretKey'=>'w9JEEK4F-XdC4HYehFDTnoVnuZkgseMkKYjzeq6N',//七牛云的配置,secretKey
             'bucket'=>'xingfuzhongguo',					//七牛云的配置,bucket空间名
             //'domain'=>'s2dgpwe6t.hn-bkt.clouddn.com'					//七牛云的配置,domain,域名
-            'domain'=>'cod.surav.cn',				//七牛云的配置,domain,域名
+            'domain'=>'cod.tdcay.cn',				//七牛云的配置,domain,域名
         ],
     ],
 ];

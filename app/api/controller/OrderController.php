@@ -64,8 +64,8 @@ class OrderController extends AuthController
             return out(null, 10002, '缴付时间未到');
         }
         //缴付截止时间
-        $jiaofu_end_time = strtotime($project['yuding_time']) + $project['period'] * 86400;
-        if(time() > $jiaofu_end_time){
+        // $jiaofu_end_time = strtotime($project['yuding_time']) + $project['period'] * 86400;
+        if(time() > strtotime($project['end_date'])){
             return out(null, 10002, '缴付时间已过');
         }
         $yuding_amount = $order['yuding_amount'];

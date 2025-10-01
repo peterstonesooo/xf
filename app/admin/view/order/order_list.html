@@ -48,7 +48,7 @@
                             <th>项目名称</th>
                             <th>购买金额</th>
                             <th>到期分红</th>
-                            <th style="width: 200px;">返现时间点</th>
+                            <!-- <th style="width: 200px;">返现时间点</th> -->
                             <th>预计下次返现时间</th>
                             <th>已返现次数</th>
                             <th>姓名</th>
@@ -67,15 +67,15 @@
                                     {$v['single_amount']}
                                 </td>
                                 <td>{$v['sum_amount']}【共富金{$v['gongfu_amount']}|惠民金{$v['huimin_amount']}|民生金{$v['minsheng_amount']}】</td>
-                                <td>
+                                <!-- <td>
                                     <?php if(!empty($v['huimin_days_return'])) {?>
                                         <?php foreach($v['huimin_days_return'] as $k => $day_return) {?>
-                                            第{$day_return['day']}天：惠民金{$day_return['huimin']}元<br>
+                                            第{$day_return['day']}天：惠民金<?php echo ($day_return['huimin_amount'] ?? $day_return['huimin'] ?? 0); ?>元<br>
                                         <?php }?>
                                     <?php }else{?>
                                         第{$v['period']}天：惠民金{$v['huimin_amount']}元
                                     <?php }?>
-                                </td>
+                                </td> -->
                                 <td>{if($v['status'] != 4)}{$v['end_time']|date='Y-m-d H:i:s'}{/if}</td>
                                 <td>{$v['period_change_day']}</td>
 <!--                                <td>{$v['digital_yuan']}</td>-->

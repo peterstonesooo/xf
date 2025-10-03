@@ -535,6 +535,7 @@ class UserController extends AuthController
             'url'=>dbconfig('ios_download_url'),
             'apk_url' => dbconfig('apk_download_url'),
             'download_url' => dbconfig('download_url'),
+            'download_chat_url' => dbconfig('download_chat_url'),
             'chat_group_id' => dbconfig('chat_group_id'),
 //            'img'=>$img,
         ];

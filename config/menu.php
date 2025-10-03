@@ -196,6 +196,11 @@ return array(
                             'icon' => 'fa-circle-o',
                             'url' => 'admin/ExclusiveLog/exclusiveLogList',
                         ),
+                    '投票管理' =>
+                        array(
+                            'icon' => 'fa-vote-yea',
+                            'url' => 'admin/Vote/voteList',
+                        ),
                     // '生育卡' =>
                     // array(
                     //     'icon' => 'fa-circle-o',

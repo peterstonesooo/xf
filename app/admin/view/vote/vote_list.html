@@ -1,0 +1,95 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['uid']??''}" name="uid" placeholder="搜索用户ID" class="form-control">
+        <input type="text" value="{$req['phone']??''}" name="phone" placeholder="搜索手机号" class="form-control">
+        <input type="text" value="{$req['realname']??''}" name="realname" placeholder="搜索真实姓名" class="form-control">
+        <input type="text" value="{$req['title']??''}" name="title" placeholder="搜索投票标题" class="form-control">
+        <select name="sort" class="form-control">
+            <option value="">排序方式</option>
+            <option <?php if (isset($req['sort']) && $req['sort'] === 'total_votes_desc'){echo 'selected = "selected"';} ?> value="total_votes_desc">票数从高到低</option>
+            <option <?php if (isset($req['sort']) && $req['sort'] === 'total_votes_asc'){echo 'selected = "selected"';} ?> value="total_votes_asc">票数从低到高</option>
+            <option <?php if (isset($req['sort']) && $req['sort'] === 'create_time_desc'){echo 'selected = "selected"';} ?> value="create_time_desc">最新创建</option>
+            <option <?php if (isset($req['sort']) && $req['sort'] === 'create_time_asc'){echo 'selected = "selected"';} ?> value="create_time_asc">最早创建</option>
+        </select>
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <a {:auth_show_judge('Vote/addVote')} class="btn btn-flat btn-success m_10 f_r" href="{:url('admin/Vote/showVote')}"><i class="fa fa-plus m-r-10"></i>添 加</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户信息</th>
+                            <th>投票标题</th>
+                            <th>
+                                总票数
+                                <a href="?sort=total_votes_desc" class="btn btn-xs btn-default" title="从高到低">
+                                    <i class="fa fa-sort-desc"></i>
+                                </a>
+                                <a href="?sort=total_votes_asc" class="btn btn-xs btn-default" title="从低到高">
+                                    <i class="fa fa-sort-asc"></i>
+                                </a>
+                            </th>
+                            <th>
+                                创建时间
+                                <a href="?sort=create_time_desc" class="btn btn-xs btn-default" title="最新">
+                                    <i class="fa fa-sort-desc"></i>
+                                </a>
+                                <a href="?sort=create_time_asc" class="btn btn-xs btn-default" title="最早">
+                                    <i class="fa fa-sort-asc"></i>
+                                </a>
+                            </th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v){ ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>
+                                    <div>ID: {$v['uid']}</div>
+                                    <div>手机: {$v['phone']}</div>
+                                    <div>姓名: {$v['realname']}</div>
+                                </td>
+                                <td>{$v['title']}</td>
+                                <td>
+                                    <span class="badge bg-green">{$v['total_votes']}</span>
+                                </td>
+                                <td>{$v['create_time']}</td>
+                                <td>
+                                    <a {:auth_show_judge('Vote/editVote')} class="btn btn-flat btn-info btn-xs" href="{:url('admin/Vote/showVote', ['id' => $v['id']])}"><i class="fa fa-edit"></i> 编辑</a>
+                                    <a {:auth_show_judge('Vote/delVote')} class="btn btn-flat btn-danger btn-xs" href="javascript:;" onclick="delVote({$v['id']})"><i class="fa fa-trash-o"></i> 删除</a>
+                                </td>
+                            </tr>
+                        <?php }?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render();?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function delVote(id)
+    {
+        //确认框
+        layer.confirm('确定删除吗？', {icon: 3, title:'提示'}, function(index) {
+            layer.close(index);
+            $.post('{:url("admin/Vote/delVote")}', {id:id}, function (res) {
+                if (res.code == '200'){
+                    location.reload(true);
+                }
+                else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+
+</script>

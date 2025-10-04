@@ -410,6 +410,7 @@ return array(
             14 => '振兴钱包',//zhenxing_wallet
             15 => '投票奖励',//vote_tickets
             16 => '共富钱包',//gongfu_wallet
+            17 => '收益钱包',//shouyi_wallet
         ),
         'status_map' =>
         array(

@@ -109,9 +109,9 @@ class OrderTransferController extends AuthController
                 return out([], 1, '收益余额不足');
             }
             $fieldOut = 'appreciating_wallet';
-            $fieldIn = 'zhenxing_wallet';
+            $fieldIn = 'shouyi_wallet';
             $typeOut = 7;
-            $typeIn = 14;
+            $typeIn = 17;
             //计算累计收益
             $data['cum_returns'] = 0;
             $data['transfer_amount'] = $req['butie_amount'];

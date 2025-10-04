@@ -26,13 +26,14 @@ class MigrateUserWallet extends Command
 
         try {
             // 使用 chunk 分批处理用户数据
-            User::field('id,butie,digit_balance,gongfu_wallet')->chunk(500, function($users) use (&$successCount, &$failCount, &$skipCount, $output) {
+            User::field('id,butie,digit_balance,gongfu_wallet,appreciating_wallet')->chunk(500, function($users) use (&$successCount, &$failCount, &$skipCount, $output) {
                 foreach ($users as $user) {
                     try {
                         // 计算需要迁移的总金额：稳盈钱包 + 惠民钱包
                         $butieAmount = floatval($user['butie'] ?? 0);
                         $digitBalanceAmount = floatval($user['digit_balance'] ?? 0);
-                        $totalAmount = $butieAmount + $digitBalanceAmount;
+                        $appreciatingAmount = floatval($user['appreciating_wallet'] ?? 0);
+                        $totalAmount = $butieAmount + $digitBalanceAmount + $appreciatingAmount;
                         
                         // 如果总金额为0，跳过此用户
                         if ($totalAmount <= 0) {
@@ -49,6 +50,11 @@ class MigrateUserWallet extends Command
                         // 清零惠民钱包并记录日志
                         if ($digitBalanceAmount > 0) {
                             User::changeInc($user['id'], -$digitBalanceAmount, 'digit_balance', 123, 0, 5, '钱包迁移：惠民钱包转入共富钱包', 0, 2, 'QBQY', 1);
+                        }
+
+                        // 清零幸福收益并记录日志
+                        if ($appreciatingAmount > 0) {
+                            User::changeInc($user['id'], -$appreciatingAmount, 'appreciating_wallet', 123, 0, 7, '钱包迁移：幸福收益转入共富钱包', 0, 2, 'QBQY', 1);
                         }
                         
                         // 转入共富钱包并记录日志

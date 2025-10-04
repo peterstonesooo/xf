@@ -380,6 +380,9 @@ class CapitalController extends AuthController
            }elseif ($req['type'] == 4){
                $field = 'puhui';
                $log_type = 13;
+           }elseif ($req['type'] == 5){
+               $field = 'shouyi_wallet';
+               $log_type = 17;
            }
 
             if ($user[$field] < $req['amount']) {

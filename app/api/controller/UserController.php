@@ -656,7 +656,7 @@ class UserController extends AuthController
     //数字人民币转账
     public function transferAccounts(){
         $req = $this->validate(request(), [
-            'type' => 'require|in:1,2,3,4',//1-惠民钱包 2-荣誉钱包 3-余额钱包 4-普惠钱包
+            'type' => 'require|in:1,2,3,4,5',//1-惠民钱包 2-荣誉钱包 3-余额钱包 4-普惠钱包 5-收益钱包
             'realname|对方姓名' => 'require|max:20',
             'account|对方账号' => 'require',
             'money|转账金额' => 'require|number',
@@ -727,6 +727,11 @@ class UserController extends AuthController
                     $field = 'puhui';
                     $fieldText = '普惠钱包';
                     $logType = 13;
+                    break;
+                case 5:
+                    $field = 'shouyi_wallet';
+                    $fieldText = '收益钱包';
+                    $logType = 17;
                     break;
             }
 

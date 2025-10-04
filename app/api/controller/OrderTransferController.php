@@ -40,8 +40,8 @@ class OrderTransferController extends AuthController
         Db::startTrans();
         try {
             $user = User::where('id', $user['id'])->lock(true)->find();
-            if($user['butie'] < $req['transfer_amount']){
-                return out([], 1001, '稳赢钱包余额不足');
+            if($user['gongfu_wallet'] < $req['transfer_amount']){
+                return out([], 1001, '共富钱包余额不足');
             }
             //如果用户有正在收益的订单则不能转入转出
 
@@ -53,14 +53,14 @@ class OrderTransferController extends AuthController
             $data['user_id'] = $user['id'];
             $data['end_time'] = time() + $req['period'] * 86400;
             $data['type'] = 1;
-            $data['from_wallet'] = 'butie';
+            $data['from_wallet'] = 'gongfu_wallet';
             $data['add_time'] = date('Y-m-d H:i:s',time());
 
             // 创建订单
             $order = OrderTransfer::create($data);
 
             // 扣除
-            User::changeInc($user['id'],-$req['transfer_amount'],'butie',56,$order['id'],3,"幸福增值转入",0,1);
+            User::changeInc($user['id'],-$req['transfer_amount'],'gongfu_wallet',56,$order['id'],16,"幸福增值转入",0,1);
             User::changeInc($user['id'],$req['transfer_amount'],'butie_lock',56,$order['id'],8,"幸福增值转入",0,1);
 
             Db::commit();

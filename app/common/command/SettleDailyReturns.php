@@ -30,7 +30,7 @@ class SettleDailyReturns extends Command
             OrderTransfer::where([
                 ['type', '=', 1],
                 ['status', '=', 1],
-                ['from_wallet', '=', 'butie'],
+                ['from_wallet', '=', 'gongfu_wallet'],
                 ['end_time', '<', time()]
             ])->order('id', 'asc')->chunk(500, function($orders) use (&$successCount, &$failCount) {
                 foreach ($orders as $order) {
@@ -39,7 +39,7 @@ class SettleDailyReturns extends Command
                         // 更新用户钱包
                        $ret = $order['transfer_amount'];
                        $cum_returns = $order['cum_returns'];
-                       User::changeInc($order['user_id'],$ret,'butie',60,$order['user_id'],3, '幸福收益');
+                       User::changeInc($order['user_id'],$ret,'gongfu_wallet',60,$order['user_id'],16, '幸福收益');
                        User::changeInc($order['user_id'],-$ret,'butie_lock',60,$order['user_id'],8, '幸福收益');
                        User::changeInc($order['user_id'],$cum_returns,'appreciating_wallet',60,$order['user_id'],7, '幸福收益');
 

@@ -290,6 +290,7 @@ return array(
             120 => '日盈振兴金',
             121 => '预定补足余额',
             122 => '投票',
+            123 => '钱包迁移',
         ),
         'balance_type_map' =>
         array(
@@ -381,6 +382,7 @@ return array(
             120 => '日盈振兴金',
             121 => '预定补足余额',
             122 => '投票',
+            123 => '钱包迁移',
 
         ),
         'integral_type_map' =>
@@ -407,6 +409,7 @@ return array(
             13 => '普惠钱包',//puhui
             14 => '振兴钱包',//zhenxing_wallet
             15 => '投票奖励',//vote_tickets
+            16 => '共富钱包',//gongfu_wallet
         ),
         'status_map' =>
         array(

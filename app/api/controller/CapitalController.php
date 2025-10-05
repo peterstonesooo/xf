@@ -340,7 +340,7 @@ class CapitalController extends AuthController
         }
         
         if ($req['amount'] < 100) {
-            return out(null, 10001, '单笔最低提现大于100元');
+            return out(null, 10001, '单笔提现须满100元方可申请');
         }
         if ($req['amount'] >= 100000) {
             return out(null, 10001, '单笔提现最高小于100000元');

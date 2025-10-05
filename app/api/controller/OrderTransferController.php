@@ -10,7 +10,7 @@ use think\facade\Db;
 class OrderTransferController extends AuthController
 {
 
-    public $rates = [7=>0.001,15=>0.003,30=>0.008];
+    public $rates = [7=>0.0001,15=>0.0005,30=>0.0012];
 
     /**
      * @return void

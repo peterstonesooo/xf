@@ -305,7 +305,7 @@ class OrderController extends AuthController
 
                 if(in_array($project['class'], [11,12,13,14])){
                     if($project['gongfu_amount'] > 0){
-                        User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,'共富专项金',0,1);
+                        User::changeInc($user['id'], $project['gongfu_amount'], 'gongfu_wallet',52,$order['id'],16,'共富专项金',0,1);
                     }
                     if($project['minsheng_amount'] > 0){
                         User::changeInc($user['id'], $project['minsheng_amount'], 'balance',52,$order['id'],4,'民生保障金',0,1);
@@ -399,7 +399,7 @@ class OrderController extends AuthController
             // 扣余额
             User::changeInc($user['id'],$pay_amount,'tiyan_wallet_lock',3,$order['id'],10,$project['project_name'],0,1);
             if($project['gongfu_amount'] > 0){
-                User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,$project['project_name']);
+                User::changeInc($user['id'], $project['gongfu_amount'], 'gongfu_wallet',52,$order['id'],16,$project['project_name']);
             }
             
             // 订单支付完成
@@ -675,7 +675,7 @@ class OrderController extends AuthController
                         User::changeInc($user['id'], $project['minsheng_amount'], 'balance',52,$order['id'],4,'民生保障金',0,1);
                     }
                     if($project['gongfu_amount'] > 0){
-                        User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,'共富专项金',0,1);
+                        User::changeInc($user['id'], $project['gongfu_amount'], 'gongfu_wallet',52,$order['id'],16,'共富专项金',0,1);
                     }
                 }
                 if($project['project_group_id'] == 13){

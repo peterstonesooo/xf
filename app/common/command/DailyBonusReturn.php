@@ -47,12 +47,9 @@ class DailyBonusReturn extends Command
                         if($order['project_id'] >= 50){
                             $daily_huimin_amount = $order['huimin_amount'];
                             if($daily_huimin_amount>0){
-                                User::changeInc($order['user_id'],$daily_huimin_amount,'digit_balance',68,$order['id'],5, '日盈惠民金');
+                                User::changeInc($order['user_id'],$daily_huimin_amount,'gongfu_wallet',68,$order['id'],16, '日盈共富金');
                             }
-                            // $daily_gongfu_amount = $order['gongfu_amount'];
-                            // if($daily_gongfu_amount>0){
-                            //     User::changeInc($order['user_id'],$daily_gongfu_amount,'butie',67,$order['id'],3, '日盈共富金');
-                            // }
+                            
                             $daily_puhui_amount = $order['puhui'];
                             if($daily_puhui_amount>0){
                                 User::changeInc($order['user_id'],$daily_puhui_amount,'puhui',119,$order['id'],13, '日盈普惠金');
@@ -65,10 +62,10 @@ class DailyBonusReturn extends Command
                             $daily_gongfu_amount = round($order['gongfu_amount']/$period, 2);
                             $daily_huimin_amount = round($order['huimin_amount']/$period, 2);
                             if($daily_gongfu_amount>0){
-                                User::changeInc($order['user_id'],$daily_gongfu_amount,'butie',67,$order['id'],3, '日享共富金');
+                                User::changeInc($order['user_id'],$daily_gongfu_amount,'gongfu_wallet',67,$order['id'],16, '日享共富金');
                             }   
                             if($daily_huimin_amount>0){
-                                User::changeInc($order['user_id'],$daily_huimin_amount,'digit_balance',68,$order['id'],5, '日享惠民金');
+                                User::changeInc($order['user_id'],$daily_huimin_amount,'gongfu_wallet',68,$order['id'],16, '日享共富金');
                             }
                         }
                         

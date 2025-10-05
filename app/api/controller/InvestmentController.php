@@ -405,10 +405,15 @@ class InvestmentController extends AuthController
                 10 => ['field' => 'tiyan_wallet_lock', 'name' => '体验钱包预支金'],
                 11 => ['field' => 'tiyan_wallet', 'name' => '体验钱包'],
                 12 => ['field' => 'xingfu_tickets', 'name' => '幸福助力卷'],
+                13 => ['field' => 'puhui', 'name' => '普惠钱包'],
+                14 => ['field' => 'zhenxing_wallet', 'name' => '振兴钱包'],
+                15 => ['field' => 'vote_tickets', 'name' => '投票奖励'],
+                16 => ['field' => 'gongfu_wallet', 'name' => '共富钱包'],
+                17 => ['field' => 'shouyi_wallet', 'name' => '收益钱包'],
             ];
 
             // 获取支持的钱包类型配置
-            $supportedTypes = LoanConfig::getConfig('investment_wallet_types', '1,2,3,4,5');
+            $supportedTypes = LoanConfig::getConfig('investment_wallet_types', '1,16,13,2,17');
             $supportedTypes = explode(',', $supportedTypes);
 
             $data = [];

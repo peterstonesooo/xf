@@ -146,7 +146,7 @@ class OrderTransferController extends AuthController
     public function getTransferList(){
         $user = $this->user;
         $typeArr = [1=>'',2=>''];
-        $fromWalletArr = ['appreciating_wallet'=>'收益转出','butie'=>'共富金转入','butie_lock'=>'共富金自动转出','digit_balance'=>'收益','fenhong_digit_balance'=>'月度分红'];
+        $fromWalletArr = ['appreciating_wallet'=>'收益转出','butie'=>'共富金转入','butie_lock'=>'共富金自动转出','digit_balance'=>'收益','fenhong_digit_balance'=>'月度分红','gongfu_wallet'=>'共富金转入'];
         $statusArr = [1=>'进行中',2=>'提前转出',3=>'已完成'];
         $orders = OrderTransfer::where('user_id', $user['id'])->paginate();
         foreach($orders as $key=>$value){

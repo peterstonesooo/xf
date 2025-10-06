@@ -163,7 +163,7 @@ class OrderTransferController extends AuthController
         $user = User::where('id', $user['id'])->lock(true)->find();
         $orders = OrderTransfer::where('user_id', $user['id'])->where('status','<>',2)->where('type',1)->where('from_wallet','butie')->order('id','desc')->find();
         $count = OrderTransfer::where('user_id', $user['id'])->where('type', 1)->where('status','<>',2)
-            ->where('from_wallet','butie')
+            ->where('from_wallet','or',['butie','gongfu_wallet'])
             ->fieldRaw('SUM(cum_returns) as cum_returns_sum, SUM(transfer_amount) as transfer_amount_sum')
             ->find();
         $fenhong = UserBalanceLog::where('user_id',$user['id'])->where('type',64)->where('status',1)->field('SUM(change_balance) as amount_sum')->find();

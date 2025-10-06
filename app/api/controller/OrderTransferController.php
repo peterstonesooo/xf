@@ -35,7 +35,7 @@ class OrderTransferController extends AuthController
         }
         $orders = OrderTransfer::where('user_id', $user['id'])->where('status', 1)->where('type',1)->count();
         if ($orders > 0) {
-            return out([], 1001, '正在产生收益');
+            return out([], 1001, '您的幸福增值计划正在进行中');
         }
         Db::startTrans();
         try {
@@ -96,6 +96,9 @@ class OrderTransferController extends AuthController
         }
         if (!empty($req['pay_password']) && $user['pay_password'] !== sha1(md5($req['pay_password']))) {
             return out(null, 10001, '支付密码错误');
+        }
+        if($req['butie_amount'] < 100){
+            return out(null, 10001, '转出金额未满100元');
         }
 
 //        $orders = OrderTransfer::where('user_id', $user['id'])->where('status', 1)->count();

@@ -168,38 +168,38 @@ class OrderController extends AuthController
 
 
         
-        if(in_array($project['project_group_id'], [7,8,9,10,11])){
-            if(!$project['open_date'] || !$project['end_date']){
-                // 判断今天是星期几
-                $weekday = date('w');
-                // 根据星期几限制project_group_id
-                if ($weekday >= 1 && $weekday <= 5) { // 周一到周五
-                    $allowed_group_id = $weekday + 6; // 7,8,9,10,11 对应周一到周五
-                    if ($project['project_group_id'] != $allowed_group_id) {
-                        return out(null, 10004, '尚未开放');
-                    }
-                    $buy_num = $project['total_quota'];  //周一到周五的总名额
-                    //周一到周五的订单
-                    $monday = date('Y-m-d 00:00:00', strtotime('monday this week'));
-                    $friday = date('Y-m-d 23:59:59', strtotime('friday this week'));
-                    $buy_orders = Order::where('project_id', $req['project_id'])->where('created_at', '>=', $monday)->where('created_at', '<=', $friday)->count();
-                    if($buy_orders >= $buy_num && $buy_num > 0){
-                        $msg = '今日“'.$project['project_name'].'”名额已满';
-                        return out(null, 10003, $msg);
-                    }
-                }else{
-                    //周末开始时间
-                    $saturday = date('Y-m-d 00:00:00', time());    
-                    $sunday = date('Y-m-d 23:59:59', time());
-                    $buy_num = $project['remaining_quota'];       
-                    $buy_orders = Order::where('project_id', $req['project_id'])->where('created_at', '>=', $saturday)->where('created_at', '<=', $sunday)->count();
-                    if($buy_orders >= $buy_num && $buy_num > 0){
-                        $msg = '今日“'.$project['project_name'].'”名额已满';
-                        return out(null, 10003, $msg);
-                    }
-                }
-            }
-        }
+        // if(in_array($project['project_group_id'], [7,8,9,10,11])){
+        //     if(!$project['open_date'] || !$project['end_date']){
+        //         // 判断今天是星期几
+        //         $weekday = date('w');
+        //         // 根据星期几限制project_group_id
+        //         if ($weekday >= 1 && $weekday <= 5) { // 周一到周五
+        //             $allowed_group_id = $weekday + 6; // 7,8,9,10,11 对应周一到周五
+        //             if ($project['project_group_id'] != $allowed_group_id) {
+        //                 return out(null, 10004, '尚未开放');
+        //             }
+        //             $buy_num = $project['total_quota'];  //周一到周五的总名额
+        //             //周一到周五的订单
+        //             $monday = date('Y-m-d 00:00:00', strtotime('monday this week'));
+        //             $friday = date('Y-m-d 23:59:59', strtotime('friday this week'));
+        //             $buy_orders = Order::where('project_id', $req['project_id'])->where('created_at', '>=', $monday)->where('created_at', '<=', $friday)->count();
+        //             if($buy_orders >= $buy_num && $buy_num > 0){
+        //                 $msg = '今日“'.$project['project_name'].'”名额已满';
+        //                 return out(null, 10003, $msg);
+        //             }
+        //         }else{
+        //             //周末开始时间
+        //             $saturday = date('Y-m-d 00:00:00', time());    
+        //             $sunday = date('Y-m-d 23:59:59', time());
+        //             $buy_num = $project['remaining_quota'];       
+        //             $buy_orders = Order::where('project_id', $req['project_id'])->where('created_at', '>=', $saturday)->where('created_at', '<=', $sunday)->count();
+        //             if($buy_orders >= $buy_num && $buy_num > 0){
+        //                 $msg = '今日“'.$project['project_name'].'”名额已满';
+        //                 return out(null, 10003, $msg);
+        //             }
+        //         }
+        //     }
+        // }
         
          
         // 初始化订单变量

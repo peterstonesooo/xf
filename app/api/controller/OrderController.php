@@ -136,7 +136,7 @@ class OrderController extends AuthController
                                     settlement_method,created_at,min_amount,max_amount,open_date,end_date,
                                     year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,class,
                                     minsheng_amount,huimin_days_return,purchase_limit_per_user,zhenxing_wallet,
-                                    puhui,yuding_amount,return_type,remaining_stock,yuding_time')
+                                    puhui,yuding_amount,return_type,remaining_stock,yuding_time,gongfu_right_now,zhenxing_right_now')
         ->where('id', $req['project_id'])
         ->lock(true)
         ->append(['all_total_buy_num'])
@@ -423,7 +423,7 @@ class OrderController extends AuthController
         dividend_cycle,period,single_gift_equity,single_gift_digital_yuan,sham_buy_num,
         progress_switch,bonus_multiple,settlement_method,created_at,min_amount,max_amount,
         open_date,end_date,year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,
-        minsheng_amount,purchase_limit_per_user,yuding_amount,return_type')
+        minsheng_amount,purchase_limit_per_user,yuding_amount,return_type,gongfu_right_now,zhenxing_right_now')
         ->where('id', $req['project_id'])
         ->lock(true)
         ->append(['all_total_buy_num'])
@@ -523,7 +523,7 @@ class OrderController extends AuthController
         single_gift_equity,single_gift_digital_yuan,sham_buy_num,progress_switch,bonus_multiple,
         settlement_method,created_at,min_amount,max_amount,open_date,end_date,year_income,total_quota,
         remaining_quota,gongfu_amount,huimin_amount,class,minsheng_amount,purchase_limit_per_user,
-        zhenxing_wallet,puhui,yuding_amount,return_type')
+        zhenxing_wallet,puhui,yuding_amount,return_type,gongfu_right_now,zhenxing_right_now')
         ->where('id', $req['project_id'])
         ->lock(true)
         ->append(['all_total_buy_num'])
@@ -2442,7 +2442,7 @@ class OrderController extends AuthController
                 ->where('o.id', $req['order_id'])
                 ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,
                 o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,
-                p.dividend_cycle,o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type')
+                p.dividend_cycle,o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type,o.gongfu_right_now,o.zhenxing_right_now')
                  ->find();
             }else{
                 if($req['project_id'] == 3){
@@ -2455,7 +2455,7 @@ class OrderController extends AuthController
                     ->where('o.id', $req['order_id'])
                     ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,
                     o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,p.dividend_cycle,
-                    o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type')
+                    o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type,o.gongfu_right_now,o.zhenxing_right_now')
                      ->find();
                 }
             }
@@ -2466,14 +2466,14 @@ class OrderController extends AuthController
                 ->where('o.id', $req['order_id'])
                 ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,
                 o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,
-                p.dividend_cycle,o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type')
+                p.dividend_cycle,o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type,o.gongfu_right_now,o.zhenxing_right_now')
                  ->find();
             }else{
                 $data = Order::alias('o')->leftJoin('mp_project p', 'p.id = o.project_id')->where('o.user_id', $user['id'])
                 ->where('o.id', $req['order_id'])
                 ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,
                 o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,p.dividend_cycle,
-                o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type')
+                o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type,o.gongfu_right_now,o.zhenxing_right_now')
                  ->find();
             }
         }

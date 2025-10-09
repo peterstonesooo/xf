@@ -100,12 +100,12 @@ class Butie extends Command
                                     
                                     $huimin_amount =  $order['huimin_amount'];
                                     if($huimin_amount > 0){
-                                        User::changeInc($order['user_id'],$huimin_amount,'digit_balance',59,$order['id'],5, '周盈惠民金');
+                                        User::changeInc($order['user_id'],$huimin_amount,'gongfu_wallet',59,$order['id'],16, '周盈共富金');
                                     }   
                                 }else{
                                     $huimin_amount =  $order['huimin_amount'];
                                     if($huimin_amount > 0){
-                                        User::changeInc($order['user_id'],$huimin_amount,'digit_balance',59,$order['id'],5, '购买商品每周分红');
+                                        User::changeInc($order['user_id'],$huimin_amount,'gongfu_wallet',59,$order['id'],16, '购买商品每周分红');
                                     }
                                     $minsheng_amount =  $order['minsheng_amount'];
                                     if($minsheng_amount > 0){
@@ -127,7 +127,7 @@ class Butie extends Command
                             }else{
                                 $ret =  $order['huimin_amount'];
                                 if($ret>0){
-                                    User::changeInc($order['user_id'],$ret,'digit_balance',59,$order['id'],5, '购买商品到期分红');
+                                    User::changeInc($order['user_id'],$ret,'gongfu_wallet',59,$order['id'],16, '购买商品到期分红');
                                 }
                                 $order->period_change_day = 1;
                                 // 更新订单状态

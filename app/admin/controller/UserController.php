@@ -499,7 +499,6 @@ class UserController extends AuthController
                 'total_quota' => $project['total_quota'],
                 'remaining_quota' => $project['remaining_quota'],
                 'gongfu_amount' => $project['gongfu_amount'],
-                'huimin_amount' => $project['huimin_amount'],
                 'minsheng_amount' => $project['minsheng_amount'],
                 'huimin_days_return' => $project['huimin_days_return'],
                 'buy_num' => 1,

@@ -58,7 +58,7 @@
                             <!-- <th>是否推荐</th> -->
                             <!-- <th>支付方式</th> -->
                             <th>限额信息</th>
-                            <th>惠民金周期返利</th>
+                            <th>周期返利</th>
                             <th>项目期数</th>
                             <!-- <th>排序号</th> -->
                             <!-- <th>创建时间</th> -->
@@ -73,7 +73,6 @@
                                 <td style="font-size: 12px; line-height: 1.4;">
                                     普惠金：{$v['puhui']|default='0'}<br>
                                     振兴金：{$v['zhenxing_wallet']|default='0'}<br>
-                                    惠民金：{$v['huimin_amount']|default='0'}<br>
                                     共富金：{$v['gongfu_amount']|default='0'}<br>
                                     购买金额：{$v['single_amount']|default='0'}
                                 </td>
@@ -171,14 +170,14 @@
                 var huiminData = data.huimin_days_return || [];
                 
                 if (huiminData.length == 0) {
-                    layer.msg('暂无惠民金周期返利数据', {icon: 0, time: 2000});
+                    layer.msg('暂无周期返利数据', {icon: 0, time: 2000});
                     return;
                 }
                 
                 // 构建显示内容
                 var content = '<div style="max-height: 400px; overflow-y: auto;">';
                 content += '<table class="table table-bordered table-striped" style="margin-bottom: 0;">';
-                content += '<thead><tr><th>天数</th><th>振兴钱包</th><th>普惠金</th><th>惠民金</th><th>共富金</th><th>民生金</th></tr></thead>';
+                content += '<thead><tr><th>天数</th><th>振兴钱包</th><th>普惠金</th><th>共富金</th><th>民生金</th></tr></thead>';
                 content += '<tbody>';
                 
                 for (var i = 0; i < huiminData.length; i++) {
@@ -187,7 +186,6 @@
                     content += '<td>' + (item.day || '') + '</td>';
                     content += '<td>' + (item.zhenxing_wallet || '0') + '</td>';
                     content += '<td>' + (item.puhui || '0') + '</td>';
-                    content += '<td>' + (item.huimin_amount || '0') + '</td>';
                     content += '<td>' + (item.gongfu_amount || '0') + '</td>';
                     content += '<td>' + (item.minsheng_amount || '0') + '</td>';
                     content += '</tr>';
@@ -198,7 +196,7 @@
                 // 显示弹框
                 layer.open({
                     type: 1,
-                    title: '惠民金周期返利详情 - ' + data.name,
+                    title: '周期返利详情 - ' + data.name,
                     area: ['800px', '500px'],
                     content: content,
                     btn: ['关闭'],

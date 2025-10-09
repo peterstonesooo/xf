@@ -28,7 +28,7 @@ class ProjectController extends AuthController
         
         // 检查是否是新的格式（days_ 和钱包类型前缀）
         $hasNewFormat = false;
-        $walletTypes = ['zhenxing_wallet', 'puhui', 'huimin_amount', 'gongfu_amount', 'minsheng_amount'];
+        $walletTypes = ['zhenxing_wallet', 'puhui', 'gongfu_amount', 'minsheng_amount'];
         foreach ($data as $key => $value) {
             if (strpos($key, 'days_') === 0) {
                 $hasNewFormat = true;
@@ -46,7 +46,7 @@ class ProjectController extends AuthController
         if ($hasNewFormat) {
             // 新格式：days_ 和各个钱包类型前缀
             $daysData = [];
-            $walletTypes = ['zhenxing_wallet', 'puhui', 'huimin_amount', 'gongfu_amount', 'minsheng_amount'];
+            $walletTypes = ['zhenxing_wallet', 'puhui', 'gongfu_amount', 'minsheng_amount'];
             $walletData = [];
             
             foreach ($data as $key => $value) {
@@ -173,10 +173,11 @@ class ProjectController extends AuthController
             'support_pay_methods|支付方式' => 'require|max:100',
             'sort|排序号' => 'integer',
             'sum_amount|总补贴金额' => 'float',
-            'huimin_amount|惠民金' => 'float',
             'gongfu_amount|共富金' => 'float',
+            'gongfu_right_now|共富金-立即发放' => 'float',
             'minsheng_amount|民生金' => 'float',
             'zhenxing_wallet|振兴钱包' => 'float',
+            'zhenxing_right_now|振兴金-立即发放' => 'float',
             'puhui|普惠金' => 'float',
             'purchase_limit_per_user|每人限购数量' => 'integer|>=:0',
             'rebate_rate|返佣比例' => 'float',
@@ -242,17 +243,18 @@ class ProjectController extends AuthController
             // 'min_amount|最小购买金额' => 'float',
             // 'max_amount|最大购买金额' => 'float',
             // 'daily_bonus_ratio|单份日分红金额' => 'float',
-            // 'dividend_cycle|分红周期' => 'max:32',
+            'dividend_cycle|返现次数' => 'max:32',
             'period|周期' => 'number',
             // 'single_gift_digital_yuan|单份赠送国家津贴' => 'integer',
             'is_recommend|是否推荐' => 'require|integer',
             'support_pay_methods|支持的支付方式' => 'require|max:100',
             'sort|排序号' => 'integer',
             'sum_amount|总补贴金额' => 'float',
-            'huimin_amount|惠民金' => 'float',
             'gongfu_amount|共富金' => 'float',
+            'gongfu_right_now|共富金-立即发放' => 'float',
             'minsheng_amount|民生金' => 'float',
             'zhenxing_wallet|振兴钱包' => 'float',
+            'zhenxing_right_now|振兴金-立即发放' => 'float',
             'puhui|普惠金' => 'float',
             'purchase_limit_per_user|每人限购数量' => 'integer|>=:0',
             'rebate_rate|返佣比例' => 'float',

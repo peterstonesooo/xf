@@ -303,56 +303,15 @@ class OrderController extends AuthController
                 }
                 
 
-                if(in_array($project['class'], [11,12,13,14])){
-                    if($project['gongfu_amount'] > 0){
-                        User::changeInc($user['id'], $project['gongfu_amount'], 'gongfu_wallet',52,$order['id'],16,'共富专项金',0,1);
-                    }
-                    if($project['minsheng_amount'] > 0){
-                        User::changeInc($user['id'], $project['minsheng_amount'], 'balance',52,$order['id'],4,'民生保障金',0,1);
-                    }
+                if($project['gongfu_right_now'] > 0){
+                    User::changeInc($user['id'], $project['gongfu_right_now'], 'gongfu_wallet',52,$order['id'],16,'共富专项金',0,1);
+                }
+                if($project['zhenxing_right_now'] > 0){
+                    User::changeInc($user['id'], $project['zhenxing_right_now'], 'zhenxing_wallet',52,$order['id'],14,'振兴专项金',0,1);
                 }
                 // 累计总收益和赠送数字人民币  到期结算
                 // 订单支付完成
                 Order::orderPayComplete($order['id'], $project, $user['id'], $pay_amount);
-            }
-            
-            // 发起第三方支付
-            if (in_array($req['pay_method'], [2,3,4,6])) {
-                $card_info = '';
-                if (!empty($paymentConf['card_info'])) {
-                    $card_info = json_encode($paymentConf['card_info']);
-                    if (empty($card_info)) {
-                        $card_info = '';
-                    }
-                }
-                // 创建支付记录
-                Payment::create([
-                    'user_id' => $user['id'],
-                    'trade_sn' => $order_sn,
-                    'pay_amount' => $pay_amount,
-                    'order_id' => $order['id'],
-                    'payment_config_id' => $paymentConf['id'],
-                    'channel' => $paymentConf['channel'],
-                    'mark' => $paymentConf['mark'],
-                    'type' => $paymentConf['type'],
-                    'card_info' => $card_info,
-                    'product_type'=>1,
-                    'pay_voucher_img_url'=>$req['pay_voucher_img_url'],
-                ]);
-                // 发起支付
-                if ($paymentConf['channel'] == 1) {
-                    $ret = Payment::requestPayment($order_sn, $paymentConf['mark'], $pay_amount);
-                }
-                elseif ($paymentConf['channel'] == 2) {
-                    $ret = Payment::requestPayment2($order_sn, $paymentConf['mark'], $pay_amount);
-                }
-                elseif ($paymentConf['channel'] == 3) {
-                    $ret = Payment::requestPayment3($order_sn, $paymentConf['mark'], $pay_amount);
-                }else if($paymentConf['channel']==8){
-                    $ret = Payment::requestPayment4($order_sn, $paymentConf['mark'], $pay_amount);
-                }else if($paymentConf['channel']==9){
-                    $ret = Payment::requestPayment5($order_sn, $paymentConf['mark'], $pay_amount);
-                }
             }
 
             Db::commit();
@@ -481,6 +440,12 @@ class OrderController extends AuthController
                 if($project['minsheng_amount'] > 0){
                     User::changeInc($user['id'], $project['minsheng_amount'], 'balance',52,$order['id'],4,$project['project_name'],0,1);
                 }
+                if($project['gongfu_right_now'] > 0){
+                    User::changeInc($user['id'], $project['gongfu_right_now'], 'gongfu_wallet',52,$order['id'],16,'共富专项金',0,1);
+                }
+                if($project['zhenxing_right_now'] > 0){
+                    User::changeInc($user['id'], $project['zhenxing_right_now'], 'zhenxing_wallet',52,$order['id'],14,'振兴专项金',0,1);
+                }
                 // User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,$project['project_name'].'共富金');
                 // 给上3级团队奖
                 $relation = UserRelation::where('sub_user_id', $user['id'])->select();
@@ -593,35 +558,7 @@ class OrderController extends AuthController
             $user = User::where('id', $user['id'])->lock(true)->find();
             //检查是否已经购买
             $order_count = OrderDailyBonus::where('user_id', $user['id'])->where('project_id', $req['project_id'])->count();
-            //三四期项目，每人限购5次，一二期每人限购一次
-            switch($project['class']){
-                case 1:
-                    if($order_count > 0){
-                        exit_out(null, 10006, '您已经购买过该产品');
-                    }
-                    break;  
-                case 2:
-                    if($order_count > 0){
-                        exit_out(null, 10006, '您已经购买过该产品');
-                    }
-                    break;
-                case 3:
-                    if($order_count > 4){
-                        exit_out(null, 10006, '您已达到购买上限');
-                    }
-                    break;
-                case 4:
-                    if($order_count > 4){
-                        exit_out(null, 10006, '您已达到购买上限');  
-                    }
-                    break;
-                case 5:
-                    if($order_count > 4){
-                        exit_out(null, 10006, '您已达到购买上限');
-                    }
-                    break;
-            }
-
+            
             //計算折扣
             $discountArr = TeamGloryLog::where('user_id',$user['id'])->order('vip_level','desc')->find();
             if($discountArr){
@@ -670,17 +607,16 @@ class OrderController extends AuthController
                         ]);
                     }
                 }
-                if(in_array($project['class'], [11,12,13,14])){
-                    if($project['minsheng_amount'] > 0){
-                        User::changeInc($user['id'], $project['minsheng_amount'], 'balance',52,$order['id'],4,'民生保障金',0,1);
-                    }
-                    if($project['gongfu_amount'] > 0){
-                        User::changeInc($user['id'], $project['gongfu_amount'], 'gongfu_wallet',52,$order['id'],16,'共富专项金',0,1);
-                    }
-                }
+                
                 if($project['project_group_id'] == 13){
                     // 同心福
                     User::changeInc($user['id'],$project['minsheng_amount'],'balance',3,$order['id'],4,'民生补贴',0,1);
+                }
+                if($project['gongfu_right_now'] > 0){
+                    User::changeInc($user['id'], $project['gongfu_right_now'], 'gongfu_wallet',52,$order['id'],16,'共富专项金',0,1);
+                }
+                if($project['zhenxing_right_now'] > 0){
+                    User::changeInc($user['id'], $project['zhenxing_right_now'], 'zhenxing_wallet',52,$order['id'],14,'振兴专项金',0,1);
                 }
                 // 累计总收益和赠送数字人民币  到期结算
                 // 订单支付完成

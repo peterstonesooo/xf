@@ -147,14 +147,14 @@
 
         // 初始化时检查类型
         var currentType = $('select[name="type"]').val();
-        if (currentType == 13) {
+        if (currentType == 13 || currentType == 15) {
             $('.file_upload_group').show();
         }
 
         // 监听类型选择变化
         $('select[name="type"]').change(function() {
             var type = $(this).val();
-            if (type == 13) {
+            if (type == 13 || type == 15) {
                 $('.file_upload_group').show();
             } else {
                 $('.file_upload_group').hide();

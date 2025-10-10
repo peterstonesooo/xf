@@ -10,7 +10,7 @@ class SystemInfoController extends AuthController
     {
         $req = request()->param();
 
-        $builder = SystemInfo::order('id', 'desc')->where('type', '<>', 2);
+        $builder = SystemInfo::order('id', 'desc')->where('type', '<>', 2)->where('type', '<>', 15);
         if (isset($req['system_info_id']) && $req['system_info_id'] !== '') {
             $builder->where('id', $req['system_info_id']);
         }

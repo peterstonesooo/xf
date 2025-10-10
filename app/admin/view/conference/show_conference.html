@@ -1,6 +1,6 @@
 <div class="search">
     <form class="form-inline">
-        <a class="btn btn-flat btn-primary m_10_l_0" href="{:url('admin/SystemInfo/systemInfoList')}">显示全部</a>
+        <a class="btn btn-flat btn-primary m_10_l_0" href="{:url('admin/Conference/conferenceList')}">显示全部</a>
         <a class="btn btn-flat btn-success m_10 f_r" onclick="javascript:history.back(-1)"><i
                     class="fa fa-undo m-r-10"></i>返 回</a>
     </form>
@@ -15,21 +15,6 @@
             <div class="box box-body">
                 <div class="row dd_input_group">
                     <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">类型</label>
-                        <div class="col-xs-8 col-sm-6 col-md-4 col-lg-4">
-                            <select name="type" class="form-control">
-                                <?php foreach (config('map.system_info')['type_map'] as $k => $v) { if ($k != 2 && $k != 15) { ?>
-                                    <option <?php if (isset($data['type']) && $data['type'] == $k) { ?> selected="selected" <?php } ?>
-                                            value="{$k}">{$v}
-                                    </option>
-                                <?php } } ?>
-                            </select>
-                        </div>
-                        <div class="col-xs-12 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
-                    </div>
-                </div>
-                <div class="row dd_input_group">
-                    <div class="form-group">
                         <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">封面图</label>
                         <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
                             <div id="img_preview1">
@@ -41,35 +26,22 @@
                         </div>
                     </div>
                 </div>
-                <!-- <div class="row dd_input_group file_upload_group" style="display: none;">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">官方文件</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <div id="file_preview">
-                                <?php if (!empty($data['link'])){ ?>
-                                    <a href="{$data['link']}" target="_blank">查看文件</a>
-                                <?php } ?>
-                            </div>
-                            <input type="file" class="form-control" name="link" id="file_url" onchange="selectFile(2)">
-                        </div>
-                    </div>
-                </div> -->
-                <div class="row dd_input_group file_upload_group" style="display: none;">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">官方链接</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="link" class="form-control" placeholder="请输入官方链接"
-                                   value="{$data['link']??''}">
-                        </div>
-                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
-                    </div>
-                </div>
                 <div class="row dd_input_group">
                     <div class="form-group">
                         <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">标题</label>
                         <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
                             <input type="text" name="title" class="form-control" placeholder="请输入标题"
                                    value="{$data['title']??''}">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">官方链接</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" name="link" class="form-control" placeholder="请输入官方链接"
+                                   value="{$data['link']??''}">
                         </div>
                         <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
                     </div>
@@ -145,23 +117,7 @@
             }
         });
 
-        // 初始化时检查类型
-        var currentType = $('select[name="type"]').val();
-        if (currentType == 13 || currentType == 15) {
-            $('.file_upload_group').show();
-        }
-
-        // 监听类型选择变化
-        $('select[name="type"]').change(function() {
-            var type = $(this).val();
-            if (type == 13 || type == 15) {
-                $('.file_upload_group').show();
-            } else {
-                $('.file_upload_group').hide();
-            }
-        });
-
-        var url = "{:url('admin/SystemInfo/systemInfoList')}";
+        var url = "{:url('admin/Conference/conferenceList')}";
         $('a[href="' + url + '"]').parents('.menu-li').addClass('active');
         var headerText = $('a[href="' + url + '"]').children('span').text();
         var is_add = "<?php echo !empty($data) ? '0' : '1';?>";
@@ -201,7 +157,7 @@
         $('#content').val(content);
         var formData = new FormData($('#commentForm')[0]);
         $.ajax({
-            url: '<?php echo !empty($data) ? url("admin/SystemInfo/editSystemInfo") : url("admin/SystemInfo/addSystemInfo");?>',
+            url: '<?php echo !empty($data) ? url("admin/Conference/editConference") : url("admin/Conference/addConference");?>',
             type: 'POST',
             data: formData,
             async: false,
@@ -240,3 +196,4 @@
         }
     }
 </script>
+

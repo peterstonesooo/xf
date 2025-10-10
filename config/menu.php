@@ -30,6 +30,11 @@ return array(
             'icon' => 'fa-cubes',
             'url' =>
                 array(
+                    '会议中心' =>
+                        array(
+                            'icon' => 'fa-calendar',
+                            'url' => 'admin/Conference/conferenceList',
+                        ),
                     '消息通知' =>
                         array(
                             'icon' => 'fa-bell',

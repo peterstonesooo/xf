@@ -1,16 +1,7 @@
 <div class="search">
     <form class="form-inline">
-        <input type="text" value="{$req['system_info_id']??''}" name="system_info_id" placeholder="搜索ID"
+        <input type="text" value="{$req['conference_id']??''}" name="conference_id" placeholder="搜索ID"
                class="form-control">
-        <select name="type" class="form-control">
-            <option value="">搜索类型</option>
-            <?php foreach (config('map.system_info')['type_map'] as $k => $v) { if ($k != 2 && $k != 15) { ?>
-                <option <?php if (isset($req['type']) && $req['type'] == $k) {
-                    echo 'selected = "selected"';
-                } ?> value="{$k}">{$v}
-                </option>
-            <?php } } ?>
-        </select>
         <select name="status" class="form-control">
             <option value="">搜索状态</option>
             <?php foreach (config('map.system_info')['status_map'] as $k => $v) { ?>
@@ -21,8 +12,8 @@
             <?php } ?>
         </select>
         <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
-        <a {:auth_show_judge('SystemInfo/addSystemInfo')} class="btn btn-flat btn-success m_10 f_r"
-        href="{:url('admin/SystemInfo/showSystemInfo')}"><i class="fa fa-plus m-r-10"></i>添 加</a>
+        <a {:auth_show_judge('Conference/addConference')} class="btn btn-flat btn-success m_10 f_r"
+        href="{:url('admin/Conference/showConference')}"><i class="fa fa-plus m-r-10"></i>添 加</a>
     </form>
 </div>
 
@@ -35,41 +26,47 @@
                         <tbody>
                         <tr>
                             <th>ID</th>
-                            <th>类型</th>
                             <th>封面图</th>
-                            <th>状态</th>
                             <th>标题</th>
-                            <th>内容</th>
+                            <th>官方链接</th>
+                            <th>状态</th>
+                            <th>排序号</th>
                             <th>创建时间</th>
                             <th>操作</th>
                         </tr>
                         <?php foreach ($data as $k => $v) { ?>
                             <tr>
                                 <td>{$v['id']}</td>
-                                <td>{$v['type_text']}</td>
                                 <td><img src="{$v['cover_img']}" onclick="seePhoto('{$v["cover_img"]}')" style="max-width: 80px;"></td>
+                                <td>{$v['title']}</td>
+                                <td>
+                                    <?php if (!empty($v['link'])) { ?>
+                                        <a href="{$v['link']}" target="_blank" style="word-break: break-all;">{$v['link']}</a>
+                                    <?php } else { ?>
+                                        <span style="color: #999;">无</span>
+                                    <?php } ?>
+                                </td>
                                 <td>
                                     <div class="switch">
                                         <div class="onoffswitch">
                                             <input type="checkbox" <?php echo $v['status'] == 1 ? 'checked' : ''; ?>
                                                    class="onoffswitch-checkbox" id="status{$v['id']}">
                                             <label class="onoffswitch-label" for="status{$v['id']}"
-                                                   onclick="changeSystemInfo({$v['id']}, 'status')">
+                                                   onclick="changeConference({$v['id']}, 'status')">
                                                 <span class="onoffswitch-inner"></span>
                                                 <span class="onoffswitch-switch"></span>
                                             </label>
                                         </div>
                                     </div>
                                 </td>
-                                <td>{$v['title']}</td>
-                                <td>{:strip_tags($v['content'])}</td>
+                                <td>{$v['sort']}</td>
                                 <td>{$v['created_at']}</td>
                                 <td>
-                                    <a {:auth_show_judge('SystemInfo/editSystemInfo')} class="btn btn-flat btn-info
-                                    btn-xs" href="{:url('admin/SystemInfo/showSystemInfo', ['id' => $v['id']])}"><i
+                                    <a {:auth_show_judge('Conference/editConference')} class="btn btn-flat btn-info
+                                    btn-xs" href="{:url('admin/Conference/showConference', ['id' => $v['id']])}"><i
                                             class="fa fa-edit"></i> 编辑</a>
-                                    <a {:auth_show_judge('SystemInfo/delSystemInfo')} class="btn btn-flat btn-danger
-                                    btn-xs" href="javascript:;" onclick="delSystemInfo({$v['id']})"><i
+                                    <a {:auth_show_judge('Conference/delConference')} class="btn btn-flat btn-danger
+                                    btn-xs" href="javascript:;" onclick="delConference({$v['id']})"><i
                                             class="fa fa-trash-o"></i> 删除</a>
                                 </td>
                             </tr>
@@ -84,11 +81,11 @@
 </div>
 
 <script>
-    function delSystemInfo(id) {
+    function delConference(id) {
         //确认框
         layer.confirm('确定删除吗？', {icon: 3, title: '提示'}, function (index) {
             layer.close(index);
-            $.post('{:url("admin/SystemInfo/delSystemInfo")}', {id: id}, function (res) {
+            $.post('{:url("admin/Conference/delConference")}', {id: id}, function (res) {
                 if (res.code == '200') {
                     location.reload(true);
                 } else {
@@ -98,7 +95,7 @@
         });
     }
 
-    function changeSystemInfo(id, field)
+    function changeConference(id, field)
     {
         var value = 0;
         if ($('#' + field + id).is(':checked')) {
@@ -110,7 +107,7 @@
         //确认框
         layer.confirm('确定操作吗', {icon: 3, title: '提示'}, function (index) {
             layer.close(index);
-            $.post('{:url("admin/SystemInfo/changeSystemInfo")}', {
+            $.post('{:url("admin/Conference/changeConference")}', {
                 "id": id,
                 "value": value,
                 "field": field
@@ -133,3 +130,4 @@
         });
     }
 </script>
+

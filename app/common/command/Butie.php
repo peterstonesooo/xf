@@ -137,6 +137,10 @@ class Butie extends Command
                                 if($zhenxing_amount>0){
                                     User::changeInc($order['user_id'],$zhenxing_amount,'zhenxing_wallet',59,$order['id'],14, '购买商品到期分红');
                                 }
+                                $puhui_amount =  $order['puhui'];
+                                if($puhui_amount>0){
+                                    User::changeInc($order['user_id'],$puhui_amount,'puhui',59,$order['id'],13, '购买商品到期分红');
+                                }
                                 
                                 $order->period_change_day = 1;
                                 // 更新订单状态

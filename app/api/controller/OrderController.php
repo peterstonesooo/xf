@@ -276,11 +276,7 @@ class OrderController extends AuthController
                     $remark = $project['project_name'].'（预定）';
                 }
                 User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$remark,0,1);
-                if($project['dividend_cycle'] < 1 || empty($project['dividend_cycle'])){
-                    if($project['gongfu_amount'] > 0){
-                        User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,$project['project_name'].'共富金');
-                    }
-                }
+                
                 //抽奖机会加一
                 User::where('id',$user['id'])->inc('order_lottery_tickets',1)->update();
                 // 给上3级团队奖

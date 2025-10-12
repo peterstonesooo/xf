@@ -129,6 +129,15 @@ class Butie extends Command
                                 if($ret>0){
                                     User::changeInc($order['user_id'],$ret,'gongfu_wallet',59,$order['id'],16, '购买商品到期分红');
                                 }
+                                $gongfu_amount =  $order['gongfu_amount'];
+                                if($gongfu_amount>0){
+                                    User::changeInc($order['user_id'],$gongfu_amount,'gongfu_wallet',59,$order['id'],16, '购买商品到期分红');
+                                }
+                                $zhenxing_amount =  $order['zhenxing_wallet'];
+                                if($zhenxing_amount>0){
+                                    User::changeInc($order['user_id'],$zhenxing_amount,'zhenxing_wallet',59,$order['id'],14, '购买商品到期分红');
+                                }
+                                
                                 $order->period_change_day = 1;
                                 // 更新订单状态
                                 $order->status = 4;

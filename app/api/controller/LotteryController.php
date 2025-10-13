@@ -93,13 +93,10 @@ class LotteryController extends AuthController
                         $log_type = 2;
                         break;
                     case 'butie':
-                        $cash_to_wallet = 'butie';
+                    case 'gongfu_wallet':
+                        $cash_to_wallet = 'gongfu_wallet';
                         $log_type_name = "共富金";
                         $log_type = 3;
-                        break;
-                    case 'digit_balance':
-                        $cash_to_wallet = 'digit_balance';
-                        $log_type = 5;
                         break;
                 }
                 // 领奖到钱包

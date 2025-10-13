@@ -756,7 +756,7 @@ class UserController extends AuthController
             $change_balance = 0 - $totalDeductAmount;
             
             // 扣除转账人余额（包含手续费）
-            User::changeInc($user['id'], $change_balance, $field, 18, 0, $logType, '转账['.$fieldText.']转账给-'.$take['realname'].($feeAmount > 0 ? '（手续费：'.$feeAmount.'元）' : ''), 0, 1);
+            User::changeInc($user['id'], $change_balance, $field, 18, 0, $logType, '转账['.$fieldText.']给-'.$take['realname'].($feeAmount > 0 ? '（手续费：'.$feeAmount.'元）' : ''), 0, 1);
                 
             // 收款人只收到转账金额（不含手续费）
             User::changeInc($take['id'], $req['money'], 'topup_balance', 19, 0, 1, '接收转账来自-'.$user['realname'], 0, 1);

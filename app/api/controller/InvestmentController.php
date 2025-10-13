@@ -98,7 +98,7 @@ class InvestmentController extends AuthController
             $req = $this->validate(request(), [
                 'gradient_id' => 'require|number',
                 'investment_amount' => 'require|float|gt:0',
-                'wallet_type' => 'require|number|in:1,2,3,4,5,6,7,8,9,10,11,12',
+                'wallet_type' => 'require|number',
                 'pay_password' => 'require'
             ]);
 

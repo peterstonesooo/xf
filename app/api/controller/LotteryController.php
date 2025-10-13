@@ -98,6 +98,11 @@ class LotteryController extends AuthController
                         $log_type_name = "共富金";
                         $log_type = 16;
                         break;
+                    case 'zhenxing_wallet':
+                        $cash_to_wallet = 'zhenxing_wallet';
+                        $log_type_name = "振兴钱包";
+                        $log_type = 14;
+                        break;
                 }
                 // 领奖到钱包
                 User::changeInc($user['id'], $prize['cash_amount'], $cash_to_wallet, 54 ,$id , $log_type,$log_type_name);

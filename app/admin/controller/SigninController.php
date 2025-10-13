@@ -59,7 +59,7 @@ class SigninController extends AuthController
             'type|类型' => 'require|in:1,2',
             'cash_amount|金额' => 'require',
             'win_probability|几率' => 'require',
-            'cash_to_wallet|到账钱包' => 'require|in:team_bonus_balance,butie,gongfu_wallet',
+            'cash_to_wallet|到账钱包' => 'require|in:team_bonus_balance,butie,gongfu_wallet,zhenxing_wallet',
         ]);
 
         if ($img_url = upload_file('img_url', false)) {
@@ -77,7 +77,7 @@ class SigninController extends AuthController
             'type|类型' => 'require|in:1,2',
             'cash_amount|金额' => 'require',
             'win_probability|几率' => 'require',
-            'cash_to_wallet|到账钱包' => 'require|in:team_bonus_balance,butie,gongfu_wallet',
+            'cash_to_wallet|到账钱包' => 'require|in:team_bonus_balance,butie,gongfu_wallet,zhenxing_wallet',
         ]);
 
         $req['img_url'] = upload_file('img_url');

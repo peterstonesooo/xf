@@ -140,7 +140,12 @@ class InvestmentController extends AuthController
                 9 => 'lottery_tickets',
                 10 => 'tiyan_wallet_lock',
                 11 => 'tiyan_wallet',
-                12 => 'xingfu_tickets'
+                12 => 'xingfu_tickets',
+                13 => 'puhui',
+                14 => 'zhenxing_wallet',
+                15 => 'vote_tickets',
+                16 => 'gongfu_wallet',
+                17 => 'shouyi_wallet'
             ];
 
             $walletField = $walletFieldMap[$req['wallet_type']] ?? 'topup_balance';
@@ -174,13 +179,18 @@ class InvestmentController extends AuthController
                     3 => 3,  // butie -> log_type=3 (稳盈钱包)
                     4 => 4,  // balance -> log_type=4 (民生钱包)
                     5 => 5,  // digit_balance -> log_type=5 (惠民钱包)
-                    6 => 2,  // integral -> log_type=2 (积分)
-                    7 => 6,  // appreciating_wallet -> log_type=6 (幸福收益)
-                    8 => 7,  // butie_lock -> log_type=7 (稳赢钱包转入)
-                    9 => 8,  // lottery_tickets -> log_type=8 (抽奖卷)
-                    10 => 9, // tiyan_wallet_lock -> log_type=9 (体验钱包预支金)
+                    6 => 6,  // integral -> log_type=2 (积分)
+                    7 => 7,  // appreciating_wallet -> log_type=6 (幸福收益)
+                    8 => 8,  // butie_lock -> log_type=7 (稳赢钱包转入)
+                    9 => 9,  // lottery_tickets -> log_type=8 (抽奖卷)
+                    10 => 10, // tiyan_wallet_lock -> log_type=9 (体验钱包预支金)
                     11 => 11, // tiyan_wallet -> log_type=11 (体验钱包)
-                    12 => 10  // xingfu_tickets -> log_type=10 (幸福助力卷)
+                    12 => 12,  // xingfu_tickets -> log_type=10 (幸福助力卷)
+                    13 => 13, // puhui -> log_type=12 (普惠钱包)
+                    14 => 14, // zhenxing_wallet -> log_type=13 (振兴钱包)
+                    15 => 15, // vote_tickets -> log_type=14 (投票奖励)
+                    16 => 16, // gongfu_wallet -> log_type=15 (共富钱包)
+                    17 => 17, // shouyi_wallet -> log_type=16 (收益钱包)
                 ];
                 $logType = $logTypeMap[$req['wallet_type']] ?? 1;
                 User::changeInc(

@@ -154,7 +154,7 @@ class ProjectController extends AuthController
             $item['order_end_time'] = $item['yuding_time'];
             $item['order_id'] = 0;
             //进度按份额计算
-            $item['progress_rate'] = ($item['total_stock']-$item['remaining_stock']) / $item['total_stock'] * 100;
+            $item['progress_rate'] = round(($item['total_stock']-$item['remaining_stock']) / $item['total_stock'] * 100, 2);
             if($item['return_type'] == 1){
                 $order = Order::where('project_id', $item['id'])->where('user_id', $user_id)
                 ->where('status', '>', 1)->find();

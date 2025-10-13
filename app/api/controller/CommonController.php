@@ -360,7 +360,7 @@ class CommonController extends BaseController
             }
 
             if(dbconfig('register_give_butie') > 0){
-                User::changeInc($user['id'], dbconfig('register_give_butie'),'butie',11,$user['id'],3,'注册奖励',1,2,'ZCJL');
+                User::changeInc($user['id'], dbconfig('register_give_butie'),'gongfu_wallet',11,$user['id'],16,'注册奖励',1,2,'ZCJL');
             }
             
 

@@ -96,7 +96,7 @@ class LotteryController extends AuthController
                     case 'gongfu_wallet':
                         $cash_to_wallet = 'gongfu_wallet';
                         $log_type_name = "共富金";
-                        $log_type = 3;
+                        $log_type = 16;
                         break;
                 }
                 // 领奖到钱包

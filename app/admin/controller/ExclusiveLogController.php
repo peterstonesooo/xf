@@ -97,7 +97,7 @@ class ExclusiveLogController extends AuthController
             $user = User::find($exclusiveLog['user_id']);
             if ($user) {
                 // 增加收益金到用户惠民钱包
-                User::changeInc($exclusiveLog['user_id'], $req['minsheng_amount'], 'digit_balance', 63, $req['id'], 5, '专属补贴', 0, 1);
+                User::changeInc($exclusiveLog['user_id'], $req['minsheng_amount'], 'gongfu_wallet', 63, $req['id'], 16, '专属补贴', 0, 1);
             }
             
             Db::commit();

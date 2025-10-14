@@ -33,7 +33,7 @@ class SettleDailyReturns extends Command
                 ['from_wallet', 'in', ['gongfu_wallet', 'butie']],
 
                 ['end_time', '<', time()]
-            ])->order('id', 'asc')->chunk(500, function($orders) use (&$successCount, &$failCount) {
+            ])->order('id', 'asc')->chunk(500, function($orders) use (&$successCount, &$failCount, $output) {
                 foreach ($orders as $order) {
                     Db::startTrans();
                     try {

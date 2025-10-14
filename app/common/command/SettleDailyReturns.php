@@ -108,7 +108,9 @@ class SettleDailyReturns extends Command
                     } catch (\Exception $e) {
                         Db::rollback();
                         $failCount++;
-                        Log::error('收益结算失败，订单ID：' . $order->id . '，错误信息：' . $e->getMessage());
+                        $errorMsg = '收益结算失败，订单ID：' . $order->id . '，错误信息：' . $e->getMessage();
+                        Log::error($errorMsg);
+                        $output->writeln($errorMsg);
                     }
                 }
             });

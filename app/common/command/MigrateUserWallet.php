@@ -32,8 +32,8 @@ class MigrateUserWallet extends Command
                         // 计算需要迁移的总金额：稳盈钱包 + 惠民钱包
                         $butieAmount = floatval($user['butie'] ?? 0);
                         $digitBalanceAmount = floatval($user['digit_balance'] ?? 0);
-                        $appreciatingAmount = floatval($user['appreciating_wallet'] ?? 0);
-                        $totalAmount = $butieAmount + $digitBalanceAmount + $appreciatingAmount;
+                        // $appreciatingAmount = floatval($user['appreciating_wallet'] ?? 0);
+                        $totalAmount = $butieAmount + $digitBalanceAmount; // + $appreciatingAmount;
                         
                         // 如果总金额为0，跳过此用户
                         if ($totalAmount <= 0) {
@@ -53,9 +53,9 @@ class MigrateUserWallet extends Command
                         }
 
                         // 清零幸福收益并记录日志
-                        if ($appreciatingAmount > 0) {
-                            User::changeInc($user['id'], -$appreciatingAmount, 'appreciating_wallet', 123, 0, 7, '钱包迁移：幸福收益转入共富钱包', 0, 2, 'QBQY', 1);
-                        }
+                        // if ($appreciatingAmount > 0) {
+                        //     User::changeInc($user['id'], -$appreciatingAmount, 'appreciating_wallet', 123, 0, 7, '钱包迁移：幸福收益转入共富钱包', 0, 2, 'QBQY', 1);
+                        // }
                         
                         // 转入共富钱包并记录日志
                         if ($totalAmount > 0) {

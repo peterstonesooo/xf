@@ -213,12 +213,25 @@ class Capital extends Model
                      } elseif ($capital['log_type'] == 5) {
                          $field = 'digit_balance';
                         $log_type = 5;
-                     }elseif ($capital['log_type'] == 11) {
+                     } elseif ($capital['log_type'] == 7) {
+                        $field = 'appreciating_wallet';
+                        $log_type = 7;
+                     } elseif ($capital['log_type'] == 11) {
                         $field = 'tiyan_wallet';
                         $log_type = 11;
-                     }elseif ($capital['log_type'] == 13) {
+                     } elseif ($capital['log_type'] == 13) {
                         $field = 'puhui';
                         $log_type = 13;
+                     } elseif ($capital['log_type'] == 16) {
+                        $field = 'gongfu_wallet';
+                        $log_type = 16;
+                     } elseif ($capital['log_type'] == 17) {
+                        $field = 'shouyi_wallet';
+                        $log_type = 17;
+                     } else {
+                        // 默认使用余额钱包
+                        $field = 'topup_balance';
+                        $log_type = $capital['log_type'];
                      }
                     $type = 13;
 

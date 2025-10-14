@@ -208,11 +208,23 @@ class CapitalController extends AuthController
                 case 5:
                     $log_type = '惠民钱包';
                     break;
+                case 7:
+                    $log_type = '幸福收益';
+                    break;
                 case 11:
                     $log_type = '体验钱包';
                     break;
                 case 13:
                     $log_type = '普惠钱包';
+                    break;
+                case 16:
+                    $log_type = '共富钱包';
+                    break;
+                case 17:
+                    $log_type = '收益钱包';
+                    break;
+                default:
+                    $log_type = '钱包';
                     break;
             }
             if($req['status'] == 2){

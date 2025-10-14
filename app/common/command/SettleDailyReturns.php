@@ -30,7 +30,8 @@ class SettleDailyReturns extends Command
             OrderTransfer::where([
                 ['type', '=', 1],
                 ['status', '=', 1],
-                ['from_wallet', '=', 'gongfu_wallet'],
+                ['from_wallet', 'in', ['gongfu_wallet', 'butie']],
+
                 ['end_time', '<', time()]
             ])->order('id', 'asc')->chunk(500, function($orders) use (&$successCount, &$failCount) {
                 foreach ($orders as $order) {

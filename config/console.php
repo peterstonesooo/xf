@@ -44,6 +44,7 @@ return [
         'sendDailyNotice'  =>  'app\common\command\SendDailyNotice',
         'settleDailyReturns' => 'app\common\command\SettleDailyReturns',
         'settleMonthlyReturns' => 'app\common\command\SettleMonthlyReturns',
+        'Settleupdateorders' => 'app\common\command\Settleupdateorders',
         'Tiyan' => 'app\common\command\Tiyan',
         'MonthlyFenhong' => 'app\common\command\MonthlyFenhong',
         'RujinPointsTask' => 'app\common\command\RujinPointsTask',

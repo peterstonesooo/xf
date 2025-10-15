@@ -49,15 +49,15 @@ class Settlezhuihui extends Command
                             //30天订单是万分之12
                             $truecum_returns=$order['transfer_amount']*0.0012;
                         }
-
-                        if($order['cum_returns'] != $truecum_returns){
-                            $chaer = $order['cum_returns'] - $truecum_returns;
+                        $user = User::where('id',$order['user_id'])->find();
+                        $chaer = $order['cum_returns'] - $truecum_returns;
+                        if($chaer > 0 && $user['appreciating_wallet'] > $chaer){
                             User::changeInc($order['user_id'],-$chaer,'appreciating_wallet',60,$order['id'],7,'幸福收益追回',0,2,'XFZZ',1);
+                            // 更新订单状态
+                            $order->cum_returns = $truecum_returns;
+                            $order->save();
                         }
-                        // 更新订单状态
-                        $order->cum_returns = $truecum_returns;
-                        $order->save();
-
+                        
                         Db::commit();
                         $successCount++;
                     } catch (\Exception $e) {

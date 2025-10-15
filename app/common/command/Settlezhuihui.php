@@ -82,14 +82,20 @@ class Settlezhuihui extends Command
                                         //输出
                                         $duofa = $money - $reward;
                                         // $output->writeln("订单ID：".$order['id'].'，幸福收益'.$v['level'].'级-【'.$user['realname'].'】多发'.$duofa.'元');
-                                        
-                                        if($luser['appreciating_wallet'] >= $duofa){
-                                            User::changeInc($v['user_id'],-$duofa,'appreciating_wallet',124,$order['id'],7,'幸福收益'.$v['level'].'级-'.$user['realname'],0,2,'XFZZ',1);
-                                        }else if($luser['shouyi_wallet'] >= $duofa){
-                                            User::changeInc($v['user_id'],-$duofa,'shouyi_wallet',124,$order['id'],17,'幸福收益'.$v['level'].'级-'.$user['realname'],0,2,'XFZZ',1);
+                                        $hasbufa = UserBalanceLog::where('relation_id',$order['id'])
+                                        ->where('type',124)->where('user_id',$v['user_id'])->find();
+                                        if($hasbufa){
+                                            $output->writeln("订单ID：".$order['id'].'，幸福收益'.$v['level'].'级-【'.$user['realname'].'】已补返');
                                         }else{
-                                            $output->writeln("订单ID：".$order['id'].'，幸福收益'.$v['level'].'级-【'.$user['realname'].'】余额不足，无法反补');
+                                            if($luser['appreciating_wallet'] >= $duofa){
+                                                User::changeInc($v['user_id'],-$duofa,'appreciating_wallet',124,$order['id'],7,'幸福收益'.$v['level'].'级-'.$user['realname'],0,2,'XFZZ',1);
+                                            }else if($luser['shouyi_wallet'] >= $duofa){
+                                                User::changeInc($v['user_id'],-$duofa,'shouyi_wallet',124,$order['id'],17,'幸福收益'.$v['level'].'级-'.$user['realname'],0,2,'XFZZ',1);
+                                            }else{
+                                                $output->writeln("订单ID：".$order['id'].'，幸福收益'.$v['level'].'级-【'.$user['realname'].'】余额不足，无法反补');
+                                            }
                                         }
+                                        
                                         $totaldufa += $duofa;
                                     }
 

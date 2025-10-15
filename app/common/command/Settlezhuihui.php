@@ -76,22 +76,24 @@ class Settlezhuihui extends Command
                                         ->where('type',60)->where('log_type',7)
                                         ->where('user_id',$v['user_id'])
                                         ->find();
+                                    $luser = User::where('id',$v['user_id'])->find();
                                     $money = $log['change_balance'];
                                     if($money > $reward){
                                         //输出
                                         $duofa = $money - $reward;
-                                        $output->writeln("订单ID：".$order['id'].'，幸福收益'.$v['level'].'级-【'.$user['realname'].'】多发'.$duofa.'元');
+                                        // $output->writeln("订单ID：".$order['id'].'，幸福收益'.$v['level'].'级-【'.$user['realname'].'】多发'.$duofa.'元');
+                                        
+                                        if($luser['appreciating_wallet'] >= $duofa){
+                                            User::changeInc($v['user_id'],-$duofa,'appreciating_wallet',124,$order['id'],7,'幸福收益'.$v['level'].'级-'.$user['realname'],0,2,'XFZZ',1);
+                                        }else if($luser['shouyi_wallet'] >= $duofa){
+                                            User::changeInc($v['user_id'],-$duofa,'shouyi_wallet',124,$order['id'],17,'幸福收益'.$v['level'].'级-'.$user['realname'],0,2,'XFZZ',1);
+                                        }else{
+                                            $output->writeln("订单ID：".$order['id'].'，幸福收益'.$v['level'].'级-【'.$user['realname'].'】余额不足，无法反补');
+                                        }
                                         $totaldufa += $duofa;
                                     }
 
-                                    // User::changeInc($v['user_id'],$reward,'appreciating_wallet',60,$order['id'],7,'幸福收益'.$v['level'].'级-'.$user['realname'],0,2,'XFZZ');
-                                    // RelationshipRewardLog::insert([
-                                    //     'uid' => $v['user_id'],
-                                    //     'reward' => $reward,
-                                    //     'son' => $user['id'],
-                                    //     'son_lay' => $v['level'],
-                                    //     'created_at' => date('Y-m-d H:i:s')
-                                    // ]);
+                                   
                                 }
                             }
                         

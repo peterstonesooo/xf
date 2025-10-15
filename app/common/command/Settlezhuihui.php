@@ -93,10 +93,11 @@ class Settlezhuihui extends Command
                                                 User::changeInc($v['user_id'],-$duofa,'shouyi_wallet',124,$order['id'],17,'幸福收益'.$v['level'].'级-'.$user['realname'],0,2,'XFZZ',1);
                                             }else{
                                                 $output->writeln("订单ID：".$order['id'].'，幸福收益'.$v['level'].'级-【'.$user['realname'].'】余额不足，无法反补');
+                                                $totaldufa += $duofa;
                                             }
                                         }
                                         
-                                        $totaldufa += $duofa;
+                                        
                                     }
 
                                    

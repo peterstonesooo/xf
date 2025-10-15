@@ -62,5 +62,6 @@ return [
         'migrateUserActive' => 'app\common\command\MigrateUserActive',
         'vote:sync' => 'app\common\command\VoteDataSync',
         'migrateUserWallet' => 'app\common\command\MigrateUserWallet',
+        'Settlezhuihui' => 'app\common\command\Settlezhuihui',
     ],
 ];

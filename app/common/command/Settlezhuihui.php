@@ -80,7 +80,7 @@ class Settlezhuihui extends Command
                                     if($money > $reward){
                                         //输出
                                         $duofa = $money - $reward;
-                                        $output->writeln('幸福收益'.$v['level'].'级-'.$user['realname'].'多发'.$duofa.'元');
+                                        $output->writeln("订单ID：".$order['id'].'，幸福收益'.$v['level'].'级-【'.$user['realname'].'】多发'.$duofa.'元');
                                         $totaldufa += $duofa;
                                     }
 
@@ -107,7 +107,7 @@ class Settlezhuihui extends Command
                 }
             });
 
-            $output->writeln('结算完成，成功：' . $successCount . '，失败：' . $failCount);
+            $output->writeln('结算完成，成功：' . $successCount . '，失败：' . $failCount.'，多发：'.$totaldufa);
             // Log::info('每日收益结算完成，成功：' . $successCount . '，失败：' . $failCount);
 
         } catch (\Exception $e) {

@@ -51,7 +51,7 @@ class Settlezhuihui extends Command
                         }
                         $user = User::where('id',$order['user_id'])->find();
                         $chaer = $order['cum_returns'] - $truecum_returns;
-                        if($chaer > 0 ){
+                        if($chaer >= 1 ){
                             if($user['appreciating_wallet'] > $chaer){
                                 User::changeInc($order['user_id'],-$chaer,'appreciating_wallet',60,$order['id'],7,'幸福收益追回',0,2,'XFZZ',1);
                                 // 更新订单状态

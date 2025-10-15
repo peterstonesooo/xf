@@ -73,7 +73,11 @@ class OrderTransferController extends AuthController
 
     public function getTransferSetting()
     {
-        return out($this->rates);
+        $rates = [];
+        foreach($this->rates as $key=>$value){
+            $rates[$key] = $value*100;
+        }
+        return out($rates);
     }
 
     /**

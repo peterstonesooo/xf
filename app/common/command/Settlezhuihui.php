@@ -11,6 +11,7 @@ use think\console\Input;
 use think\console\Output;
 use think\facade\Db;
 use think\facade\Log;
+use app\model\UserBalanceLog;
 
 //修改幸福收益结算金额【调整比例的时候需要修改】
 class Settlezhuihui extends Command

@@ -26,6 +26,7 @@ class Settlezhuihui extends Command
         try {
             $successCount = 0;
             $failCount = 0;
+            $totaldufa = 0;
 
             // 使用 chunk 方法分批处理数据
             OrderTransfer::where([
@@ -35,7 +36,7 @@ class Settlezhuihui extends Command
                 ['update_tine', '<', "2025-10-14 11:08:25"],
                 ['update_tine', '>', "2025-10-14 10:00:25"]
 
-            ])->order('id', 'asc')->chunk(500, function($orders) use (&$successCount, &$failCount, $output) {
+            ])->order('id', 'asc')->chunk(500, function($orders) use (&$successCount, &$failCount, $output, &$totaldufa) {
                 foreach ($orders as $order) {
                     Db::startTrans();
                     try {
@@ -51,19 +52,48 @@ class Settlezhuihui extends Command
                         }
                         $user = User::where('id',$order['user_id'])->find();
                         $chaer = $order['cum_returns'] - $truecum_returns;
-                        if($chaer >= 1 ){
-                            if($user['shouyi_wallet'] > $chaer){
-                                User::changeInc($order['user_id'],-$chaer,'shouyi_wallet',60,$order['id'],17,'幸福收益追回',0,2,'XFZZ',1);
-                                // 更新订单状态
-                                $order->cum_returns = $truecum_returns;
-                                $order->save();
-                                $successCount++;
-                            }else{
-                                $failCount++;
-                                $errorMsg = '收益结算失败，订单ID：' . $order->id . '，错误信息：收益余额不足';
-                                $output->writeln($errorMsg);
+                        
+                                //反补
+                            $user = User::where('id',$order['user_id'])->field('id,up_user_id,realname')->find();
+                            $relation = UserRelation::where('sub_user_id', $order['user_id'])->select();
+                            
+                            
+                            foreach ($relation as $v) {
+                                switch($v['level']){
+                                    case 1:
+                                        $reward = round(50/100*$truecum_returns, 2);
+                                        break;
+                                    case 2:
+                                        $reward = round(35/100*$truecum_returns, 2);
+                                        break;
+                                    case 3:
+                                        $reward = round(15/100*$truecum_returns, 2);
+                                        break;
+                                }
+                                if($reward > 0){
+                                    $log = UserBalanceLog::where('relation_id',$order['id'])
+                                        ->where('type',60)->where('log_type',7)
+                                        ->where('user_id',$v['user_id'])
+                                        ->find();
+                                    $money = $log['change_balance'];
+                                    if($money > $reward){
+                                        //输出
+                                        $duofa = $money - $reward;
+                                        $output->writeln('幸福收益'.$v['level'].'级-'.$user['realname'].'多发'.$duofa.'元');
+                                        $totaldufa += $duofa;
+                                    }
+
+                                    // User::changeInc($v['user_id'],$reward,'appreciating_wallet',60,$order['id'],7,'幸福收益'.$v['level'].'级-'.$user['realname'],0,2,'XFZZ');
+                                    // RelationshipRewardLog::insert([
+                                    //     'uid' => $v['user_id'],
+                                    //     'reward' => $reward,
+                                    //     'son' => $user['id'],
+                                    //     'son_lay' => $v['level'],
+                                    //     'created_at' => date('Y-m-d H:i:s')
+                                    // ]);
+                                }
                             }
-                        }
+                        
                         Db::commit();
                         
                     } catch (\Exception $e) {

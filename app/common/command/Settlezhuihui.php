@@ -51,15 +51,21 @@ class Settlezhuihui extends Command
                         }
                         $user = User::where('id',$order['user_id'])->find();
                         $chaer = $order['cum_returns'] - $truecum_returns;
-                        if($chaer > 0 && $user['appreciating_wallet'] > $chaer){
-                            User::changeInc($order['user_id'],-$chaer,'appreciating_wallet',60,$order['id'],7,'幸福收益追回',0,2,'XFZZ',1);
-                            // 更新订单状态
-                            $order->cum_returns = $truecum_returns;
-                            $order->save();
+                        if($chaer > 0 ){
+                            if($user['appreciating_wallet'] > $chaer){
+                                User::changeInc($order['user_id'],-$chaer,'appreciating_wallet',60,$order['id'],7,'幸福收益追回',0,2,'XFZZ',1);
+                                // 更新订单状态
+                                $order->cum_returns = $truecum_returns;
+                                $order->save();
+                                $successCount++;
+                            }else{
+                                $failCount++;
+                                $errorMsg = '收益结算失败，订单ID：' . $order->id . '，错误信息：收益余额不足';
+                                $output->writeln($errorMsg);
+                            }
                         }
-                        
                         Db::commit();
-                        $successCount++;
+                        
                     } catch (\Exception $e) {
                         Db::rollback();
                         $failCount++;

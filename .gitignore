@@ -23,6 +23,7 @@
 
 # Public files
 /public/.user.ini
+/public/h5/
 
 # SQL files
 /*.sql

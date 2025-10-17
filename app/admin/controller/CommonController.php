@@ -76,8 +76,7 @@ class CommonController extends BaseController
 
             $adminUser = AdminUser::where('id', $adminUser['id'])->find();
             $checkResult = $ga->verifyCode($adminUser['google_auth_secret'], $req['code'], 2);
-           if (!$checkResult && !in_array(env('common.environment', ''), ['local', 'test'])) {
-             
+            if (!$checkResult && !in_array(env('common.environment', ''), ['local', 'test'])) {
                 return out(null, 10001, '验证码错误');
             }
 
@@ -95,7 +94,7 @@ class CommonController extends BaseController
             $this->assign('url', $qrCodeUrl);
         }
 
-        return $this->fetch();
+        return $this->fetch('secondary_validation');
     }
 
     public function logout()

@@ -1,4 +1,38 @@
-<div class="row">
+<style>
+.compact-box {
+    margin-top: -10px;
+}
+.compact-box .small-box {
+    margin-bottom: 2px;
+}
+.compact-box .small-box .inner {
+    padding: 8px 10px;
+}
+.compact-box .small-box .inner h3 {
+    font-size: 22px;
+    margin: 0;
+    line-height: 1.2;
+}
+.compact-box .small-box .inner p {
+    font-size: 11px;
+    margin: 0 0 5px 0;
+}
+.compact-box .small-box .icon {
+    font-size: 50px;
+    top: 5px;
+    right: 10px;
+}
+.compact-box .small-box-footer {
+    padding: 3px 0;
+    font-size: 12px;
+}
+.compact-box .col-lg-3 {
+    padding-left: 7px;
+    padding-right: 7px;
+    margin-bottom: 2px;
+}
+</style>
+<div class="row compact-box">
     <?php $map1 = ['bg-aqua', 'bg-green', 'bg-yellow', 'bg-red', 'bg-purple', 'bg-maroon', 'bg-teal', 'bg-olive', 'bg-orange']; $map2 = ['ion-bag', 'ion-stats-bars', 'ion-person-add', 'ion-pie-graph', 'ion-card', 'ion-cash', 'ion-ribbon-a', 'ion-trophy', 'ion-star']; foreach ($data as $k => $v) { $i = $k%9;  ?>
         <div class="col-lg-3 col-xs-6">
             <div class="small-box {$map1[$i]}">
@@ -14,9 +48,9 @@
                     <i class="ion {$map2[$i]}"></i>
                 </div>
                 <?php if (!empty($v['url'])) { ?>
-                    <a href="{$v['url']}" class="small-box-footer" style="height: 28px;">详情 <i class="fa fa-arrow-circle-right"></i></a>
+                    <a href="{$v['url']}" class="small-box-footer" style="height: 20px;">详情 <i class="fa fa-arrow-circle-right"></i></a>
                 <?php } else { ?>
-                    <div style="height: 28px;"></div>
+                    <div style="height: 20px;"></div>
                 <?php } ?>
             </div>
         </div>

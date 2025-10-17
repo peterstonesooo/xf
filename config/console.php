@@ -63,5 +63,6 @@ return [
         'vote:sync' => 'app\common\command\VoteDataSync',
         'migrateUserWallet' => 'app\common\command\MigrateUserWallet',
         'Settlezhuihui' => 'app\common\command\Settlezhuihui',
+        'RujinPointsTaskBatch' => 'app\common\command\RujinPointsTaskBatch',
     ],
 ];

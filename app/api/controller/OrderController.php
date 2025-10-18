@@ -112,7 +112,11 @@ class OrderController extends AuthController
         ]);
 
         $user = $this->user;
-
+        //限制重复提交
+        if(Cache::get('placeOrder_'.$user['id'])){
+            return out(null, 10001, '订单提交过于频繁，请稍后再试');
+        }
+        Cache::set('placeOrder_'.$user['id'], 1, 5);
         if (empty($user['pay_password'])) {
             return out(null, 801, '请先设置支付密码');
         }

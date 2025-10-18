@@ -23,11 +23,11 @@ return [
         // 更多的磁盘配置信息
         'qiniu' =>[									//完全可以自定义的名称
             'type'=>'qiniu',						//可以自定义,实际上是类名小写
-            'accessKey' =>'G7KJMWo24SfxEKKmp2cIFOWm2zdXY0z-4AA70lTX',		//七牛云的配置,accessKey
-            'secretKey'=>'w9JEEK4F-XdC4HYehFDTnoVnuZkgseMkKYjzeq6N',//七牛云的配置,secretKey
-            'bucket'=>'xingfuzhongguo',					//七牛云的配置,bucket空间名
+            'accessKey' =>'IAM-ZCSuAX9xprvlADosiwIWVcTdjKIGZNvrc_rOXCbV',		//七牛云的配置,accessKey
+            'secretKey'=>'V2vMCLycafue03K-4FGm3hYYPBV3GcEh6yOwZLyie4K9',//七牛云的配置,secretKey
+            'bucket'=>'xinfuchina',					//七牛云的配置,bucket空间名
             //'domain'=>'s2dgpwe6t.hn-bkt.clouddn.com'					//七牛云的配置,domain,域名
-            'domain'=>'cod.tdcay.cn',				//七牛云的配置,domain,域名
+            'domain'=>'pic.ruivon.com',				//七牛云的配置,domain,域名
         ],
     ],
 ];

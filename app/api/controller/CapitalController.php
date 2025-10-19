@@ -158,6 +158,11 @@ class CapitalController extends AuthController
         ]);
         $user = $this->user;
 
+        // 检查实名认证
+        if ($user['shiming_status'] == 0) {
+            return out(null, 10001, '您尚未通过实名认证，无法充值');
+        }
+
         if ($req['pay_channel'] == 6 && empty($req['pay_voucher_img_url'])) {
             if ( empty($req['pay_voucher_img_url'])) {
                 return out(null, 10001, '请上传支付凭证图片');

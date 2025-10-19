@@ -40,7 +40,7 @@ class SigninController extends AuthController
             }
             //实名认证
             if($user['shiming_status'] != 1){
-                return out(null, 10001, '您尚未通过实名认证，无法签到。');
+                return out(null, 10001, '您尚未通过实名认证，无法签到');
             }
 
             $last_sign = UserSignin::where('user_id', $user['id'])->order('signin_date', 'desc')->find();

@@ -675,7 +675,7 @@ class UserController extends AuthController
         if (!$transferCheck['allowed']) {
             return out(null, 10001, $transferCheck['message']);
         }
-        if (empty($user['ic_number'])) {
+        if ($user['shiming_status'] == 0) {
             return out(null, 10001, '请先完成实名认证');
         }
         if (empty($user['pay_password'])) {
@@ -699,8 +699,8 @@ class UserController extends AuthController
             if(!$take){
                 return out(null, 10002, '转账手机号不存在');
             }
-            if (empty($take['ic_number'])) {
-                return out(null, 10002, '请收款用户先完成实名认证');
+            if ($take['shiming_status'] == 0) {
+                return out(null, 10002, '您尝试转账的用户不存在或尚未完成实名注册');
             }
             //判断收款人名字是否正确
             if($take['realname'] != $req['realname']){
@@ -816,8 +816,8 @@ class UserController extends AuthController
             if (!$take) {
                 exit_out(null, 10002, '用户不存在');
             }
-            if (empty($take['ic_number'])) {
-                exit_out(null, 10002, '请收款用户先完成实名认证');
+            if ($take['shiming_status'] == 0) {
+                exit_out(null, 10002, '收款人未完成实名认证');
             }
             
             switch($req['type']){

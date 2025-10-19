@@ -684,13 +684,41 @@ class ProjectController extends AuthController
             ->where('status',2)
             ->field('created_at,single_amount,total_num,date')
             ->order('id','asc')
-            ->select()->each(function($item)use(&$totalAmount,&$totalNum){
-                $totalAmount += $item['single_amount'];
-                if($item['total_num'] > $totalNum){
-                    $totalNum = $item['total_num'];
-                }
-            })
+            ->select()
             ->toArray();
+        
+        // 循环处理，判断每条记录是否连续
+        $listCount = count($list);
+        for($i = 0; $i < $listCount; $i++){
+            $currentItem = &$list[$i];
+            $totalAmount += $currentItem['single_amount'];
+            
+            // 记录当前期数（最后一次循环就是最后一条数据的期数）
+            $totalNum = $currentItem['total_num'];
+            
+            // 判断是否连续
+            if($i < $listCount - 1){
+                // 不是最后一条，比较下一条
+                $nextItem = $list[$i + 1];
+                
+                // 如果下一条的total_num比当前小或相等，说明当前这条后面中断了
+                if($nextItem['total_num'] <= $currentItem['total_num']){
+                    $currentItem['is_continue'] = 0; // 中断
+                } else {
+                    $currentItem['is_continue'] = 1; // 连续
+                }
+            } else {
+                // 最后一条记录
+                if($currentItem['total_num'] >= 10){
+                    // 已完成10期，标记为连续完成
+                    $currentItem['is_continue'] = 1;
+                } else {
+                    // 未完成10期，标记为连续（可能还在继续）
+                    $currentItem['is_continue'] = 1;
+                }
+            }
+        }
+        
         $data['list'] = $list;
         $data['totalAmount'] = $totalAmount;
         $data['totalNum'] = $totalNum;

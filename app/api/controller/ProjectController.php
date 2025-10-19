@@ -608,18 +608,32 @@ class ProjectController extends AuthController
                 return out(null, 10001, '本周定投已完成');
             }
             
-            // 获取用户最新的定投记录来计算total_num
+            // 获取用户最新的定投记录来计算total_num（按ID倒序，确保是最新的）
             $latestOrder = OrderDingtou::where('user_id',$user['id'])
                 ->where('project_id',$project['project_id'])
-                ->order('total_num', 'desc')
+                ->where('status', 2) // 只查询已支付成功的订单
+                ->order('id', 'desc')
                 ->find();
             
             if($latestOrder){
-                if($latestOrder['total_num'] >= 10){
-                    return out(null, 10001, '你的定投计划已完成');
+                // 检查定投连续性：上一期应该在上周
+                $lastOrderDate = strtotime($latestOrder['date']);
+                $lastWeekMonday = strtotime('last week Monday');
+                $lastWeekSunday = strtotime('last week Sunday 23:59:59');
+                
+                // 判断上一期是否在上周内
+                if($lastOrderDate >= $lastWeekMonday && $lastOrderDate <= $lastWeekSunday){
+                    // 连续定投，期数+1
+                    if($latestOrder['total_num'] >= 10){
+                        return out(null, 10001, '你的定投计划已完成');
+                    }
+                    $project['total_num'] = $latestOrder['total_num'] + 1;
+                } else {
+                    // 中断了，重新从第1期开始
+                    $project['total_num'] = 1;
                 }
-                $project['total_num'] = $latestOrder['total_num'] + 1;
             }else{
+                // 首次定投，从第1期开始
                 $project['total_num'] = 1;
             }
             

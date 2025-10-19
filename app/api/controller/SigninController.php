@@ -165,7 +165,7 @@ class SigninController extends AuthController
         }
         //实名认证
         if($user['shiming_status'] != 1){
-            return out(null, 10001, '您尚未通过实名认证，无法签到。');
+            return out(null, 10001, '您尚未通过实名认证，无法签到');
         }
         if (UserSignin::where('user_id', $user['id'])->where('signin_date', $signin_date)->lock(true)->count()) {
             return out(null, 10001, '您这天已经签到');

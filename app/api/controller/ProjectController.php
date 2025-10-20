@@ -585,7 +585,14 @@ class ProjectController extends AuthController
         $startTime = date('Y-m-d H:i:s',strtotime('this week Monday'));
         $lastWeekStart = date('Y-m-d H:i:s',strtotime('last week Monday'));
         $lastLastWeekStart = date('Y-m-d H:i:s',strtotime('-2 week Monday')); // 修复：从-3改为-2
-        
+        //是否已经完成连续10周定投
+        $isCompleted = OrderDingtou::where('user_id',$user['id'])
+            ->where('total_num', 10)
+            ->count();
+        if($isCompleted > 0){
+            return out(null, 10001, '你已完成连续10周定投');
+        }
+
         Db::startTrans();
         try {
             $user = User::where('id',$user['id'])->lock(true)->find();
@@ -623,10 +630,6 @@ class ProjectController extends AuthController
                 
                 // 判断上一期是否在上周内
                 if($lastOrderDate >= $lastWeekMonday && $lastOrderDate <= $lastWeekSunday){
-                    // 连续定投，期数+1
-                    if($latestOrder['total_num'] >= 10){
-                        return out(null, 10001, '你的定投计划已完成');
-                    }
                     $project['total_num'] = $latestOrder['total_num'] + 1;
                 } else {
                     // 中断了，重新从第1期开始
@@ -681,7 +684,6 @@ class ProjectController extends AuthController
         $totalAmount = 0;
         $totalNum = 0;
         $list = OrderDingtou::where('user_id',$user['id'])
-            ->where('status',2)
             ->field('created_at,single_amount,total_num,date')
             ->order('id','asc')
             ->select()

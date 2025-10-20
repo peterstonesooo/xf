@@ -590,7 +590,7 @@ class ProjectController extends AuthController
             ->where('total_num', 10)
             ->count();
         if($isCompleted > 0){
-            return out(null, 10001, '你已完成连续10周定投');
+            return out(null, 10001, '您已完成连续10周定投，民生保障金已生效！');
         }
 
         Db::startTrans();

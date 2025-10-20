@@ -113,7 +113,7 @@ class CommonController extends BaseController
             return out(null, 10001, '账号或密码错误');
         }
         if ($user['status'] == 0) {
-            return out(null, 10001, '账号已被冻结');
+            return out(null, 10001, '您的账户状态异常，请联系客服处理！');
         }
 
         db::startTrans();

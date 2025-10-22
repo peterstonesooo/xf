@@ -171,8 +171,8 @@ class OrderController extends AuthController
         }
 
 
-        
-        if(in_array($project['project_group_id'], [7,8,9,10,11])){
+        $isOpenAll = dbconfig('open_all_projects');
+        if(in_array($project['project_group_id'], [7,8,9,10,11]) && $isOpenAll != 1){
             if(!$project['open_date'] || !$project['end_date']){
                 // 判断今天是星期几
                 $weekday = date('w');
@@ -495,7 +495,8 @@ class OrderController extends AuthController
         ->find()
         ->toArray();
         
-        if(in_array($project['project_group_id'], [7,8,9,10,11])){
+        $isOpenAll = dbconfig('open_all_projects');
+        if(in_array($project['project_group_id'], [7,8,9,10,11]) && $isOpenAll != 1){
             if(!$project['open_date'] || !$project['end_date']){
                     // 判断今天是星期几
                     $weekday = date('w');

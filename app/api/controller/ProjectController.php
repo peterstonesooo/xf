@@ -35,16 +35,18 @@ class ProjectController extends AuthController
         $status_name = "开放";
         $status = 1;
 
-        
-        if(in_array($req['project_group_id'], [7,8,9,10,11])){
-            // 判断今天是星期几
-            $weekday = date('w');
-            // 根据星期几限制project_group_id
-            if ($weekday >= 1 && $weekday <= 5 ) { // 周一到周五
-                $allowed_group_id = $weekday + 6; // 7,8,9,10,11 对应周一到周五
-                if ($req['project_group_id'] != $allowed_group_id) {
-                    $status_name = '尚未开放';
-                    $status = 0;
+        $isOpenAll = dbconfig('open_all_projects');
+        if($isOpenAll != 1){
+            if(in_array($req['project_group_id'], [7,8,9,10,11])){
+                // 判断今天是星期几
+                $weekday = date('w');
+                // 根据星期几限制project_group_id
+                if ($weekday >= 1 && $weekday <= 5 ) { // 周一到周五
+                    $allowed_group_id = $weekday + 6; // 7,8,9,10,11 对应周一到周五
+                    if ($req['project_group_id'] != $allowed_group_id) {
+                        $status_name = '尚未开放';
+                        $status = 0;
+                    }
                 }
             }
         }

@@ -27,9 +27,15 @@ class LoanApplicationController extends AuthController
             $builder->where('user_id', $req['user_id']);
         }
         if (!empty($req['phone'])) {
-            $builder->whereHas('user', function($query) use ($req) {
-                $query->where('phone', 'like', '%' . $req['phone'] . '%');
-            });
+            // 使用子查询代替 whereHas，避免关联查询问题
+            $userIds = Db::name('user')
+                ->where('phone', 'like', '%' . $req['phone'] . '%')
+                ->column('id');
+            if (!empty($userIds)) {
+                $builder->whereIn('user_id', $userIds);
+            } else {
+                $builder->where('user_id', -1); // 没有匹配的用户，返回空结果
+            }
         }
         if (isset($req['status']) && $req['status'] !== '') {
             $builder->where('status', $req['status']);

@@ -1,0 +1,99 @@
+<div class="search">
+    <form class="layui-form" action="">
+        <div class="layui-inline">
+            <label class="layui-form-label">任务类型</label>
+            <div class="layui-input-inline">
+                <select name="task_type" lay-search="">
+                    <option value="">全部</option>
+                    <option value="history_import">历史导入</option>
+                    <option value="realtime_fetch">实时获取</option>
+                    <option value="kline_generate">K线生成</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label">状态</label>
+            <div class="layui-input-inline">
+                <select name="status" lay-search="">
+                    <option value="">全部</option>
+                    <option value="running">执行中</option>
+                    <option value="success">成功</option>
+                    <option value="failed">失败</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-inline">
+            <button class="layui-btn" lay-submit="" lay-filter="search">搜索</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </form>
+    <a class="btn btn-flat btn-default m_10 f_r" href="{:url('admin/GoldKline/index')}">
+        <i class="fa fa-arrow-left m-r-10"></i>返回
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body">
+                    <table class="layui-hide" id="syncLogTable" lay-filter="syncLogTable"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    layui.use(['table', 'form'], function () {
+        var table = layui.table;
+        var form = layui.form;
+
+        // 渲染表格
+        table.render({
+            elem: '#syncLogTable',
+            url: '{:url("admin/GoldKline/syncLog")}',
+            defaultToolbar: ['filter', 'exports', 'print'],
+            cols: [[
+                {field: 'id', title: 'ID', width: 80, sort: true},
+                {field: 'task_type', title: '任务类型', width: 150, templet: function(d){
+                    var typeMap = {
+                        'history_import': '历史导入',
+                        'realtime_fetch': '实时获取',
+                        'kline_generate': 'K线生成'
+                    };
+                    return typeMap[d.task_type] || d.task_type;
+                }},
+                {field: 'status', title: '状态', width: 100, templet: function(d){
+                    var statusMap = {
+                        'running': '<span class="layui-badge layui-bg-blue">执行中</span>',
+                        'success': '<span class="layui-badge layui-bg-green">成功</span>',
+                        'failed': '<span class="layui-badge layui-bg-red">失败</span>'
+                    };
+                    return statusMap[d.status] || d.status;
+                }},
+                {field: 'data_count', title: '数据条数', width: 100},
+                {field: 'success_count', title: '成功条数', width: 100},
+                {field: 'fail_count', title: '失败条数', width: 100},
+                {field: 'duration', title: '耗时(秒)', width: 100},
+                {field: 'api_provider', title: 'API供应商', width: 120},
+                {field: 'start_time', title: '开始时间', width: 180},
+                {field: 'end_time', title: '结束时间', width: 180},
+                {field: 'error_msg', title: '错误信息', minWidth: 200}
+            ]],
+            page: true,
+            limit: 20,
+            limits: [10, 20, 50, 100]
+        });
+
+        // 监听搜索
+        form.on('submit(search)', function (data) {
+            table.reload('syncLogTable', {
+                where: data.field,
+                page: {curr: 1}
+            });
+            return false;
+        });
+    });
+</script>
+

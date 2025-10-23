@@ -65,6 +65,26 @@ return array(
                             'icon' => 'fa-users',
                             'url' => 'admin/AdminUser/adminUserList',
                         ),
+                    // '黄金K线数据' =>
+                    //     array(
+                    //         'icon' => 'fa-line-chart',
+                    //         'url' => 'admin/GoldKline/index',
+                    //     ),
+                    '黄金K线图表' =>
+                        array(
+                            'icon' => 'fa-bar-chart',
+                            'url' => 'admin/GoldKline/chart',
+                        ),
+                    // 'K线同步日志' =>
+                    //     array(
+                    //         'icon' => 'fa-list-alt',
+                    //         'url' => 'admin/GoldKline/syncLog',
+                    //     ),
+                    'K线API配置' =>
+                        array(
+                            'icon' => 'fa-cog',
+                            'url' => 'admin/GoldKline/config',
+                        ),
                 ),
         ),
         '交易管理' =>

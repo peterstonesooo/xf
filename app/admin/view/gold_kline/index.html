@@ -1,0 +1,177 @@
+<div class="search">
+    <form class="layui-form" action="">
+        <div class="layui-inline">
+            <label class="layui-form-label">K线周期</label>
+            <div class="layui-input-inline">
+                <select name="period" lay-search="">
+                    <option value="">全部</option>
+                    <option value="1min">1分钟</option>
+                    <option value="5min">5分钟</option>
+                    <option value="15min">15分钟</option>
+                    <option value="30min">30分钟</option>
+                    <option value="1hour">1小时</option>
+                    <option value="4hour">4小时</option>
+                    <option value="1day">1天</option>
+                    <option value="1week">1周</option>
+                    <option value="1month">1月</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label">价格类型</label>
+            <div class="layui-input-inline">
+                <select name="price_type" lay-search="">
+                    <option value="">全部</option>
+                    <option value="CNY">人民币/克</option>
+                    <option value="USD">美元/盎司</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-inline">
+            <button class="layui-btn" lay-submit="" lay-filter="search">搜索</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </form>
+    <a class="btn btn-flat btn-success m_10 f_r" href="javascript:;" onclick="syncKline('realtime')">
+        <i class="fa fa-refresh m-r-10"></i>同步最新K线
+    </a>
+    <a class="btn btn-flat btn-primary m_10 f_r" href="{:url('admin/GoldKline/chart')}">
+        <i class="fa fa-line-chart m-r-10"></i>查看图表
+    </a>
+    <a class="btn btn-flat btn-warning m_10 f_r" href="{:url('admin/GoldKline/config')}">
+        <i class="fa fa-cog m-r-10"></i>API配置
+    </a>
+    <a class="btn btn-flat btn-info m_10 f_r" href="{:url('admin/GoldKline/syncLog')}">
+        <i class="fa fa-list m-r-10"></i>同步日志
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body">
+                    <table class="layui-hide" id="klineTable" lay-filter="klineTable"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/html" id="toolbar">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="batchDelete">批量删除</button>
+    </div>
+</script>
+
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+<script>
+    layui.use(['table', 'form'], function () {
+        var table = layui.table;
+        var form = layui.form;
+
+        // 渲染表格
+        table.render({
+            elem: '#klineTable',
+            url: '{:url("admin/GoldKline/index")}',
+            toolbar: '#toolbar',
+            defaultToolbar: ['filter', 'exports', 'print'],
+            cols: [[
+                {type: 'checkbox', fixed: 'left'},
+                {field: 'id', title: 'ID', width: 80, sort: true},
+                {field: 'period', title: 'K线周期', width: 100},
+                {field: 'price_type', title: '价格类型', width: 100},
+                {field: 'open_price', title: '开盘价', width: 120},
+                {field: 'high_price', title: '最高价', width: 120},
+                {field: 'low_price', title: '最低价', width: 120},
+                {field: 'close_price', title: '收盘价', width: 120},
+                {field: 'volume', title: '成交量', width: 120},
+                {field: 'start_datetime', title: '开始时间', width: 180},
+                {field: 'end_datetime', title: '结束时间', width: 180},
+                {field: 'is_completed', title: '状态', width: 100, templet: function(d){
+                    return d.is_completed == 1 ? '<span class="layui-badge layui-bg-green">已完成</span>' : '<span class="layui-badge layui-bg-orange">进行中</span>';
+                }},
+                {fixed: 'right', title: '操作', toolbar: '#barDemo', width: 150}
+            ]],
+            page: true,
+            limit: 20,
+            limits: [10, 20, 50, 100]
+        });
+
+        // 监听搜索
+        form.on('submit(search)', function (data) {
+            table.reload('klineTable', {
+                where: data.field,
+                page: {curr: 1}
+            });
+            return false;
+        });
+
+        // 监听工具条
+        table.on('tool(klineTable)', function (obj) {
+            var data = obj.data;
+            if (obj.event === 'del') {
+                layer.confirm('确定删除吗？', function (index) {
+                    $.post('{:url("admin/GoldKline/delete")}', {id: data.id}, function (res) {
+                        if (res.code == 1) {
+                            layer.msg('删除成功');
+                            obj.del();
+                        } else {
+                            layer.msg(res.msg);
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+
+        // 监听头工具栏
+        table.on('toolbar(klineTable)', function (obj) {
+            var checkStatus = table.checkStatus(obj.config.id);
+            switch (obj.event) {
+                case 'batchDelete':
+                    var data = checkStatus.data;
+                    if (data.length === 0) {
+                        layer.msg('请选择要删除的数据');
+                        return;
+                    }
+                    var ids = data.map(function (item) {
+                        return item.id;
+                    }).join(',');
+                    layer.confirm('确定删除选中的数据吗？', function (index) {
+                        $.post('{:url("admin/GoldKline/batchDelete")}', {ids: ids}, function (res) {
+                            if (res.code == 1) {
+                                layer.msg('删除成功');
+                                table.reload('klineTable');
+                            } else {
+                                layer.msg(res.msg);
+                            }
+                        });
+                        layer.close(index);
+                    });
+                    break;
+            }
+        });
+    });
+
+    // 同步K线数据
+    function syncKline(type) {
+        layer.confirm('确定执行同步吗？', function (index) {
+            layer.close(index);
+            var loadIndex = layer.load(2);
+            $.post('{:url("admin/GoldKline/sync")}', {type: type}, function (res) {
+                layer.close(loadIndex);
+                if (res.code == 1) {
+                    layer.msg(res.msg, {icon: 1});
+                    layui.table.reload('klineTable');
+                } else {
+                    layer.msg(res.msg, {icon: 2});
+                }
+            });
+        });
+    }
+</script>
+

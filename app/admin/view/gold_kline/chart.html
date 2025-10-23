@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>黄金K线图表</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.0/dist/echarts.min.js"></script>
+</head>
+<body>
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header with-border">
+                <h3 class="box-title">黄金K线图表</h3>
+                <div class="box-tools pull-right">
+                    <form class="form-inline" id="chartForm">
+                        <div class="form-group">
+                            <label>周期：</label>
+                            <select class="form-control" id="period" name="period" onchange="loadChart()">
+                                <option value="1min">1分钟</option>
+                                <option value="5min">5分钟</option>
+                                <option value="15min">15分钟</option>
+                                <option value="30min">30分钟</option>
+                                <option value="1hour">1小时</option>
+                                <option value="4hour">4小时</option>
+                                <option value="1day" selected>1天</option>
+                                <option value="1week">1周</option>
+                                <option value="1month">1月</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>价格类型：</label>
+                            <select class="form-control" id="price_type" name="price_type" onchange="loadChart()">
+                                <option value="CNY" selected>人民币/克</option>
+                                <option value="USD">美元/盎司</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>数量：</label>
+                            <input type="number" class="form-control" id="limit" name="limit" value="100" onchange="loadChart()" style="width: 80px;">
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="loadChart()">刷新</button>
+                        <a href="{:url('admin/GoldKline/index')}" class="btn btn-default">返回</a>
+                    </form>
+                </div>
+            </div>
+            <div class="box-body">
+                <div id="klineChart" style="width: 100%; height: 600px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var myChart = echarts.init(document.getElementById('klineChart'));
+    
+    // 页面加载时自动加载图表
+    $(document).ready(function() {
+        loadChart();
+    });
+    
+    function loadChart() {
+        var period = $('#period').val();
+        var priceType = $('#price_type').val();
+        var limit = $('#limit').val();
+        
+        myChart.showLoading();
+        
+        $.ajax({
+            url: '{:url("admin/GoldKline/chart")}',
+            type: 'GET',
+            data: {
+                period: period,
+                price_type: priceType,
+                limit: limit
+            },
+            dataType: 'json',
+            success: function(res) {
+                myChart.hideLoading();
+                
+                if (res.code == 0 && res.data) {
+                    var chartData = res.data;
+                    
+                    var option = {
+                        title: {
+                            text: '黄金K线图',
+                            left: 'center'
+                        },
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                type: 'cross'
+                            },
+                            formatter: function (params) {
+                                var data = params[0].data;
+                                return params[0].name + '<br/>' +
+                                    '开盘：' + data[1] + '<br/>' +
+                                    '收盘：' + data[2] + '<br/>' +
+                                    '最低：' + data[3] + '<br/>' +
+                                    '最高：' + data[4];
+                            }
+                        },
+                        legend: {
+                            data: ['K线'],
+                            top: 30
+                        },
+                        grid: {
+                            left: '10%',
+                            right: '10%',
+                            bottom: '15%'
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: chartData.timestamps,
+                            scale: true,
+                            boundaryGap: false,
+                            axisLine: {onZero: false},
+                            splitLine: {show: false},
+                            splitNumber: 20,
+                            min: 'dataMin',
+                            max: 'dataMax'
+                        },
+                        yAxis: {
+                            scale: true,
+                            splitArea: {
+                                show: true
+                            }
+                        },
+                        dataZoom: [
+                            {
+                                type: 'inside',
+                                start: 0,
+                                end: 100
+                            },
+                            {
+                                show: true,
+                                type: 'slider',
+                                top: '90%',
+                                start: 0,
+                                end: 100
+                            }
+                        ],
+                        series: [
+                            {
+                                name: 'K线',
+                                type: 'candlestick',
+                                data: chartData.data,
+                                itemStyle: {
+                                    color: '#ef232a',
+                                    color0: '#14b143',
+                                    borderColor: '#ef232a',
+                                    borderColor0: '#14b143'
+                                }
+                            }
+                        ]
+                    };
+                    
+                    myChart.setOption(option);
+                } else {
+                    layer.msg('加载数据失败', {icon: 2});
+                }
+            },
+            error: function() {
+                myChart.hideLoading();
+                layer.msg('加载数据失败', {icon: 2});
+            }
+        });
+    }
+    
+    // 自适应窗口大小
+    window.addEventListener('resize', function() {
+        myChart.resize();
+    });
+</script>
+</body>
+</html>
+

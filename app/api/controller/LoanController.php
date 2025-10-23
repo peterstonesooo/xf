@@ -49,11 +49,20 @@ class LoanController extends AuthController
             $user = $this->user;
             $maxLoanAmount = $this->checkUserQualificationAndGetMaxAmount($user['id']);
             
-            // 计算实际的最大贷款金额（取产品最大金额和用户最大限额的较小值）
-            $actualMaxAmount = $maxLoanAmount !== false ? min($product->max_amount, $maxLoanAmount) : $product->max_amount;
+            // 计算用户当前未还清的贷款金额
+            $unpaidLoanAmount = LoanApplication::where('user_id', $user['id'])
+                                              ->where('status', 4) // 已放款状态
+                                              ->sum('loan_amount');
             
-            // 计算实际的最小贷款金额（如果用户最大限额小于产品最小金额，则无法贷款）
-            $actualMinAmount = $maxLoanAmount !== false && $maxLoanAmount >= $product->min_amount ? $product->min_amount : 0;
+            // 计算用户剩余可借额度（总额度 - 未还清金额）
+            $remainingQuota = $maxLoanAmount !== false ? bcsub((string)$maxLoanAmount, (string)$unpaidLoanAmount, 2) : 0;
+            $remainingQuota = max(0, $remainingQuota); // 确保不为负数
+            
+            // 计算实际的最大贷款金额（取产品最大金额和用户剩余额度的较小值）
+            $actualMaxAmount = $maxLoanAmount !== false ? min($product->max_amount, $remainingQuota) : $product->max_amount;
+            
+            // 计算实际的最小贷款金额（如果用户剩余额度小于产品最小金额，则无法贷款）
+            $actualMinAmount = $remainingQuota >= $product->min_amount ? $product->min_amount : 0;
 
             // 格式化产品数据
             $productData = [
@@ -64,7 +73,9 @@ class LoanController extends AuthController
                 'actual_min_amount' => $actualMinAmount,
                 'actual_max_amount' => $actualMaxAmount,
                 'user_max_loan_amount' => $maxLoanAmount !== false ? $maxLoanAmount : 0,
-                'can_apply' => $maxLoanAmount !== false && $maxLoanAmount >= $product->min_amount,
+                'unpaid_loan_amount' => $unpaidLoanAmount, // 未还清贷款金额
+                'remaining_quota' => $remainingQuota, // 剩余可借额度
+                'can_apply' => $maxLoanAmount !== false && $remainingQuota >= $product->min_amount,
                 'interest_type' => $product->interest_type,
                 'interest_type_text' => $product->getInterestTypeTextAttr(null, $product->toArray()),
                 'overdue_interest_rate' => $product->overdue_interest_rate,
@@ -170,9 +181,15 @@ class LoanController extends AuthController
                 return out(null, 400, "您本次申请金额已超出可支持额度");
             }
 
-            // 验证用户完成的产品组限额
-            if ($req['loan_amount'] > $maxLoanAmount) {
-                return out(null, 400, "您本次申请金额已超出可支持额度");
+            // 计算用户当前未还清的贷款金额
+            $unpaidLoanAmount = LoanApplication::where('user_id', $this->user['id'])
+                                              ->where('status', 4) // 已放款状态
+                                              ->sum('loan_amount');
+            
+            // 验证用户完成的产品组限额（本次申请金额 + 未还清金额）
+            $totalLoanAmount = bcadd((string)$req['loan_amount'], (string)$unpaidLoanAmount, 2);
+            if (bccomp((string)$totalLoanAmount, (string)$maxLoanAmount, 2) > 0) {
+                return out(null, 400, "您当前未还清贷款{$unpaidLoanAmount}元，本次申请{$req['loan_amount']}元，总额{$totalLoanAmount}元已超出可支持额度{$maxLoanAmount}元");
             }
 
             // 验证用户申请次数限制
@@ -341,6 +358,15 @@ class LoanController extends AuthController
             // 检查用户资格和获取最大贷款限额
             $maxLoanAmount = $this->checkUserQualificationAndGetMaxAmount($user['id']);
             
+            // 计算用户当前未还清的贷款金额
+            $unpaidLoanAmount = LoanApplication::where('user_id', $user['id'])
+                                              ->where('status', 4) // 已放款状态
+                                              ->sum('loan_amount');
+            
+            // 计算用户剩余可借额度
+            $remainingQuota = $maxLoanAmount !== false ? bcsub((string)$maxLoanAmount, (string)$unpaidLoanAmount, 2) : 0;
+            $remainingQuota = max(0, $remainingQuota); // 确保不为负数
+            
             // 检查幸福助力券数量（暂时不检查）
             // $requiredTickets = LoanConfig::getConfig('xingfu_tickets_num', 10);
             // $hasEnoughTickets = $user['xingfu_tickets'] >= $requiredTickets;
@@ -351,6 +377,8 @@ class LoanController extends AuthController
                 return out([
                     'qualified' => false,
                     'max_loan_amount' => 0,
+                    'unpaid_loan_amount' => $unpaidLoanAmount,
+                    'remaining_quota' => 0,
                     'message' => '请先完成专属补贴申请',
                     'xingfu_tickets' => $user['xingfu_tickets'],
                     'required_tickets' => $requiredTickets,
@@ -363,6 +391,8 @@ class LoanController extends AuthController
             //     return out([
             //         'qualified' => false,
             //         'max_loan_amount' => $maxLoanAmount,
+            //         'unpaid_loan_amount' => $unpaidLoanAmount,
+            //         'remaining_quota' => $remainingQuota,
             //         'message' => "申请借资需要{$requiredTickets}张幸福助力券，您当前有{$user['xingfu_tickets']}张",
             //         'xingfu_tickets' => $user['xingfu_tickets'],
             //         'required_tickets' => $requiredTickets,
@@ -375,7 +405,8 @@ class LoanController extends AuthController
             $availableProducts = [];
             
             foreach ($products as $product) {
-                $actualMaxAmount = min($product->max_amount, $maxLoanAmount);
+                // 使用剩余额度计算实际可借金额
+                $actualMaxAmount = min($product->max_amount, $remainingQuota);
                 if ($actualMaxAmount >= $product->min_amount) {
                     $availableProducts[] = [
                         'id' => $product->id,
@@ -390,6 +421,8 @@ class LoanController extends AuthController
             return out([
                 'qualified' => true,
                 'max_loan_amount' => $maxLoanAmount,
+                'unpaid_loan_amount' => $unpaidLoanAmount, // 未还清贷款金额
+                'remaining_quota' => $remainingQuota, // 剩余可借额度
                 'available_products' => $availableProducts,
                 'message' => '您已具备贷款资格',
                 'xingfu_tickets' => $user['xingfu_tickets'],

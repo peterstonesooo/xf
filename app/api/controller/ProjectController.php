@@ -21,6 +21,7 @@ use app\model\ExclusiveLog;
 use app\model\Authentication;
 use app\model\TeamGloryLog;
 use app\model\YuanmengUser;
+use think\facade\Cache;
 use think\facade\Db;
 
 class ProjectController extends AuthController

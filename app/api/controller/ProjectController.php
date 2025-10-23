@@ -741,6 +741,11 @@ class ProjectController extends AuthController
             'amount|申请金额' => 'require|number',
         ]);
         $user = $this->user;
+        //限制重复操作
+        if(Cache::get('exclusive_'.$user['id'])){
+            return out(null,10001,'操作过于频繁，请稍后再试');
+        }
+        Cache::set('exclusive_'.$user['id'],1,5);
         $user = User::where('id',$user['id'])->lock(true)->find();
         
         $exclusive_log = ExclusiveLog::where('user_id',$user['id'])->count();

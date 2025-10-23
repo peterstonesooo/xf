@@ -643,6 +643,23 @@ class LoanController extends AuthController
                 
                 $plan->save();
 
+                // 检查是否所有期数都已还清
+                $allPlans = LoanRepaymentPlan::where('application_id', $plan->application_id)->select();
+                $allPaid = true;
+                foreach ($allPlans as $p) {
+                    if ($p->status != 2) {
+                        $allPaid = false;
+                        break;
+                    }
+                }
+
+                // 如果所有期数都已还清，更新申请状态为已结清
+                if ($allPaid) {
+                    $application = LoanApplication::find($plan->application_id);
+                    $application->status = 5; // 已结清
+                    $application->save();
+                }
+
                 // 发送还款成功通知
                 $this->sendRepaymentSuccessNotification($plan, $walletName);
 

@@ -2000,8 +2000,8 @@ class UserController extends AuthController
             'realname|真实姓名' => 'require',
 //            'gender|性别' => 'require|number',
             'phone|手机号' => 'require|mobile',
-            'card_front|身份证正面照片' => 'require',
-            'card_back|身份证背面照片' => 'require',
+            'card_front|身份证正面照片' => 'require|url',
+            'card_back|身份证背面照片' => 'require|url',
 //            'card_hand|手持身份证照片' => 'require',
             'card_number|身份证号' => 'require',
             'bank_card|银行卡' => 'require',
@@ -2011,6 +2011,7 @@ class UserController extends AuthController
         if ($req['phone'] != $user['phone']) {
             return out(null, 10001, '认证手机号与注册手机号不一致');
         }
+        
 
         $isAuthentication = Authentication::where('user_id', $user->id)->where('status', 0)->find();
         if ($isAuthentication) {

@@ -303,7 +303,10 @@ class CapitalController extends AuthController
             'type|提现钱包'=>'require|number', //1现金余额，2债券收益，3释放提现额度，4普惠钱包
         ]);
         $user = $this->user;
-        
+        $maxallone = dbconfig('single_withdraw_max_amount');
+        if($maxallone > 0 && $req['amount'] > $maxallone){
+            return out(null, 10001, '单笔提现最高小于'.$maxallone.'元');
+        }
         if($req['type'] == 2){
             // 检查用户是否已激活幸福权益
             $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);
@@ -346,9 +349,6 @@ class CapitalController extends AuthController
         
         if ($req['amount'] < 100) {
             return out(null, 10001, '单笔提现须满100元方可申请');
-        }
-        if ($req['amount'] >= 100000) {
-            return out(null, 10001, '单笔提现最高小于100000元');
         }
 
         Db::startTrans();

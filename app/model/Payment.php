@@ -993,7 +993,7 @@ $extend = [
             throw $e;
         }
         return [
-            'data' => $data['payurl'],
+            'data' => urldecode($data['payurl']),
         ];
     }
 

@@ -293,6 +293,7 @@ return array(
             122 => '投票',
             123 => '钱包迁移',
             124 => '幸福收益追回',
+            125 => '黄金奖励',
         ),
         'balance_type_map' =>
         array(
@@ -386,6 +387,7 @@ return array(
             122 => '投票',
             123 => '钱包迁移',
             124 => '幸福收益追回',
+            125 => '黄金奖励',
 
         ),
         'integral_type_map' =>
@@ -414,6 +416,7 @@ return array(
             15 => '投票奖励',//vote_tickets
             16 => '共富钱包',//gongfu_wallet
             17 => '收益钱包',//shouyi_wallet
+            18 => '黄金',//gold_wallet
         ),
         'status_map' =>
         array(

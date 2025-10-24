@@ -314,6 +314,9 @@ class OrderController extends AuthController
                 Order::orderPayComplete($order['id'], $project, $user['id'], $pay_amount);
             }
 
+            //判断完成情况根据配置发放相应黄金并记录日志
+            Project::checkUserGroupCompletionSendGold($user['id']);
+
             Db::commit();
         } catch (Exception $e) {
             Db::rollback();
@@ -622,7 +625,8 @@ class OrderController extends AuthController
                 // 订单支付完成
                 OrderDailyBonus::orderPayComplete($order['id'], $project, $user['id'], $pay_amount);
             }
-            
+            //判断完成情况根据配置发放相应黄金并记录日志
+            Project::checkUserGroupCompletionSendGold($user['id']);
 
             Db::commit();
         } catch (Exception $e) {

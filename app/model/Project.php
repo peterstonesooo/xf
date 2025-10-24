@@ -241,4 +241,375 @@ class Project extends Model
         // 必须完成所有开放的项目组才能申请贷款
         return count($completedGroups) >= count($openGroups);
     }
+
+    /**
+     * 获取用户完成产品组的次数统计
+     * 返回每个产品组（7、8、9、10、11）用户完成的次数
+     * 
+     * @param int $userId 用户ID
+     * @return array 返回格式：[7=>2, 8=>0, 9=>1, 10=>0, 11=>0]
+     * 
+     * 完成规则：
+     * - 每个产品组包含普通项目（daily_bonus_ratio=0）和日返项目（daily_bonus_ratio>0）
+     * - 用户必须购买该组的所有项目才算完成一次
+     * - 如果用户购买了该组所有项目各2次，则完成次数为2次
+     */
+    public static function getUserGroupCompletionCount($userId)
+    {
+        // 初始化结果数组
+        $result = [
+            7 => 0,
+            8 => 0,
+            9 => 0,
+            10 => 0,
+            11 => 0,
+        ];
+        
+        // 遍历每个产品组
+        foreach ($result as $groupId => &$count) {
+            // 获取该组的普通项目ID（一次性分红）
+            $normalProjects = self::where('project_group_id', $groupId)
+                ->where('status', 1)
+                ->where('daily_bonus_ratio', '=', 0)
+                ->column('id');
+            
+            // 获取该组的日返项目ID（每日分红）
+            $dailyProjects = self::where('project_group_id', $groupId)
+                ->where('status', 1)
+                ->where('daily_bonus_ratio', '>', 0)
+                ->column('id');
+            
+            // 如果该组没有开放的项目，跳过
+            if (empty($normalProjects) && empty($dailyProjects)) {
+                continue;
+            }
+            
+            // 初始化最小完成次数为无限大
+            $minCompletionCount = PHP_INT_MAX;
+            
+            // 检查普通项目的完成次数
+            if (!empty($normalProjects)) {
+                foreach ($normalProjects as $projectId) {
+                    // 统计用户购买该项目的次数（status >= 2 表示已支付）
+                    $purchaseCount = Order::where('user_id', $userId)
+                        ->where('project_id', $projectId)
+                        ->where('status', '>=', 2)
+                        ->count();
+                    
+                    // 取最小值（木桶效应：完成次数由购买最少的项目决定）
+                    $minCompletionCount = min($minCompletionCount, $purchaseCount);
+                }
+            }
+            
+            // 检查日返项目的完成次数
+            if (!empty($dailyProjects)) {
+                foreach ($dailyProjects as $projectId) {
+                    // 统计用户购买该项目的次数（status >= 2 表示已支付）
+                    $purchaseCount = OrderDailyBonus::where('user_id', $userId)
+                        ->where('project_id', $projectId)
+                        ->where('status', '>=', 2)
+                        ->count();
+                    
+                    // 取最小值
+                    $minCompletionCount = min($minCompletionCount, $purchaseCount);
+                }
+            }
+            
+            // 如果最小值还是初始值，说明该组没有任何购买记录
+            if ($minCompletionCount == PHP_INT_MAX) {
+                $count = 0;
+            } else {
+                $count = $minCompletionCount;
+            }
+        }
+        
+        return $result;
+    }
+
+
+    /**
+     * 检查用户完成情况并发放黄金奖励
+     * 根据用户完成产品组的次数，发放相应克数的黄金
+     * 记录到mp_gold_order表中，作为系统赠送的买入订单
+     * 
+     * @param int $userId 用户ID
+     * @return array 返回发放结果
+     */
+    public static function checkUserGroupCompletionSendGold($userId)
+    {
+        // 获取用户完成情况
+        $completionCount = self::getUserGroupCompletionCount($userId);
+        
+        // 获取黄金奖励配置（克数）
+        $goldConfigs = \app\model\GoldApiConfig::where('key', 'in', [
+            'complete_group_7',
+            'complete_group_8',
+            'complete_group_9',
+            'complete_group_10',
+            'complete_group_11',
+            'complete_group_all'
+        ])->column('val', 'key');
+        
+        // 获取当前金价
+        $currentPrice = self::getCurrentGoldPrice();
+        
+        if ($currentPrice <= 0) {
+            \think\facade\Log::error('获取金价失败，无法发放黄金奖励');
+            return [
+                'success' => false,
+                'message' => '获取金价失败',
+                'rewarded_count' => 0,
+                'total_gold' => 0
+            ];
+        }
+        
+        $rewardedCount = 0;
+        $totalGold = 0;
+        $rewardDetails = [];
+        
+        // 遍历每个产品组
+        foreach ($completionCount as $groupId => $completedTimes) {
+            if ($completedTimes <= 0) {
+                continue; // 未完成，跳过
+            }
+            
+            // 获取该组的奖励配置（克数）
+            $configKey = 'complete_group_' . $groupId;
+            $goldQuantityPerTime = floatval($goldConfigs[$configKey] ?? 0);
+            
+            if ($goldQuantityPerTime <= 0) {
+                continue; // 未配置奖励，跳过
+            }
+            
+            // 获取该组的所有项目ID（普通项目+日返项目）
+            $normalProjects = self::where('project_group_id', $groupId)
+                ->where('status', 1)
+                ->where('daily_bonus_ratio', '=', 0)
+                ->column('id');
+            
+            $dailyProjects = self::where('project_group_id', $groupId)
+                ->where('status', 1)
+                ->where('daily_bonus_ratio', '>', 0)
+                ->column('id');
+            
+            // 合并所有项目ID并排序
+            $allProjectIds = array_merge($normalProjects, $dailyProjects);
+            sort($allProjectIds);
+            
+            // 项目ID组合（用逗号拼接）
+            $projectIdsStr = implode(',', $allProjectIds);
+            
+            // 检查已发放次数（通过mp_gold_order表的remark字段识别项目组合）
+            $rewardedTimes = \app\model\GoldOrder::where('user_id', $userId)
+                ->where('type', 3) // type=3表示系统奖励
+                ->where('remark', $projectIdsStr)
+                ->count();
+            
+            // 计算需要发放的次数
+            $needRewardTimes = $completedTimes - $rewardedTimes;
+            
+            if ($needRewardTimes <= 0) {
+                continue; // 已全部发放
+            }
+            
+            // 发放奖励
+            for ($i = 1; $i <= $needRewardTimes; $i++) {
+                $completionIndex = $rewardedTimes + $i;
+                
+                try {
+                    // 计算黄金价值
+                    $goldValue = $goldQuantityPerTime * $currentPrice;
+                    
+                    // 生成订单号
+                    $orderNo = 'GOLDREWARD' . date('YmdHis') . str_pad($userId, 6, '0', STR_PAD_LEFT) . rand(1000, 9999);
+                    
+                    // 创建黄金订单记录（type=3表示系统奖励，remark存储项目ID组合）
+                    $goldOrder = \app\model\GoldOrder::create([
+                        'order_no' => $orderNo,
+                        'user_id' => $userId,
+                        'type' => 3, // 3-系统奖励
+                        'quantity' => $goldQuantityPerTime,
+                        'price' => $currentPrice,
+                        'amount' => $goldValue,
+                        'fee' => 0,
+                        'fee_rate' => 0,
+                        'actual_amount' => $goldValue,
+                        'cost_price_before' => 0,
+                        'cost_price_after' => 0,
+                        'balance_before' => 0,
+                        'balance_after' => 0,
+                        'profit' => 0,
+                        'status' => 1, // 已完成
+                        'remark' => $projectIdsStr, // 存储项目ID组合，如："101,102,103"
+                    ]);
+                    
+                    // 使用 User::changeInc 增加用户黄金余额并记录日志
+                    User::changeInc(
+                        $userId,
+                        $goldQuantityPerTime,  // 增加的黄金克数
+                        'gold_wallet',         // 字段名
+                        125,                   // type=125（单组黄金奖励）
+                        $goldOrder->id,        // 关联黄金订单ID
+                        18,                    // log_type=18（黄金收入）
+                        "完成产品组{$groupId}第{$completionIndex}次奖励黄金{$goldQuantityPerTime}克",
+                        0,                     // 系统操作
+                        1,                     // status=1（已完成）
+                        'GOLD',                // 订单前缀
+                        0                      // 不删除
+                    );
+                    
+                    // 同步更新黄金钱包表（用于收益计算）
+                    \app\model\UserGoldWallet::addRewardGold($userId, $goldQuantityPerTime, $currentPrice);
+                    
+                    $rewardedCount++;
+                    $totalGold += $goldQuantityPerTime;
+                    
+                    $rewardDetails[] = [
+                        'group_id' => $groupId,
+                        'completion_index' => $completionIndex,
+                        'gold_quantity' => $goldQuantityPerTime,
+                        'gold_value' => $goldValue,
+                    ];
+                    
+                    \think\facade\Log::info("用户{$userId}完成产品组{$groupId}第{$completionIndex}次（项目ID：{$projectIdsStr}），发放黄金{$goldQuantityPerTime}克，价值{$goldValue}元");
+                    
+                } catch (\Exception $e) {
+                    \think\facade\Log::error("发放黄金奖励失败：用户{$userId}，产品组{$groupId}，错误：" . $e->getMessage());
+                }
+            }
+        }
+        
+        // 处理complete_group_all（完成所有产品组的额外奖励）
+        $allGroupMinCompletion = min($completionCount); // 取所有组的最小完成次数
+        
+        if ($allGroupMinCompletion > 0) {
+            // 所有组都至少完成了1次以上
+            $goldQuantityPerTime = floatval($goldConfigs['complete_group_all'] ?? 0);
+            
+            if ($goldQuantityPerTime > 0) {
+                // 获取所有产品组的项目ID组合，用于remark标识
+                $allGroupProjectIds = [];
+                foreach ([7, 8, 9, 10, 11] as $gid) {
+                    $normalProjects = self::where('project_group_id', $gid)
+                        ->where('status', 1)
+                        ->where('daily_bonus_ratio', '=', 0)
+                        ->column('id');
+                    
+                    $dailyProjects = self::where('project_group_id', $gid)
+                        ->where('status', 1)
+                        ->where('daily_bonus_ratio', '>', 0)
+                        ->column('id');
+                    
+                    $groupIds = array_merge($normalProjects, $dailyProjects);
+                    sort($groupIds);
+                    $allGroupProjectIds[] = implode(',', $groupIds);
+                }
+                
+                // 用竖线分隔各组，格式如："101,102,103|201,202|301,302,303|401,402|501,502"
+                $allGroupsRemark = implode('|', $allGroupProjectIds);
+                
+                // 检查已发放complete_group_all的次数
+                $allRewardedTimes = \app\model\GoldOrder::where('user_id', $userId)
+                    ->where('type', 3)
+                    ->where('remark', $allGroupsRemark)
+                    ->count();
+                
+                // 需要发放的次数 = 所有组的最小完成次数 - 已发放次数
+                $needRewardTimes = $allGroupMinCompletion - $allRewardedTimes;
+                
+                if ($needRewardTimes > 0) {
+                    // 发放complete_group_all奖励
+                    for ($i = 1; $i <= $needRewardTimes; $i++) {
+                        $completionIndex = $allRewardedTimes + $i;
+                        
+                        try {
+                            // 计算黄金价值
+                            $goldValue = $goldQuantityPerTime * $currentPrice;
+                            
+                            // 生成订单号
+                            $orderNo = 'GOLDREWARD' . date('YmdHis') . str_pad($userId, 6, '0', STR_PAD_LEFT) . rand(1000, 9999);
+                            
+                            // 创建黄金订单记录（type=3表示系统奖励）
+                            $goldOrder = \app\model\GoldOrder::create([
+                                'order_no' => $orderNo,
+                                'user_id' => $userId,
+                                'type' => 3,
+                                'quantity' => $goldQuantityPerTime,
+                                'price' => $currentPrice,
+                                'amount' => $goldValue,
+                                'fee' => 0,
+                                'fee_rate' => 0,
+                                'actual_amount' => $goldValue,
+                                'cost_price_before' => 0,
+                                'cost_price_after' => 0,
+                                'balance_before' => 0,
+                                'balance_after' => 0,
+                                'profit' => 0,
+                                'status' => 1,
+                                'remark' => $allGroupsRemark, // 存储所有组的项目ID，格式："101,102|201,202|301,302|401,402|501,502"
+                            ]);
+                            
+                            // 使用 User::changeInc 增加用户黄金余额并记录日志
+                            User::changeInc(
+                                $userId,
+                                $goldQuantityPerTime,  // 增加的黄金克数
+                                'gold_wallet',         // 字段名
+                                125,                   // type=125（完成全部产品组黄金奖励）
+                                $goldOrder->id,        // 关联黄金订单ID
+                                18,                    // log_type=18（黄金收入）
+                                "完成全部产品组第{$completionIndex}轮奖励黄金{$goldQuantityPerTime}克",
+                                0,                     // 系统操作
+                                1,                     // status=1（已完成）
+                                'GOLD',                // 订单前缀
+                                0                      // 不删除
+                            );
+                            
+                            // 同步更新黄金钱包表（用于收益计算）
+                            \app\model\UserGoldWallet::addRewardGold($userId, $goldQuantityPerTime, $currentPrice);
+                            
+                            $rewardedCount++;
+                            $totalGold += $goldQuantityPerTime;
+                            
+                            $rewardDetails[] = [
+                                'group_id' => 'all',
+                                'completion_index' => $completionIndex,
+                                'gold_quantity' => $goldQuantityPerTime,
+                                'gold_value' => $goldValue,
+                            ];
+                            
+                            \think\facade\Log::info("用户{$userId}完成全部产品组第{$completionIndex}轮（项目组合：{$allGroupsRemark}），发放额外黄金{$goldQuantityPerTime}克，价值{$goldValue}元");
+                            
+                        } catch (\Exception $e) {
+                            \think\facade\Log::error("发放complete_group_all奖励失败：用户{$userId}，错误：" . $e->getMessage());
+                        }
+                    }
+                }
+            }
+        }
+        
+        return [
+            'success' => true,
+            'message' => $rewardedCount > 0 ? "成功发放{$rewardedCount}次奖励，共{$totalGold}克黄金" : '无需发放奖励',
+            'rewarded_count' => $rewardedCount,
+            'total_gold' => $totalGold,
+            'reward_details' => $rewardDetails,
+        ];
+    }
+    
+    /**
+     * 获取当前金价（从K线表）
+     * @return float
+     */
+    private static function getCurrentGoldPrice()
+    {
+        $kline = \app\model\GoldKline::where([
+            'period' => '1day',
+            'price_type' => 'CNY'
+        ])->order('start_time', 'desc')->find();
+        
+        return $kline ? floatval($kline->close_price) : 0;
+    }
+
+
+
 }

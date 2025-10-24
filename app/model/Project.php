@@ -366,6 +366,7 @@ class Project extends Model
         $rewardedCount = 0;
         $totalGold = 0;
         $rewardDetails = [];
+        $totalGoldForWallet = 0;  // 累积总黄金数（用于最后一次性更新钱包表）
         
         // 遍历每个产品组
         foreach ($completionCount as $groupId => $completedTimes) {
@@ -458,11 +459,9 @@ class Project extends Model
                         0                      // 不删除
                     );
                     
-                    // 同步更新黄金钱包表（用于收益计算）
-                    \app\model\UserGoldWallet::addRewardGold($userId, $goldQuantityPerTime, $currentPrice);
-                    
                     $rewardedCount++;
                     $totalGold += $goldQuantityPerTime;
+                    $totalGoldForWallet += $goldQuantityPerTime;  // 累积到总数
                     
                     $rewardDetails[] = [
                         'group_id' => $groupId,
@@ -564,11 +563,9 @@ class Project extends Model
                                 0                      // 不删除
                             );
                             
-                            // 同步更新黄金钱包表（用于收益计算）
-                            \app\model\UserGoldWallet::addRewardGold($userId, $goldQuantityPerTime, $currentPrice);
-                            
                             $rewardedCount++;
                             $totalGold += $goldQuantityPerTime;
+                            $totalGoldForWallet += $goldQuantityPerTime;  // 累积到总数
                             
                             $rewardDetails[] = [
                                 'group_id' => 'all',
@@ -584,6 +581,16 @@ class Project extends Model
                         }
                     }
                 }
+            }
+        }
+        
+        // 最后统一更新钱包表（一次性更新所有黄金）
+        if ($totalGoldForWallet > 0) {
+            try {
+                \app\model\UserGoldWallet::addRewardGold($userId, $totalGoldForWallet, $currentPrice);
+                \think\facade\Log::info("用户{$userId}钱包表统一更新：增加{$totalGoldForWallet}克黄金");
+            } catch (\Exception $e) {
+                \think\facade\Log::error("更新钱包表失败：用户{$userId}，黄金{$totalGoldForWallet}克，错误：" . $e->getMessage());
             }
         }
         

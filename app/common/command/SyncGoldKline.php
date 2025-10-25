@@ -14,12 +14,21 @@ use think\console\input\Option;
  * 同步黄金K线数据命令
  * 
  * 使用方法：
- * php think sync:gold-kline                         - 同步最新K线（默认日K）
- * php think sync:gold-kline --type=history          - 同步历史K线
- * php think sync:gold-kline --type=realtime         - 同步最新K线
- * php think sync:gold-kline --type=batch            - 批量同步历史数据
- * php think sync:gold-kline --kline=8 --num=1000    - 同步指定类型和数量的历史K线
- * php think sync:gold-kline -t history -k 5         - 使用简写参数
+ *  获取最近30条数据
+ * php think sync:gold-kline --type=batch --total=30
+ * # 从指定日期往前获取30条
+ * php think sync:gold-kline --type=batch --total=30 --time=2025-09-22
+ * 从指定日期时间往前获取100条
+ * php think sync:gold-kline --type=batch --total=100 --time="2025-09-22 14:30:00"
+ *  使用时间戳
+ * php think sync:gold-kline --type=batch --total=50 --time=1727011200
+ * php think sync:gold-kline                                      - 同步最新K线（默认日K）
+ * php think sync:gold-kline --type=history                       - 同步历史K线
+ * php think sync:gold-kline --type=realtime                      - 同步最新K线
+ * php think sync:gold-kline --type=batch --total=30              - 批量同步最近30条数据
+ * php think sync:gold-kline --type=batch --total=30 --time=2025-09-22  - 从指定时间往前同步30条
+ * php think sync:gold-kline --kline=8 --num=1000                 - 同步指定类型和数量的历史K线
+ * php think sync:gold-kline -t history -k 5                      - 使用简写参数
  */
 class SyncGoldKline extends Command
 {
@@ -30,7 +39,8 @@ class SyncGoldKline extends Command
             ->addOption('type', 't', Option::VALUE_OPTIONAL, '同步类型：history-历史数据, realtime-实时数据, batch-批量历史', 'realtime')
             ->addOption('kline', 'k', Option::VALUE_OPTIONAL, 'K线类型（1-10）', '8')
             ->addOption('num', null, Option::VALUE_OPTIONAL, '查询数量', '500')
-            ->addOption('total', null, Option::VALUE_OPTIONAL, '批量同步总数量', '5000')
+            ->addOption('total', null, Option::VALUE_OPTIONAL, '批量同步数量（固定获取N条）', '30')
+            ->addOption('time', null, Option::VALUE_OPTIONAL, '指定时间（格式：YYYY-MM-DD 或时间戳），不填则获取最近数据', '')
             ->setHelp('该命令用于同步黄金K线数据，支持历史数据和实时数据同步');
     }
     
@@ -49,6 +59,7 @@ class SyncGoldKline extends Command
         $klineType = intval($input->getOption('kline'));
         $queryNum = intval($input->getOption('num'));
         $totalNum = intval($input->getOption('total'));
+        $timeParam = $input->getOption('time');
         
         $output->writeln('<info>开始同步黄金K线数据...</info>');
         $output->writeln("同步类型: {$type}");
@@ -62,8 +73,21 @@ class SyncGoldKline extends Command
                 
             case 'batch':
                 // 批量同步历史数据
-                $output->writeln("K线类型: {$klineType}, 总数量: {$totalNum}");
-                $result = $service->batchSyncHistory($klineType, $totalNum);
+                // 解析时间参数
+                $timestamp = 0;
+                if (!empty($timeParam)) {
+                    if (is_numeric($timeParam)) {
+                        // 如果是纯数字，当作时间戳
+                        $timestamp = intval($timeParam);
+                    } else {
+                        // 否则尝试解析日期字符串
+                        $timestamp = strtotime($timeParam);
+                    }
+                    $output->writeln("K线类型: {$klineType}, 数量: {$totalNum}, 从时间: " . date('Y-m-d H:i:s', $timestamp));
+                } else {
+                    $output->writeln("K线类型: {$klineType}, 数量: {$totalNum}, 获取最近数据");
+                }
+                $result = $service->batchSyncHistory($klineType, $totalNum, $timestamp);
                 break;
                 
             case 'realtime':

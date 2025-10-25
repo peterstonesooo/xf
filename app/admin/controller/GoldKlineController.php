@@ -61,14 +61,18 @@ class GoldKlineController extends BaseController
         $priceType = input('price_type', 'CNY');
         $limit = input('limit', 100);
         
-        // 获取K线数据
+        // 获取K线数据（先按时间倒序获取最新的N条）
         $klineData = GoldKlineModel::where([
             'period' => $period,
             'price_type' => $priceType
         ])
-            ->order('start_time', 'asc')
+            ->order('start_time', 'desc')  // 倒序获取最新数据
             ->limit($limit)
-            ->select();
+            ->select()
+            ->toArray();
+        
+        // 反转数组，使其按时间正序排列
+        $klineData = array_reverse($klineData);
         
         // 转换为图表所需格式
         $chartData = [
@@ -77,12 +81,12 @@ class GoldKlineController extends BaseController
         ];
         
         foreach ($klineData as $kline) {
-            $chartData['timestamps'][] = $kline->start_datetime;
+            $chartData['timestamps'][] = $kline['start_datetime'];
             $chartData['data'][] = [
-                floatval($kline->open_price),
-                floatval($kline->close_price),
-                floatval($kline->low_price),
-                floatval($kline->high_price),
+                floatval($kline['open_price']),
+                floatval($kline['close_price']),
+                floatval($kline['low_price']),
+                floatval($kline['high_price']),
             ];
         }
         

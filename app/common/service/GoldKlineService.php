@@ -440,12 +440,13 @@ class GoldKlineService
     }
     
     /**
-     * 批量同步历史数据（循环获取）
+     * 批量同步历史数据
      * @param int $klineType K线类型
-     * @param int $totalNum 总共需要获取的数量
+     * @param int $totalNum 总数量（固定获取N条）
+     * @param int $endTimestamp 结束时间戳（0=获取最近的，>0=从指定时间往前）
      * @return array
      */
-    public function batchSyncHistory($klineType = 8, $totalNum = 5000)
+    public function batchSyncHistory($klineType = 8, $totalNum = 30, $endTimestamp = 0)
     {
         $batchSize = 500; // 每次最多500条
         $totalSuccess = 0;
@@ -455,21 +456,13 @@ class GoldKlineService
         // 获取K线周期
         $period = GoldKline::getPeriodByType($klineType);
         
-        // 检查数据库中是否已有数据，获取最早的时间戳
-        $earliestKline = GoldKline::where([
-            'period' => $period,
-            'price_type' => $this->priceType
-        ])->order('start_time', 'asc')->find();
-        
-        if ($earliestKline) {
-            // 如果已有数据，从最早的数据继续往前获取
-            $endTimestamp = $earliestKline->start_time;
-            Log::info("数据库中已有数据，最早时间：" . $earliestKline->start_datetime . "（时间戳：{$endTimestamp}）");
-            Log::info("从该时间点继续往前同步{$totalNum}条数据");
+        // 根据 endTimestamp 参数决定行为
+        if ($endTimestamp == 0) {
+            // 获取最近的数据
+            Log::info("获取最近的 {$totalNum} 条数据");
         } else {
-            // 如果没有数据，从当前时间开始
-            $endTimestamp = 0;
-            Log::info("数据库中无数据，从当前时间开始同步{$totalNum}条数据");
+            // 从指定时间往前获取
+            Log::info("从时间 " . date('Y-m-d H:i:s', $endTimestamp) . "（时间戳：{$endTimestamp}）往前同步 {$totalNum} 条数据");
         }
         
         Log::info("开始批量同步：目标{$totalNum}条，分{$iterations}次请求");

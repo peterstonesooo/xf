@@ -7,6 +7,7 @@ use app\model\GoldKline;
 use app\model\GoldSyncLog;
 use app\model\GoldApiConfig;
 use think\facade\Log;
+use think\facade\Cache;
 
 /**
  * 黄金K线数据服务类
@@ -37,6 +38,16 @@ class GoldKlineService
      * 盎司转克换算系数（1盎司 = 31.1035克）
      */
     const OZ_TO_GRAM = 31.1035;
+    
+    /**
+     * Redis缓存键前缀
+     */
+    const CACHE_KEY_LATEST_PRICE = 'gold:latest_price:';
+    
+    /**
+     * Redis缓存有效期（秒）
+     */
+    const CACHE_TTL = 15;
     
     /**
      * 构造函数
@@ -516,6 +527,182 @@ class GoldKlineService
                 'fail_count' => $totalFail
             ]
         ];
+    }
+    
+    /**
+     * 获取最新金价（带Redis缓存）
+     * @param bool $forceRefresh 是否强制刷新缓存
+     * @return array ['success' => bool, 'price' => float, 'data' => array]
+     */
+    public function getLatestPrice($forceRefresh = false)
+    {
+        $cacheKey = self::CACHE_KEY_LATEST_PRICE . $this->goldCode;
+        
+        // 如果不是强制刷新，先尝试从缓存获取
+        if (!$forceRefresh) {
+            $cachedData = Cache::get($cacheKey);
+            if ($cachedData) {
+                Log::info('从Redis缓存获取最新金价：' . $cachedData['price']);
+                return [
+                    'success' => true,
+                    'price' => floatval($cachedData['price']),
+                    'data' => $cachedData,
+                    'from_cache' => true
+                ];
+            }
+        }
+        
+        // 缓存不存在或强制刷新，调用API获取
+        $result = $this->fetchLatestPriceFromApi();
+        
+        if ($result['success']) {
+            // 存入Redis缓存
+            Cache::set($cacheKey, $result['data'], self::CACHE_TTL);
+            Log::info('从API获取最新金价并缓存：' . $result['price']);
+            
+            return [
+                'success' => true,
+                'price' => $result['price'],
+                'data' => $result['data'],
+                'from_cache' => false
+            ];
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * 从API获取最新成交价（tick数据）
+     * @return array
+     */
+    private function fetchLatestPriceFromApi()
+    {
+        try {
+            // 生成追踪码
+            $trace = $this->generateTrace();
+            
+            // 构建查询参数
+            $query = [
+                'trace' => $trace,
+                'data' => [
+                    'symbol_list' => [
+                        [
+                            'code' => $this->goldCode
+                        ]
+                    ]
+                ]
+            ];
+            
+            // 构建完整URL（使用 trade-tick 接口）
+            $url = 'https://quote.alltick.co/quote-b-api/trade-tick?token=' 
+                   . $this->apiToken 
+                   . '&query=' . urlencode(json_encode($query));
+            
+            Log::info('请求最新金价API：' . $url);
+            
+            // 发送HTTP请求
+            $response = $this->httpGet($url);
+            
+            if (!$response) {
+                return [
+                    'success' => false,
+                    'message' => 'API请求失败',
+                    'price' => 0,
+                    'data' => []
+                ];
+            }
+            
+            $result = json_decode($response, true);
+            
+            if (!$result || !isset($result['ret'])) {
+                return [
+                    'success' => false,
+                    'message' => 'API返回数据格式错误',
+                    'price' => 0,
+                    'data' => []
+                ];
+            }
+            
+            // 检查返回码
+            if ($result['ret'] != 200) {
+                return [
+                    'success' => false,
+                    'message' => $result['msg'] ?? '未知错误',
+                    'price' => 0,
+                    'data' => []
+                ];
+            }
+            
+            // 解析返回数据
+            $tickList = $result['data']['tick_list'] ?? [];
+            
+            if (empty($tickList)) {
+                return [
+                    'success' => false,
+                    'message' => '未获取到最新价格数据',
+                    'price' => 0,
+                    'data' => []
+                ];
+            }
+            
+            $tick = $tickList[0];
+            $price = floatval($tick['price']);
+            
+            // 价格转换（如果需要从盎司转换为克）
+            $convertedPrice = $this->convertPrice($price);
+            
+            // 准备返回数据
+            $data = [
+                'code' => $tick['code'],
+                'price' => $convertedPrice,
+                'original_price' => $price,
+                'volume' => $tick['volume'] ?? 0,
+                'turnover' => $tick['turnover'] ?? 0,
+                'tick_time' => $tick['tick_time'] ?? 0,
+                'tick_datetime' => isset($tick['tick_time']) ? date('Y-m-d H:i:s', intval($tick['tick_time']) / 1000) : '',
+                'trade_direction' => $tick['trade_direction'] ?? 0,
+                'seq' => $tick['seq'] ?? '',
+                'price_type' => $this->priceType,
+                'fetched_at' => date('Y-m-d H:i:s')
+            ];
+            
+            return [
+                'success' => true,
+                'message' => 'ok',
+                'price' => floatval($convertedPrice),
+                'data' => $data
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error('获取最新金价异常：' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+                'price' => 0,
+                'data' => []
+            ];
+        }
+    }
+    
+    /**
+     * 获取最新金价（仅返回价格，方便快速调用）
+     * @param bool $forceRefresh 是否强制刷新缓存
+     * @return float 返回价格，失败返回0
+     */
+    public function getCurrentPrice($forceRefresh = false)
+    {
+        $result = $this->getLatestPrice($forceRefresh);
+        return $result['success'] ? $result['price'] : 0;
+    }
+    
+    /**
+     * 清除最新金价缓存
+     * @return bool
+     */
+    public function clearPriceCache()
+    {
+        $cacheKey = self::CACHE_KEY_LATEST_PRICE . $this->goldCode;
+        return Cache::delete($cacheKey);
     }
 }
 

@@ -610,9 +610,15 @@ class Project extends Model
     private static function getCurrentGoldPrice()
     {
         $kline = \app\model\GoldKline::where([
-            'period' => '1day',
+            'period' => '1min',
             'price_type' => 'CNY'
         ])->order('start_time', 'desc')->find();
+        if(!$kline){
+            $kline = \app\model\GoldKline::where([
+                'period' => '1day',
+                'price_type' => 'CNY'
+            ])->order('start_time', 'desc')->find();
+        }
         
         return $kline ? floatval($kline->close_price) : 0;
     }

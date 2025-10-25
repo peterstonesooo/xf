@@ -69,5 +69,7 @@ return [
         // 黄金K线系统命令
         'sync:gold-kline' => 'app\common\command\SyncGoldKline',
         'install:gold-kline' => 'app\common\command\InstallGoldKline',
+        'gold:snapshot' => 'app\common\command\GenerateGoldSnapshot',
+        'test:gold-price' => 'app\common\command\TestGoldPrice',
     ],
 ];

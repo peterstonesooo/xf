@@ -4,6 +4,9 @@ namespace app\api\controller;
 
 use app\model\GoldKline;
 use app\model\GoldPrice;
+use app\model\UserGoldWallet;
+use app\model\GoldAssetSnapshot;
+use app\common\service\GoldKlineService;
 
 /**
  * 黄金K线数据控制器
@@ -21,6 +24,7 @@ class GoldController extends AuthController
                 'type' => 'require|in:1,2,3,4,5',
             ]);
             
+            $user = $this->user;
             $type = intval($req['type']);
             
             // 根据类型确定查询参数
@@ -54,14 +58,62 @@ class GoldController extends AuthController
                 ];
             }
             
+            // 获取当前金价（使用缓存，15秒有效期）
+            $service = new GoldKlineService();
+            $priceResult = $service->getLatestPrice();
+            $currentPrice = $priceResult['success'] ? $priceResult['price'] : 0;
+            
+            // 获取用户黄金钱包
+            $goldWallet = UserGoldWallet::where('user_id', $user['id'])->find();
+            
+            // 初始化默认值
+            $goldBalance = 0;           // 当前持有（克）
+            $costPrice = 0;             // 成本价
+            $holdEarning = 0;           // 持有收益（浮动盈亏）
+            $totalEarning = 0;          // 累积收益（已实现盈亏）
+            $yesterdayEarning = 0;      // 昨日收益
+            
+            if ($goldWallet) {
+                $goldBalance = floatval($goldWallet->gold_balance);
+                $costPrice = floatval($goldWallet->cost_price);
+                
+                // 计算持有收益 = (当前金价 - 成本价) × 持有数量
+                if ($currentPrice > 0 && $goldBalance > 0) {
+                    $holdEarning = ($currentPrice - $costPrice) * $goldBalance;
+                }
+                
+                // 累积收益（已实现盈亏）
+                $totalEarning = floatval($goldWallet->realized_profit);
+                
+                // 计算昨日收益（通过快照对比）
+                $yesterdayProfit = GoldAssetSnapshot::calculateYesterdayProfit($user['id']);
+                $yesterdayEarning = $yesterdayProfit['yesterday_profit'];
+            }
+            
+            // 统计全局数据
+            // 申领黄金人数（有黄金余额的用户数）
+            $applyGoldNumber = UserGoldWallet::where('gold_balance', '>', 0)->count();
+            
+            // 累计持有黄金总量（所有用户）
+            $totalHoldGold = UserGoldWallet::sum('gold_balance');
+            
+            // 黄金储备（当前用户的黄金余额）
+            $goldReserve = $goldBalance;
+            
+            // 储备估值（黄金储备 × 当前金价）
+            $goldReserveAmount = $goldBalance * $currentPrice;
+            
             return out([
-                'yestoday_earning' => 1,        //昨日收益
-                'hold_earning' => 2,            //持有收益
-                'total_earning' => 3,           //累积收益
-                'gold_reserve' => 4,           //黄金储备
-                'gold_reserve_amount' => 5,     //储备估值
-                'apply_gold_number' => 6,       //申领黄金人数
-                'total_hold_gold' => 7,         //累计持有黄金
+                'current_price' => round($currentPrice, 2),              // 当前金价（元/克）
+                'gold_wallet' => round($goldBalance, 6),                 // 当前持有（克）
+                'yesterday_earning' => round($yesterdayEarning, 2),      // 昨日收益（元）
+                'hold_earning' => round($holdEarning, 2),                // 持有收益/浮动盈亏（元）
+                'total_earning' => round($totalEarning, 2),              // 累积收益/已实现盈亏（元）
+                
+                'gold_reserve' => round($goldReserve, 6),                // 黄金储备（克）
+                'gold_reserve_amount' => round($goldReserveAmount, 2),   // 储备估值（元）
+                'apply_gold_number' => $applyGoldNumber,                 // 申领黄金人数
+                'total_hold_gold' => round($totalHoldGold, 6),           // 累计持有黄金[所有人]（克）
                 
                 'type' => $type,
                 'type_name' => $params['name'],
@@ -206,6 +258,60 @@ class GoldController extends AuthController
             
         } catch (\Exception $e) {
             return out(null, 500, '获取统计数据失败：' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 获取实时金价（从Redis缓存或API）
+     * @return \think\response\Json
+     */
+    public function getCurrentPrice()
+    {
+        try {
+            $service = new GoldKlineService();
+            
+            // 获取最新金价（自动使用Redis缓存）
+            $result = $service->getLatestPrice();
+            
+            if (!$result['success']) {
+                return out(null, 500, $result['message']);
+            }
+            
+            return out([
+                'price' => $result['price'],
+                'data' => $result['data'],
+                'from_cache' => $result['from_cache'] ?? false,
+            ], 200, '获取成功');
+            
+        } catch (\Exception $e) {
+            return out(null, 500, '获取实时金价失败：' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 强制刷新实时金价（跳过Redis缓存）
+     * @return \think\response\Json
+     */
+    public function refreshCurrentPrice()
+    {
+        try {
+            $service = new GoldKlineService();
+            
+            // 强制从API获取最新金价
+            $result = $service->getLatestPrice(true);
+            
+            if (!$result['success']) {
+                return out(null, 500, $result['message']);
+            }
+            
+            return out([
+                'price' => $result['price'],
+                'data' => $result['data'],
+                'from_cache' => false,
+            ], 200, '刷新成功');
+            
+        } catch (\Exception $e) {
+            return out(null, 500, '刷新实时金价失败：' . $e->getMessage());
         }
     }
 }

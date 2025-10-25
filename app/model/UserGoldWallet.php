@@ -67,24 +67,34 @@ class UserGoldWallet extends Model
      */
     public static function addRewardGold($userId, $quantity, $price)
     {
-        $wallet = self::getOrCreate($userId);
-        
-        // 计算新成本价（加权平均，奖励按当前金价计入成本）
-        if ($wallet->gold_balance == 0) {
-            $newCostPrice = $price;
-        } else {
-            $totalCost = $wallet->cost_price * $wallet->gold_balance;
-            $newCost = $price * $quantity;
-            $newCostPrice = ($totalCost + $newCost) / ($wallet->gold_balance + $quantity);
+        $wallet = self::where('user_id', $userId)->find();
+        if(!$wallet){
+            // 更新钱包数据
+            return self::create([
+                'user_id' => $userId,
+                'gold_balance' => $quantity,
+                'cost_price' => $price,
+                'total_buy_quantity' => $quantity,
+                'total_buy_amount' => ($price * $quantity),
+            ]);
+        }else{
+            // 计算新成本价（加权平均，奖励按当前金价计入成本）
+            if ($wallet->gold_balance == 0) {
+                $newCostPrice = $price;
+            } else {
+                $totalCost = $wallet->cost_price * $wallet->gold_balance;
+                $newCost = $price * $quantity;
+                $newCostPrice = ($totalCost + $newCost) / ($wallet->gold_balance + $quantity);
+            }
+            // 更新钱包数据
+            $wallet->gold_balance += $quantity;
+            $wallet->cost_price = $newCostPrice;
+            $wallet->total_buy_quantity += $quantity;
+            $wallet->total_buy_amount += ($price * $quantity); // 虽然是奖励，但也算买入
+            
+            return $wallet->save();
         }
-        
-        // 更新钱包数据
-        $wallet->gold_balance += $quantity;
-        $wallet->cost_price = $newCostPrice;
-        $wallet->total_buy_quantity += $quantity;
-        $wallet->total_buy_amount += ($price * $quantity); // 虽然是奖励，但也算买入
-        
-        return $wallet->save();
+       
     }
 }
 

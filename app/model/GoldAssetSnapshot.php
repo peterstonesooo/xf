@@ -60,35 +60,109 @@ class GoldAssetSnapshot extends Model
     }
     
     /**
-     * 计算用户昨日收益
+     * 计算用户昨日收益（昨天那一天赚了多少钱）
      * @param int $userId
-     * @param string $today 今天日期，格式：Y-m-d，默认今天
-     * @return array ['yesterday_profit' => float, 'today_asset' => float, 'yesterday_asset' => float]
+     * @return array ['yesterday_profit' => float, 'yesterday_asset' => float, 'before_yesterday_asset' => float]
      */
-    public static function calculateYesterdayProfit($userId, $today = null)
+    public static function calculateYesterdayProfit($userId)
     {
-        if (!$today) {
-            $today = date('Y-m-d');
-        }
-        
-        $yesterday = date('Y-m-d', strtotime($today . ' -1 day'));
-        
-        // 获取今日快照
-        $todaySnapshot = self::getUserSnapshot($userId, $today);
+        $yesterday = date('Y-m-d', strtotime('-1 day'));
+        $beforeYesterday = date('Y-m-d', strtotime('-2 day'));
         
         // 获取昨日快照
         $yesterdaySnapshot = self::getUserSnapshot($userId, $yesterday);
-        
-        $todayAsset = $todaySnapshot ? floatval($todaySnapshot->total_asset) : 0;
         $yesterdayAsset = $yesterdaySnapshot ? floatval($yesterdaySnapshot->total_asset) : 0;
         
+        // 获取前日快照
+        $beforeYesterdaySnapshot = self::getUserSnapshot($userId, $beforeYesterday);
+        $beforeYesterdayAsset = $beforeYesterdaySnapshot ? floatval($beforeYesterdaySnapshot->total_asset) : 0;
+        
+        // 昨日收益 = 昨日总资产 - 前日总资产
+        $yesterdayProfit = $yesterdayAsset - $beforeYesterdayAsset;
+        
         return [
-            'yesterday_profit' => $todayAsset - $yesterdayAsset,
-            'today_asset' => $todayAsset,
-            'yesterday_asset' => $yesterdayAsset,
+            'yesterday_profit' => $yesterdayProfit,              // 昨日收益
+            'yesterday_asset' => $yesterdayAsset,                // 昨日总资产
+            'before_yesterday_asset' => $beforeYesterdayAsset,   // 前日总资产
+            'yesterday_date' => $yesterday,
+            'before_yesterday_date' => $beforeYesterday,
+        ];
+    }
+    
+    /**
+     * 计算用户今日收益（今天到目前为止赚了多少钱）
+     * @param int $userId
+     * @return array ['today_profit' => float, 'today_asset' => float, 'yesterday_asset' => float]
+     */
+    public static function calculateTodayProfit($userId)
+    {
+        $today = date('Y-m-d');
+        $yesterday = date('Y-m-d', strtotime('-1 day'));
+        
+        // 获取昨日快照
+        $yesterdaySnapshot = self::getUserSnapshot($userId, $yesterday);
+        $yesterdayAsset = $yesterdaySnapshot ? floatval($yesterdaySnapshot->total_asset) : 0;
+        
+        // 获取今日总资产（优先快照，无快照则实时计算）
+        $todaySnapshot = self::getUserSnapshot($userId, $today);
+        
+        if ($todaySnapshot) {
+            // 今日快照已生成（23:59后）
+            $todayAsset = floatval($todaySnapshot->total_asset);
+            $fromSnapshot = true;
+        } else {
+            // 今日快照未生成（23:59前），使用实时计算
+            $todayAsset = self::calculateRealTimeAsset($userId);
+            $fromSnapshot = false;
+        }
+        
+        // 今日收益 = 今日总资产 - 昨日总资产
+        $todayProfit = $todayAsset - $yesterdayAsset;
+        
+        return [
+            'today_profit' => $todayProfit,          // 今日收益
+            'today_asset' => $todayAsset,            // 今日总资产
+            'yesterday_asset' => $yesterdayAsset,    // 昨日总资产
             'today_date' => $today,
             'yesterday_date' => $yesterday,
+            'from_snapshot' => $fromSnapshot,        // 今日数据是否来自快照
+            'is_realtime' => !$fromSnapshot,         // 今日数据是否实时计算
         ];
+    }
+    
+    /**
+     * 实时计算用户当前总资产
+     * @param int $userId
+     * @return float
+     */
+    private static function calculateRealTimeAsset($userId)
+    {
+        // 获取用户黄金钱包
+        $wallet = \app\model\UserGoldWallet::where('user_id', $userId)->find();
+        
+        if (!$wallet || $wallet->gold_balance <= 0) {
+            return 0;
+        }
+        
+        // 获取当前实时金价
+        $service = new \app\common\service\GoldKlineService();
+        $priceResult = $service->getLatestPrice();
+        $currentPrice = $priceResult['success'] ? $priceResult['price'] : 0;
+        
+        if ($currentPrice <= 0) {
+            // 如果实时金价获取失败，降级使用K线最新收盘价
+            $latestKline = \app\model\GoldKline::where('period', '1day')
+                ->where('price_type', 'CNY')
+                ->order('start_time', 'desc')
+                ->find();
+            
+            $currentPrice = $latestKline ? floatval($latestKline->close_price) : 0;
+        }
+        
+        // 计算总资产 = 黄金余额 × 当前金价
+        $totalAsset = floatval($wallet->gold_balance) * $currentPrice;
+        
+        return $totalAsset;
     }
     
     /**

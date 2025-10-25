@@ -71,7 +71,8 @@ class GoldController extends AuthController
             $costPrice = 0;             // 成本价
             $holdEarning = 0;           // 持有收益（浮动盈亏）
             $totalEarning = 0;          // 累积收益（已实现盈亏）
-            $yesterdayEarning = 0;      // 昨日收益
+            $yesterdayEarning = 0;      // 昨日收益（昨天那一天赚了多少）
+            $todayEarning = 0;          // 今日收益（今天到目前赚了多少）
             
             if ($goldWallet) {
                 $goldBalance = floatval($goldWallet->gold_balance);
@@ -85,9 +86,13 @@ class GoldController extends AuthController
                 // 累积收益（已实现盈亏）
                 $totalEarning = floatval($goldWallet->realized_profit);
                 
-                // 计算昨日收益（通过快照对比）
+                // 计算昨日收益（昨日总资产 - 前日总资产）
                 $yesterdayProfit = GoldAssetSnapshot::calculateYesterdayProfit($user['id']);
                 $yesterdayEarning = $yesterdayProfit['yesterday_profit'];
+                
+                // 计算今日收益（今日总资产 - 昨日总资产）
+                $todayProfit = GoldAssetSnapshot::calculateTodayProfit($user['id']);
+                $todayEarning = $todayProfit['today_profit'];
             }
             
             // 统计全局数据
@@ -106,7 +111,8 @@ class GoldController extends AuthController
             return out([
                 'current_price' => round($currentPrice, 2),              // 当前金价（元/克）
                 'gold_wallet' => round($goldBalance, 6),                 // 当前持有（克）
-                'yesterday_earning' => round($yesterdayEarning, 2),      // 昨日收益（元）
+                'yesterday_earning' => round($yesterdayEarning, 2),      // 昨日收益（昨天那一天赚了多少，元）
+                'today_earning' => round($todayEarning, 2),              // 今日收益（今天到目前赚了多少，元）
                 'hold_earning' => round($holdEarning, 2),                // 持有收益/浮动盈亏（元）
                 'total_earning' => round($totalEarning, 2),              // 累积收益/已实现盈亏（元）
                 

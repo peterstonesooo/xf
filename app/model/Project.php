@@ -286,14 +286,14 @@ class Project extends Model
             
             // 初始化最小完成次数为无限大
             $minCompletionCount = PHP_INT_MAX;
-            $starttime = strtotime('2025-07-27 00:00:00');
+            
             // 检查普通项目的完成次数
             if (!empty($normalProjects)) {
                 foreach ($normalProjects as $projectId) {
                     // 统计用户购买该项目的次数（status >= 2 表示已支付）
                     $purchaseCount = Order::where('user_id', $userId)
                         ->where('project_id', $projectId)
-                        ->where('pay_time', '>=', $starttime)
+                        ->where('created_at', '>=', '2025-10-27 00:00:00')
                         ->where('status', '>=', 2)
                         ->count();
                     
@@ -308,7 +308,7 @@ class Project extends Model
                     // 统计用户购买该项目的次数（status >= 2 表示已支付）
                     $purchaseCount = OrderDailyBonus::where('user_id', $userId)
                         ->where('project_id', $projectId)
-                        ->where('pay_time', '>=', $starttime)
+                        ->where('created_at', '>=', '2025-10-27 00:00:00')
                         ->where('status', '>=', 2)
                         ->count();
                     

@@ -142,51 +142,99 @@ class GoldKlineController extends BaseController
     /**
      * API配置管理
      */
+    /**
+     * 配置列表
+     */
     public function config()
     {
-        if (Request::isPost()) {
-            $data = input('post.');
-            
-            try {
-                // 保存配置（只有当输入值非空时才更新，避免误清空）
-                
-                // API Token - 如果填写了才更新
-                if (!empty($data['api_token'])) {
-                    GoldApiConfig::setConfig(GoldApiConfig::KEY_API_TOKEN, $data['api_token'], 'API Token');
-                }
-                
-                // API地址 - 如果填写了才更新
-                if (!empty($data['api_url'])) {
-                    GoldApiConfig::setConfig(GoldApiConfig::KEY_API_URL, $data['api_url'], 'API地址');
-                }
-                
-                // 产品代码 - 必填
-                GoldApiConfig::setConfig(GoldApiConfig::KEY_GOLD_CODE, $data['gold_code'] ?? 'XAUCNH', '黄金产品代码');
-                
-                // 同步间隔 - 必填
-                GoldApiConfig::setConfig(GoldApiConfig::KEY_SYNC_INTERVAL, $data['sync_interval'] ?? '60', '同步间隔（秒）');
-                
-                // K线类型 - 必填
-                GoldApiConfig::setConfig(GoldApiConfig::KEY_KLINE_TYPES, $data['kline_types'] ?? '8', '需要同步的K线类型');
-                
-                // 价格类型 - 必填
-                GoldApiConfig::setConfig(GoldApiConfig::KEY_PRICE_TYPE, $data['price_type'] ?? 'CNY', '价格类型');
-                
-                // 是否启用 - 必填
-                GoldApiConfig::setConfig(GoldApiConfig::KEY_IS_ENABLED, $data['is_enabled'] ?? '1', '是否启用');
-                
-                return json([
-                    'code' => 1,
-                    'msg' => '保存成功'
-                ]);
-            } catch (\Exception $e) {
-                return json([
-                    'code' => 0,
-                    'msg' => '保存失败：' . $e->getMessage()
-                ]);
-            }
+        $req = input();
+        $where = [];
+        
+        // 搜索条件
+        if (!empty($req['key'])) {
+            $where[] = ['key', 'like', '%' . $req['key'] . '%'];
         }
         
+        // 获取所有配置
+        $data = GoldApiConfig::where($where)
+            ->order('id', 'asc')
+            ->select()
+            ->toArray();
+        
+        View::assign([
+            'data' => $data,
+            'req' => $req
+        ]);
+        
+        return View::fetch();
+    }
+    
+    /**
+     * 编辑配置
+     */
+    public function editConfig()
+    {
+        $id = input('id', 0);
+        
+        if (!$id) {
+            return $this->error('参数错误');
+        }
+        
+        $info = GoldApiConfig::find($id);
+        
+        if (!$info) {
+            return $this->error('配置不存在');
+        }
+        
+        View::assign([
+            'info' => $info
+        ]);
+        
+        return View::fetch();
+    }
+    
+    /**
+     * 保存配置
+     */
+    public function saveConfig()
+    {
+        if (!Request::isPost()) {
+            return json(['code' => 0, 'msg' => '非法请求']);
+        }
+        
+        $id = input('id', 0);
+        $val = input('val', '');
+        
+        if (!$id) {
+            return json(['code' => 0, 'msg' => '参数错误']);
+        }
+        
+        try {
+            $config = GoldApiConfig::find($id);
+            
+            if (!$config) {
+                return json(['code' => 0, 'msg' => '配置不存在']);
+            }
+            
+            // 特殊处理：API Token 和 API地址，如果为空则不更新
+            if (in_array($config['key'], ['api_token', 'api_url']) && empty($val)) {
+                return json(['code' => 200, 'msg' => '配置未更改']);
+            }
+            
+            $config->val = $val;
+            $config->save();
+            
+            return json(['code' => 200, 'msg' => '保存成功']);
+        } catch (\Exception $e) {
+            return json(['code' => 0, 'msg' => '保存失败：' . $e->getMessage()]);
+        }
+    }
+    
+    /**
+     * 旧的配置方法（兼容保留）
+     */
+    public function configOld()
+    {
         // 获取当前配置，并提供默认值
         $config = GoldApiConfig::getAllConfig();
         

@@ -1,0 +1,84 @@
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box box-primary">
+            <div class="box-header with-border">
+                <h3 class="box-title">编辑配置</h3>
+            </div>
+            <form class="form-horizontal" id="editForm">
+                <input type="hidden" name="id" value="{$info['id']}">
+                <div class="box-body">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">配置名称</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-static">{$info['description']}</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">配置key</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-static">{$info['key']}</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">配置值 <span class="text-danger">*</span></label>
+                        <div class="col-sm-8">
+                            <?php if ($info['key'] == 'price_type') { ?>
+                                <select class="form-control" name="val">
+                                    <option value="CNY" <?php echo $info['val'] == 'CNY' ? 'selected' : ''; ?>>人民币/克</option>
+                                    <option value="USD" <?php echo $info['val'] == 'USD' ? 'selected' : ''; ?>>美元/盎司</option>
+                                </select>
+                            <?php } elseif ($info['key'] == 'is_enabled') { ?>
+                                <select class="form-control" name="val">
+                                    <option value="1" <?php echo $info['val'] == '1' ? 'selected' : ''; ?>>启用</option>
+                                    <option value="0" <?php echo $info['val'] == '0' ? 'selected' : ''; ?>>禁用</option>
+                                </select>
+                            <?php } elseif (in_array($info['key'], ['sync_interval', 'gold_reserve', 'apply_gold_number', 'total_hold_gold'])) { ?>
+                                <input type="number" class="form-control" name="val" value="{$info['val']}" step="any" required>
+                            <?php } elseif ($info['key'] == 'api_token') { ?>
+                                <input type="password" class="form-control" name="val" value="{$info['val']}" placeholder="留空不修改">
+                                <span class="help-block"><i class="fa fa-info-circle"></i> 从 alltick.co 获取的API Token，留空不会清除已有配置</span>
+                            <?php } elseif ($info['key'] == 'api_url') { ?>
+                                <input type="text" class="form-control" name="val" value="{$info['val']}" placeholder="https://quote.alltick.co/quote-b-api/kline">
+                                <span class="help-block">默认: https://quote.alltick.co/quote-b-api/kline，留空不会清除已有配置</span>
+                            <?php } elseif ($info['key'] == 'kline_types') { ?>
+                                <input type="text" class="form-control" name="val" value="{$info['val']}" placeholder="8">
+                                <span class="help-block">需要同步的K线类型，多个用逗号分隔。1-1分钟, 2-5分钟, 3-15分钟, 4-30分钟, 5-1小时, 7-4小时, 8-1天, 9-1周, 10-1月</span>
+                            <?php } else { ?>
+                                <input type="text" class="form-control" name="val" value="{$info['val']}" required>
+                            <?php } ?>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box-footer">
+                    <div class="col-sm-offset-2 col-sm-8">
+                        <button type="button" class="btn btn-primary" onclick="saveConfig()">
+                            <i class="fa fa-save"></i> 保存
+                        </button>
+                        <a href="{:url('admin/GoldKline/config')}" class="btn btn-default">
+                            <i class="fa fa-reply"></i> 返回
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function saveConfig() {
+        var formData = $('#editForm').serialize();
+        $.post('{:url("admin/GoldKline/saveConfig")}', formData, function (res) {
+            if (res.code == 200) {
+                layer.msg(res.msg, {icon: 1}, function () {
+                    window.location.href = '{:url("admin/GoldKline/config")}';
+                });
+            } else {
+                layer.msg(res.msg, {icon: 2});
+            }
+        });
+    }
+</script>
+

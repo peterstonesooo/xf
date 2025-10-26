@@ -115,6 +115,7 @@ class GoldController extends AuthController
             return out([
                 'current_price' => round($currentPrice, 2),              // 当前金价（元/克）
                 'gold_wallet' => round($goldBalance, 6),                 // 当前持有（克）
+                'gold_wallet_price' => round($goldBalance*$currentPrice, 2),                 // 当前持有价格（元）
                 'yesterday_earning' => round($yesterdayEarning, 2),      // 昨日收益（昨天那一天赚了多少，元）
                 'today_earning' => round($todayEarning, 2),              // 今日收益（今天到目前赚了多少，元）
                 'hold_earning' => round($holdEarning, 2),                // 持有收益/浮动盈亏（元）

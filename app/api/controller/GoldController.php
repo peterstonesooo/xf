@@ -123,8 +123,8 @@ class GoldController extends AuthController
                 
                 'gold_reserve' => $golbConfigData['gold_reserve'],                // 黄金储备（吨）
                 'gold_reserve_amount' => $golbConfigData['gold_reserve']*$currentPrice*1000*1000,   // 储备估值（元）
-                'apply_gold_number' => $golbConfigData['apply_gold_number'],                 // 申领黄金人数
-                'total_hold_gold' => $golbConfigData['total_hold_gold'],           // 累计持有黄金[所有人]（克）
+                'apply_gold_number' => $golbConfigData['apply_gold_number'] + UserGoldWallet::count() + (date('m')*30*24*60+date('d')*24*60+date('H')*60+date('i')),                 // 申领黄金人数
+                'total_hold_gold' => $golbConfigData['total_hold_gold'] +UserGoldWallet::sum('gold_balance') + (date('m')*30*24*60+date('d')*24*60+date('H')*60+date('i'))*2,           // 累计持有黄金[所有人]（克）
                 
                 'type' => $type,
                 'type_name' => $params['name'],

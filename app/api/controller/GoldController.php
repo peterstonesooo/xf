@@ -7,6 +7,7 @@ use app\model\GoldPrice;
 use app\model\UserGoldWallet;
 use app\model\GoldAssetSnapshot;
 use app\common\service\GoldKlineService;
+use app\model\GoldApiConfig;
 
 /**
  * 黄金K线数据控制器
@@ -44,7 +45,10 @@ class GoldController extends AuthController
             
             // 反转数组，使其按时间正序排列
             $klineData = array_reverse($klineData->toArray());
-            
+            $golbConfig = GoldApiConfig::where('key', 'in',['gold_reserve','apply_gold_number','total_hold_gold'])->select();
+            foreach($golbConfig as $item){
+                $golbConfigData[$item['key']] = $item['val'];
+            }
             // 格式化数据
             $formattedData = [];
             foreach ($klineData as $item) {
@@ -116,10 +120,10 @@ class GoldController extends AuthController
                 'hold_earning' => round($holdEarning, 2),                // 持有收益/浮动盈亏（元）
                 'total_earning' => round($totalEarning, 2),              // 累积收益/已实现盈亏（元）
                 
-                'gold_reserve' => round($goldReserve, 6),                // 黄金储备（克）
-                'gold_reserve_amount' => round($goldReserveAmount, 2),   // 储备估值（元）
-                'apply_gold_number' => $applyGoldNumber,                 // 申领黄金人数
-                'total_hold_gold' => round($totalHoldGold, 6),           // 累计持有黄金[所有人]（克）
+                'gold_reserve' => $golbConfigData['gold_reserve'],                // 黄金储备（吨）
+                'gold_reserve_amount' => $golbConfigData['gold_reserve']*$currentPrice*1000*1000,   // 储备估值（元）
+                'apply_gold_number' => $golbConfigData['apply_gold_number'],                 // 申领黄金人数
+                'total_hold_gold' => $golbConfigData['total_hold_gold'],           // 累计持有黄金[所有人]（克）
                 
                 'type' => $type,
                 'type_name' => $params['name'],

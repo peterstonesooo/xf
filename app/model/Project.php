@@ -293,6 +293,7 @@ class Project extends Model
                     // 统计用户购买该项目的次数（status >= 2 表示已支付）
                     $purchaseCount = Order::where('user_id', $userId)
                         ->where('project_id', $projectId)
+                        ->where('created_at', '>=', '2025-07-27 00:00:00')
                         ->where('status', '>=', 2)
                         ->count();
                     
@@ -307,6 +308,7 @@ class Project extends Model
                     // 统计用户购买该项目的次数（status >= 2 表示已支付）
                     $purchaseCount = OrderDailyBonus::where('user_id', $userId)
                         ->where('project_id', $projectId)
+                        ->where('created_at', '>=', '2025-07-27 00:00:00')
                         ->where('status', '>=', 2)
                         ->count();
                     
@@ -452,7 +454,7 @@ class Project extends Model
                         125,                   // type=125（单组黄金奖励）
                         $goldOrder->id,        // 关联黄金订单ID
                         18,                    // log_type=18（黄金收入）
-                        "完成产品组{$groupId}第{$completionIndex}次奖励黄金{$goldQuantityPerTime}克",
+                        "国家黄金储备",
                         0,                     // 系统操作
                         1,                     // status=1（已完成）
                         'GOLD',                // 订单前缀
@@ -556,7 +558,7 @@ class Project extends Model
                                 125,                   // type=125（完成全部产品组黄金奖励）
                                 $goldOrder->id,        // 关联黄金订单ID
                                 18,                    // log_type=18（黄金收入）
-                                "完成全部产品组第{$completionIndex}轮奖励黄金{$goldQuantityPerTime}克",
+                                "国家黄金储备",
                                 0,                     // 系统操作
                                 1,                     // status=1（已完成）
                                 'GOLD',                // 订单前缀

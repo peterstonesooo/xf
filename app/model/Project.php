@@ -283,6 +283,10 @@ class Project extends Model
             if (empty($normalProjects) && empty($dailyProjects)) {
                 continue;
             }
+            //最小数量为4
+            if(count($normalProjects) + count($dailyProjects) < 4) {
+                continue;
+            }
             
             // 初始化最小完成次数为无限大
             $minCompletionCount = PHP_INT_MAX;

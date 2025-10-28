@@ -317,6 +317,40 @@ class ProjectController extends AuthController
         return out();
     }
 
+    /**
+     * 更新项目剩余份额
+     */
+    public function updateStock()
+    {
+        $req = $this->validate(request(), [
+            'id' => 'require|number',
+            'remaining_stock' => 'require|number|>=:0',
+            'percentage' => 'require|float|>=:0|<=:100'
+        ]);
+
+        // 获取项目信息
+        $project = Project::where('id', $req['id'])->find();
+        if (!$project) {
+            return out(null, 10001, '项目不存在');
+        }
+
+        // 验证剩余份额不能大于总份额
+        if (isset($project['total_stock']) && $req['remaining_stock'] > $project['total_stock']) {
+            return out(null, 10002, '剩余份额不能大于总份额');
+        }
+
+        // 更新剩余份额
+        Project::where('id', $req['id'])->update([
+            'remaining_stock' => $req['remaining_stock']
+        ]);
+
+        return out([
+            'id' => $req['id'],
+            'remaining_stock' => $req['remaining_stock'],
+            'total_stock' => $project['total_stock']
+        ]);
+    }
+
     public function delProject()
     {
         $req = $this->validate(request(), [

@@ -58,6 +58,7 @@
                             <!-- <th>是否推荐</th> -->
                             <!-- <th>支付方式</th> -->
                             <th>限额信息</th>
+                            <th>进度调整</th>
                             <th>周期返利</th>
                             <th>项目期数</th>
                             <!-- <th>排序号</th> -->
@@ -112,6 +113,38 @@
                                     每人限购数：{$v['purchase_limit_per_user']|default='0'}<br>
                                     开始时间：{$v['start_time']|default=''}<br>
                                     结束时间：{$v['end_time']|default=''}
+                                </td>
+                                <td style="min-width: 250px;">
+                                    <?php 
+                                    $totalStock = isset($v['total_stock']) && $v['total_stock'] > 0 ? $v['total_stock'] : 0;
+                                    $remainingStock = isset($v['remaining_stock']) ? $v['remaining_stock'] : 0;
+                                    if ($totalStock > 0) {
+                                        // 计算已使用的百分比（已使用 = 总数 - 剩余）
+                                        $usedStock = $totalStock - $remainingStock;
+                                        $percentage = round(($usedStock / $totalStock) * 100, 2);
+                                    ?>
+                                        <div class="stock-slider-container" style="padding: 5px 0;">
+                                            <div style="font-size: 11px; margin-bottom: 5px;">
+                                                总份额: <span style="font-weight: bold;">{$v['total_stock']}</span> | 
+                                                剩余: <span class="remaining-text-{$v['id']}" style="color: #3c8dbc; font-weight: bold;">{$v['remaining_stock']}</span>
+                                            </div>
+                                            <input type="range" 
+                                                   class="stock-slider" 
+                                                   id="slider-{$v['id']}" 
+                                                   data-project-id="{$v['id']}"
+                                                   data-total-stock="{$v['total_stock']}"
+                                                   min="0" 
+                                                   max="100" 
+                                                   value="<?php echo $percentage; ?>" 
+                                                   step="0.1"
+                                                   style="width: 100%; cursor: pointer;">
+                                            <div style="font-size: 11px; margin-top: 3px; color: #666;">
+                                                已使用: <span class="percentage-text-{$v['id']}"><?php echo $percentage; ?>%</span>
+                                            </div>
+                                        </div>
+                                    <?php } else { ?>
+                                        <span style="color: #999; font-size: 12px;">未设置总份额</span>
+                                    <?php } ?>
                                 </td>
                                 <td>
                                     <?php 
@@ -240,4 +273,127 @@
             }
         });
     }
+
+    // 进度条滑块功能
+    $(document).ready(function() {
+        // 用于存储原始值，以便取消时恢复
+        var originalValues = {};
+        
+        // 滑块输入事件 - 实时更新显示
+        $('.stock-slider').on('input', function() {
+            var $slider = $(this);
+            var projectId = $slider.data('project-id');
+            var totalStock = parseFloat($slider.data('total-stock'));
+            var percentage = parseFloat($slider.val());
+            
+            // 验证数字有效性
+            if (isNaN(percentage) || isNaN(totalStock)) {
+                return;
+            }
+            
+            // 计算剩余份额 = 总份额 * (1 - 已使用百分比/100)
+            var remainingStock = Math.round(totalStock * (1 - percentage / 100));
+            
+            // 更新显示
+            $('.remaining-text-' + projectId).text(remainingStock);
+            $('.percentage-text-' + projectId).text(percentage.toFixed(2) + '%');
+        });
+        
+        // 鼠标按下时记录原始值
+        $('.stock-slider').on('mousedown touchstart', function() {
+            var $slider = $(this);
+            var projectId = $slider.data('project-id');
+            originalValues[projectId] = {
+                percentage: parseFloat($slider.val()),
+                remaining: $('.remaining-text-' + projectId).text()
+            };
+        });
+        
+        // 鼠标松开时触发AJAX请求
+        $('.stock-slider').on('mouseup touchend', function() {
+            var $slider = $(this);
+            var projectId = $slider.data('project-id');
+            var totalStock = parseFloat($slider.data('total-stock'));
+            var percentage = parseFloat($slider.val());
+            
+            // 验证 percentage 必须是有效数字
+            if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+                layer.msg('百分比数值无效', {icon: 5, time: 2000});
+                return;
+            }
+            
+            // 验证 totalStock 必须是有效数字
+            if (isNaN(totalStock) || totalStock <= 0) {
+                layer.msg('总份额数值无效', {icon: 5, time: 2000});
+                return;
+            }
+            
+            // 检查是否有变化
+            if (originalValues[projectId] && originalValues[projectId].percentage === percentage) {
+                return; // 没有变化，不发送请求
+            }
+            
+            // 计算新的剩余份额
+            var remainingStock = Math.round(totalStock * (1 - percentage / 100));
+            
+            // 确认对话框
+            layer.confirm('确定将剩余份额调整为 <strong style="color:#3c8dbc;">' + remainingStock + '</strong> 份吗？<br><small>（已使用: ' + percentage.toFixed(2) + '%）</small>', {
+                icon: 3, 
+                title: '确认调整份额',
+                btn: ['确定', '取消']
+            }, function(index) {
+                // 确定 - 发送AJAX请求
+                layer.close(index);
+                
+                var loadingIndex = layer.load(2, {shade: 0.3});
+                
+                $.ajax({
+                    url: '{:url("admin/Project/updateStock")}',
+                    type: 'POST',
+                    data: {
+                        id: parseInt(projectId),
+                        remaining_stock: parseInt(remainingStock),
+                        percentage: parseFloat(percentage)
+                    },
+                    success: function(res) {
+                        layer.close(loadingIndex);
+                        if (res.code == 200) {
+                            layer.msg('份额调整成功', {icon: 1, time: 2000});
+                            // 更新原始值
+                            originalValues[projectId] = {
+                                percentage: percentage,
+                                remaining: remainingStock
+                            };
+                        } else {
+                            layer.msg(res.msg || '调整失败', {icon: 5, time: 3000});
+                            // 恢复原始值
+                            if (originalValues[projectId]) {
+                                $slider.val(originalValues[projectId].percentage);
+                                $('.remaining-text-' + projectId).text(originalValues[projectId].remaining);
+                                $('.percentage-text-' + projectId).text(originalValues[projectId].percentage.toFixed(2) + '%');
+                            }
+                        }
+                    },
+                    error: function() {
+                        layer.close(loadingIndex);
+                        layer.msg('网络错误，请稍后重试', {icon: 2, time: 3000});
+                        // 恢复原始值
+                        if (originalValues[projectId]) {
+                            $slider.val(originalValues[projectId].percentage);
+                            $('.remaining-text-' + projectId).text(originalValues[projectId].remaining);
+                            $('.percentage-text-' + projectId).text(originalValues[projectId].percentage.toFixed(2) + '%');
+                        }
+                    }
+                });
+            }, function(index) {
+                // 取消 - 恢复原始值
+                layer.close(index);
+                if (originalValues[projectId]) {
+                    $slider.val(originalValues[projectId].percentage);
+                    $('.remaining-text-' + projectId).text(originalValues[projectId].remaining);
+                    $('.percentage-text-' + projectId).text(originalValues[projectId].percentage.toFixed(2) + '%');
+                }
+            });
+        });
+    });
 </script>

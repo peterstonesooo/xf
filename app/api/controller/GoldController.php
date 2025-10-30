@@ -119,7 +119,7 @@ class GoldController extends AuthController
                 'yesterday_earning' => round($yesterdayEarning, 2),      // 昨日收益（昨天那一天赚了多少，元）
                 'today_earning' => round($todayEarning, 2),              // 今日收益（今天到目前赚了多少，元）
                 'hold_earning' => round($holdEarning, 2),                // 持有收益/浮动盈亏（元）
-                'total_earning' => round($totalEarning, 2),              // 累积收益/已实现盈亏（元）
+                'total_earning' => round($holdEarning, 2),              // 累积收益/已实现盈亏（元）
                 
                 'gold_reserve' => $golbConfigData['gold_reserve'],                // 黄金储备（吨）
                 'gold_reserve_amount' => $golbConfigData['gold_reserve']*$currentPrice*1000*1000,   // 储备估值（元）

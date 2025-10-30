@@ -129,6 +129,13 @@ class OrderController extends AuthController
         if(!$project){
             return out(null, 10002, '项目不存在');
         }
+
+        if($project['project_group_id'] != 12){
+            $count = $this->placeOrderCheck();
+            if($count < 1){
+                return out(null, 10003, '请先前往【幸福同行】中完成“红色传承”或“八一精神”任意窗口申领');
+            }
+        }
         
 /*         $redis = new \Predis\Client(config('cache.stores.redis'));
         $ret = $redis->set('order_'.$user['id'],1,'EX',5,'NX');
@@ -639,7 +646,32 @@ class OrderController extends AuthController
     }
 
 
+    public function placeCheck()
+    {
+        $req = $this->validate(request(), [
+            'project_id' => 'require|number',
+        ]);
 
+        $user = $this->user;
+        $project = Project::where('id', $req['project_id'])->where('status',1)->find();
+        if(!$project){
+            return out(null, 10002, '项目不存在');
+        }
+        if($project['project_group_id'] != 12){
+            $count = $this->placeOrderCheck();
+            if($count < 1){
+                return out(null, 10003, '请先前往【幸福同行】中完成“红色传承”或“八一精神”任意窗口申领');
+            }
+        }
+        return out(null, 0, '可以购买');
+
+    }
+
+    public function placeOrderCheck(){
+        $user = $this->user;
+        $count = OrderDailyBonus::where('user_id', $user['id'])->where('project_id', 'in',[15,48])->count();
+        return $count;
+    }
 
 
 

@@ -35,7 +35,7 @@ class ProjectController extends AuthController
         $user_id = $user['id'];
         $status_name = "开放";
         $status = 1;
-
+        $this->projectProcess();
         $isOpenAll = dbconfig('open_all_projects');
         if($isOpenAll != 1){
             if(in_array($req['project_group_id'], [7,8,9,10,11])){
@@ -970,6 +970,28 @@ class ProjectController extends AuthController
         }
 
         return out($data);
+    }
+
+    //项目进度设置【每小时最小20个】
+    public function projectProcess(){
+        $project = Project::where('project_group_id','in', [7,8,9,10,11])->where('status',1)->select();
+        foreach($project as $v){
+            $start = strtotime($v['created_at']);
+            if($start > time()){
+                continue;
+            }
+            if($v['daily_bonus_ratio'] > 0){
+                $count = OrderDailyBonus::where('project_id',$v['id'])->count();
+            }else{
+                $count = Order::where('project_id',$v['id'])->count();
+            }
+            
+            $times = (time()-$start)/180+$count;
+            if($v['total_stock']>$times){
+                $remaining_stock = $v['total_stock']-$times;
+                project::where('id',$v['id'])->update(['remaining_stock'=>$remaining_stock]);
+            }
+        }
     }
 
 }

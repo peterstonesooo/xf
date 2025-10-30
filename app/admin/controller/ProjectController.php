@@ -8,6 +8,8 @@ use app\model\Project;
 use app\model\User;
 use think\facade\Cache;
 use think\facade\Db;
+use app\model\OrderDailyBonus;
+use app\model\Order;
 
 class ProjectController extends AuthController
 {

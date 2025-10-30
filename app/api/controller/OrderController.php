@@ -451,7 +451,7 @@ class OrderController extends AuthController
                 }
                 // User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,$project['project_name'].'共富金');
                 // 给上3级团队奖
-                $relation = UserRelation::where('sub_user_id', $user['id'])->select();
+                $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3])->select();
                 $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
                 foreach ($relation as $v) {
                     $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount'], 2);
@@ -595,7 +595,7 @@ class OrderController extends AuthController
                 User::where('id',$user['id'])->inc('order_lottery_tickets',1)->update();
                 // User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,$project['project_name'].'共富金');
                 // 给上3级团队奖
-                $relation = UserRelation::where('sub_user_id', $user['id'])->select();
+                $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3])->select();
                 $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
                 foreach ($relation as $v) {
                     $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount'], 2);

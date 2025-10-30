@@ -285,7 +285,7 @@ class OrderController extends AuthController
                 User::where('id',$user['id'])->inc('order_lottery_tickets',1)->update();
                 // 给上3级团队奖
                 if($project['return_type'] == 0){
-                    $relation = UserRelation::where('sub_user_id', $user['id'])->select();
+                    $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3])->select();
                     $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
                     foreach ($relation as $v) {
                         $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount'], 2);

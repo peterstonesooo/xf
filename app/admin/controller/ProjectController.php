@@ -338,10 +338,19 @@ class ProjectController extends AuthController
         if (isset($project['total_stock']) && $req['remaining_stock'] > $project['total_stock']) {
             return out(null, 10002, '剩余份额不能大于总份额');
         }
-
+        //计算时间
+        if($project['daily_bonus_ratio'] > 0){
+            $count = OrderDailyBonus::where('project_id',$project['id'])->count();
+        }else{
+            $count = Order::where('project_id',$project['id'])->count();
+        }
+        $times = $req['remaining_stock']-$count;
+        $start = time()-$times*180;
+        
         // 更新剩余份额
         Project::where('id', $req['id'])->update([
-            'remaining_stock' => $req['remaining_stock']
+            'remaining_stock' => $req['remaining_stock'],
+            'created_at' => date('Y-m-d H:i:s', $start)
         ]);
 
         return out([

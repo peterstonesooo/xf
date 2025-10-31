@@ -306,7 +306,7 @@ class LoanController extends AuthController
             
             $user = $this->user;
             
-            $applications = LoanApplication::with(['product', 'gradient'])
+            $applications = LoanApplication::with(['product', 'gradient','repayment_plans'])
                                           ->where('user_id', $user['id'])
                                           ->order('id desc')
                                           ->paginate([
@@ -315,10 +315,21 @@ class LoanController extends AuthController
                                           ]);
 
             $data = [];
+            $yiqi_count = 0;
             foreach ($applications as $application) {
+                $repaymentPlans = $application->repayment_plans;
+                $repaymentPlanData = [];
+                foreach ($repaymentPlans as $plan) {
+                    $repaymentPlanData[] = $plan->toArray();
+                    if($plan->status == 3){
+                        $yiqi_count ++;
+                    }
+                }
+                $application->repayment_plans = $repaymentPlanData;
                 $data[] = [
                     'id' => $application->id,
                     'product_name' => $application->product->name ?? '',
+                    'repayment_plans' => $repaymentPlanData,
                     'loan_amount' => $application->loan_amount,
                     'loan_days' => $application->loan_days,
                     'installment_count' => $application->installment_count,
@@ -336,6 +347,7 @@ class LoanController extends AuthController
 
             return out([
                 'list' => $data,
+                'yiqi_count' => $yiqi_count,
                 'total' => $applications->total(),
                 'current_page' => $applications->currentPage(),
                 'last_page' => $applications->lastPage()

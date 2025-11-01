@@ -112,13 +112,11 @@ class LoanApplicationController extends AuthController
             $application->audit_remark = $req['audit_remark'] ?? '';
             $application->save();
 
-            // 如果审核通过，生成还款计划
-            if ($req['status'] == 2) {
-                $this->generateRepaymentPlan($application);
-            }
+            // 审核通过后不再生成还款计划，改为放款时生成
+            // 这样可以基于实际的放款时间（disburse_time）来计算还款日期
 
-                    Db::commit();
-        return out(null, 0, '审核成功');
+            Db::commit();
+            return out(null, 0, '审核成功');
     } catch (\Exception $e) {
         Db::rollback();
         return out(null, 10001, '审核失败：' . $e->getMessage());
@@ -153,10 +151,8 @@ class LoanApplicationController extends AuthController
                 $application->audit_time = date('Y-m-d H:i:s');
                 $application->save();
 
-                // 如果审核通过，生成还款计划
-                if ($req['status'] == 2) {
-                    $this->generateRepaymentPlan($application);
-                }
+                // 审核通过后不再生成还款计划，改为放款时生成
+                // 这样可以基于实际的放款时间（disburse_time）来计算还款日期
             }
 
             Db::commit();
@@ -189,12 +185,15 @@ class LoanApplicationController extends AuthController
 
         Db::startTrans();
         try {
-            // 1. 更新申请状态
+            // 1. 更新申请状态和放款时间
             $application->status = 4;
             $application->disburse_time = date('Y-m-d H:i:s');
             $application->save();
 
-            // 2. 给用户账户增加贷款金额到普惠钱包
+            // 2. 生成还款计划（基于放款时间计算）
+            $this->generateRepaymentPlan($application);
+
+            // 3. 给用户账户增加贷款金额到普惠钱包
             $user = User::where('id', $application->user_id)->lock(true)->find();
             if (!$user) {
                 throw new \Exception('用户不存在');
@@ -359,6 +358,7 @@ class LoanApplicationController extends AuthController
 
     /**
      * 生成还款计划
+     * 基于放款时间（disburse_time）计算还款日期
      */
     private function generateRepaymentPlan($application)
     {
@@ -372,14 +372,17 @@ class LoanApplicationController extends AuthController
         $monthlyPrincipal = bcdiv((string)$loanAmount, (string)$installmentCount, 2);
         $monthlyInterest = bcdiv(bcsub((string)$totalAmount, (string)$loanAmount, 2), (string)$installmentCount, 2);
         
+        // 确定基准时间：优先使用放款时间，如果没有则使用当前时间
+        $baseTime = $application->disburse_time ?? date('Y-m-d H:i:s');
+        
         // 生成还款计划
         for ($i = 1; $i <= $installmentCount; $i++) {
-            // 根据梯度表中的loan_days计算还款时间
-            // 第一次还款：time() + loan_days
-            // 第二次还款：time() + loan_days * 2
-            // 第三次还款：time() + loan_days * 3
+            // 根据梯度表中的loan_days计算还款时间（基于放款时间）
+            // 第一次还款：放款时间 + loan_days
+            // 第二次还款：放款时间 + loan_days * 2
+            // 第三次还款：放款时间 + loan_days * 3
             $daysToAdd = $loanDays * $i;
-            $dueDate = date('Y-m-d', strtotime("+{$daysToAdd} day", strtotime($application->created_at)));
+            $dueDate = date('Y-m-d', strtotime("+{$daysToAdd} day", strtotime($baseTime)));
             
             LoanRepaymentPlan::create([
                 'application_id' => $application->id,

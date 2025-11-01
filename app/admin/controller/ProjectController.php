@@ -346,7 +346,7 @@ class ProjectController extends AuthController
         }else{
             $count = Order::where('project_id',$project['id'])->count();
         }
-        $times = $req['total_stock'] - $req['remaining_stock']-$count;
+        $times = $project['total_stock'] - $req['remaining_stock']-$count;
         $start = time()-$times*180;
         
         // 更新剩余份额

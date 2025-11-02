@@ -245,12 +245,12 @@ class CommonController extends BaseController
         if($req['vt'] != $key){
             return out(null, 10001, '验证错误');
         } */
-/*        
+        
         
         if (User::where('ic_number', $req['ic_number'])->count()) {
             return out(null, 10002, '该身份证号已注册，请登录');
         }
- */
+
         //支付密码固定6位
         if (strlen($req['pay_password']) !== 6) {
             return out(null, 10000, '支付密码为6位数');

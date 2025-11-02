@@ -51,6 +51,7 @@ return [
         'DailyBonusReturn' => 'app\common\command\DailyBonusReturn',
         'checkLoanOverdue' => 'app\common\command\CheckLoanOverdue',
         'loanOverdueManager' => 'app\common\command\LoanOverdueManager',
+        'repairLoanApplicationStatus' => 'app\common\command\RepairLoanApplicationStatus',
         'investment:auto-return' => 'app\common\command\InvestmentAutoReturn',
         'repair:happiness_equity_reward' => 'app\common\command\RepairHappinessEquityReward',
         'fix:investment_interest_data' => 'app\common\command\FixInvestmentInterestData',

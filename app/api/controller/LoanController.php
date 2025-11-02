@@ -633,6 +633,14 @@ class LoanController extends AuthController
                     1
                 );
 
+                // 更新还款计划
+                $plan->paid_amount = bcadd((string)$plan->paid_amount, (string)$repaymentAmount, 2);
+                $plan->remaining_amount = bcsub((string)$plan->remaining_amount, (string)$plan->remaining_amount, 2); // 全部还清
+                $plan->status = 2; // 已还款
+                $plan->overdue_days = 0; // 清除逾期天数
+                $plan->overdue_interest = 0; // 清除逾期利息
+                $plan->save();
+
                 // 创建还款记录
                 LoanRepaymentRecord::create([
                     'plan_id' => $plan->id,
@@ -646,36 +654,25 @@ class LoanController extends AuthController
                     'remark' => $req['remark'] ?? "使用{$walletName}还款"
                 ]);
 
-                // 更新还款计划
-                $plan->paid_amount = bcadd((string)$plan->paid_amount, (string)$repaymentAmount, 2);
-                $plan->remaining_amount = bcsub((string)$plan->remaining_amount, (string)$plan->remaining_amount, 2); // 全部还清
-                $plan->status = 2; // 已还款
-                $plan->overdue_days = 0; // 清除逾期天数
-                $plan->overdue_interest = 0; // 清除逾期利息
-                
-                $plan->save();
+                // 检查是否所有期数都已还清（使用count查询，更高效且准确）
+                $unpaidCount = LoanRepaymentPlan::where('application_id', $plan->application_id)
+                    ->where('status', '<>', 2)  // 状态不是已还款
+                    ->count();
 
-                // 检查是否所有期数都已还清
-                $allPlans = LoanRepaymentPlan::where('application_id', $plan->application_id)->select();
-                $allPaid = true;
-                foreach ($allPlans as $p) {
-                    if ($p->status != 2) {
-                        $allPaid = false;
-                        break;
+                // 如果所有期数都已还清，更新申请状态为已结清
+                if ($unpaidCount == 0) {
+                    $application = LoanApplication::find($plan->application_id);
+                    if ($application && $application->status == 4) {
+                        $application->status = 5; // 已结清
+                        $application->save();
                     }
                 }
 
-                // 如果所有期数都已还清，更新申请状态为已结清
-                if ($allPaid) {
-                    $application = LoanApplication::find($plan->application_id);
-                    $application->status = 5; // 已结清
-                    $application->save();
-                }
+                Db::commit();
 
                 // 发送还款成功通知
                 $this->sendRepaymentSuccessNotification($plan, $walletName);
 
-                Db::commit();
                 return out(null, 0, "使用{$walletName}逾期还款成功");
             } catch (\Exception $e) {
                 Db::rollback();
@@ -922,6 +919,9 @@ class LoanController extends AuthController
                     1
                 );
 
+                // 判断还款类型（在更新状态之前）
+                $repaymentType = $plan->status == 3 ? 3 : 1; // 3=逾期还款，1=正常还款
+                
                 // 更新还款计划
                 $plan->paid_amount = bcadd((string)$plan->paid_amount, (string)$repaymentAmount, 2);
                 $plan->remaining_amount = bcsub((string)$plan->remaining_amount, (string)$plan->remaining_amount, 2); // 全部还清
@@ -931,7 +931,6 @@ class LoanController extends AuthController
                 $plan->save();
 
                 // 创建还款记录
-                $repaymentType = $plan->status == 3 ? 3 : 1; // 3=逾期还款，1=正常还款
                 LoanRepaymentRecord::create([
                     'plan_id' => $plan->id,
                     'application_id' => $plan->application_id,
@@ -945,21 +944,18 @@ class LoanController extends AuthController
                     'created_at' => date('Y-m-d H:i:s')
                 ]);
 
-                // 检查是否所有期数都已还清
-                $allPlans = LoanRepaymentPlan::where('application_id', $plan->application_id)->select();
-                $allPaid = true;
-                foreach ($allPlans as $p) {
-                    if ($p->status != 2) {
-                        $allPaid = false;
-                        break;
-                    }
-                }
+                // 检查是否所有期数都已还清（使用count查询，更高效且准确）
+                $unpaidCount = LoanRepaymentPlan::where('application_id', $plan->application_id)
+                    ->where('status', '<>', 2)  // 状态不是已还款
+                    ->count();
 
                 // 如果所有期数都已还清，更新申请状态为已结清
-                if ($allPaid) {
+                if ($unpaidCount == 0) {
                     $application = LoanApplication::find($plan->application_id);
-                    $application->status = 5; // 已结清
-                    $application->save();
+                    if ($application && $application->status == 4) {
+                        $application->status = 5; // 已结清
+                        $application->save();
+                    }
                 }
 
                 Db::commit();

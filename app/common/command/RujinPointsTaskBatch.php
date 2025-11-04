@@ -157,7 +157,7 @@ class RujinPointsTaskBatch extends Command
             'team_bonus_balance' => ['field' => 'team_bonus_balance', 'log_type' => 2],
             'butie' => ['field' => 'butie', 'log_type' => 3],
             'balance' => ['field' => 'balance', 'log_type' => 4],
-            'digit_balance' => ['field' => 'digit_balance', 'log_type' => 5],
+            'gongfu_wallet' => ['field' => 'gongfu_wallet', 'log_type' => 16],
             'puhui' => ['field' => 'puhui', 'log_type' => 13],
             'zhenxing_wallet' => ['field' => 'zhenxing_wallet', 'log_type' => 14],
         ];

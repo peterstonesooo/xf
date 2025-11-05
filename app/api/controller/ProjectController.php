@@ -12,6 +12,7 @@ use app\model\PaymentConfig;
 use app\model\PrivateTransferLog;
 use app\model\Project;
 use app\model\ProjectTongxing;
+use app\model\ProjectTongxingZhixing;
 use app\model\Taxoff;
 use app\model\ProjectHuodong;
 use app\model\User;
@@ -1000,6 +1001,19 @@ class ProjectController extends AuthController
                 project::where('id',$v['id'])->update(['remaining_stock'=>$remaining_stock]);
             }
         }
+    }
+
+    /**
+     * 获取同行项目经执行配置列表
+     * @return \think\response\Json
+     */
+    public function tongxingZhixingList()
+    {
+        $data = ProjectTongxingZhixing::order(['order' => 'asc', 'id' => 'desc'])
+            ->field('id,title,detial,cover_img,city,order')
+            ->select();
+        
+        return out($data);
     }
 
 }

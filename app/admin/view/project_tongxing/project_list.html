@@ -5,6 +5,8 @@
         <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
         <a {:auth_show_judge('ProjectTongxing/addProject')} class="btn btn-flat btn-success m_10 f_r"
         href="{:url('admin/ProjectTongxing/showProject')}"><i class="fa fa-plus m-r-10"></i>添 加</a>
+        <a {:auth_show_judge('ProjectTongxingZhixing/zhixingList')} class="btn btn-flat btn-info m_10 f_r"
+        href="{:url('admin/ProjectTongxingZhixing/zhixingList')}"><i class="fa fa-cog m-r-10"></i>经执行配置</a>
     </form>
 </div>
 

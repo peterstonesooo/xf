@@ -15,7 +15,7 @@ class ProjectTongxing extends Model
     protected $updateTime = 'updated_at';
     
     // JSON字段
-    protected $json = ['amounts'];
+    protected $json = ['amounts', 'cover_img'];
     protected $jsonAssoc = true;
     
     // 字段类型转换
@@ -29,9 +29,15 @@ class ProjectTongxing extends Model
     protected $default = [
         'name' => '',
         'intro' => '',
-        'cover_img' => '',
+        'cover_img' => [],
         'details_img' => '',
         'video_url' => '',
         'amounts' => [],
+        'help_province' => 0,
+        'help_city' => 0,
+        'help_district' => 0,
+        'fund_goal' => 0.00,
+        'already_fund' => 0.00,
+        'support_numbers' => 0,
     ];
 } 

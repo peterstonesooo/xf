@@ -15,19 +15,19 @@
             <div class="box box-body">
                 <div class="row dd_input_group">
                     <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">名称</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-2 control-label dd_input_l">名称</label>
+                        <div class="col-xs-7 col-sm-8 col-md-6 col-lg-8">
                             <input type="text" name="name" class="form-control" placeholder="请输入名称"
                                    value="{$data['name']??''}">
                         </div>
-                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                        <div class="col-xs-1 col-sm-2 col-md-4 col-lg-2 dd_ts">*</div>
                     </div>
                 </div>
                 
                 <div class="row dd_input_group">
                     <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">简介</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-2 control-label dd_input_l">简介</label>
+                        <div class="col-xs-7 col-sm-8 col-md-6 col-lg-8">
                             <textarea name="intro" class="form-control" placeholder="请输入简介" rows="3">{$data['intro']??''}</textarea>
                         </div>
                     </div>
@@ -35,22 +35,44 @@
                 
                 <div class="row dd_input_group">
                     <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">封面图</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <div id="img_preview1">
-                                <?php if (!empty($data['cover_img'])){ ?>
-                                    <img style="max-width: 580px;" src ="{$data['cover_img']}"/>
-                                <?php } ?>
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-2 control-label dd_input_l">封面图【轮播图】</label>
+                        <div class="col-xs-7 col-sm-8 col-md-6 col-lg-8">
+                            <div id="cover_images_container">
+                                <?php 
+                                $cover_images = [];
+                                if (!empty($data['cover_img'])) {
+                                    $cover_images = is_array($data['cover_img']) ? $data['cover_img'] : json_decode($data['cover_img'], true);
+                                }
+                                if (!empty($cover_images)) {
+                                    foreach ($cover_images as $index => $img_url) {
+                                ?>
+                                <div class="cover-image-item" style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
+                                    <div class="row">
+                                        <div class="col-md-10">
+                                            <div class="cover-img-preview">
+                                                <img style="max-width: 100%; max-height: 200px;" src="<?php echo $img_url; ?>"/>
+                                            </div>
+                                            <input type="hidden" name="existing_cover_img[]" value="<?php echo $img_url; ?>">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="button" class="btn btn-danger btn-xs" onclick="removeCoverImage(this)">删除</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php 
+                                    }
+                                } 
+                                ?>
                             </div>
-                            <input type="file" class="form-control" name="cover_img" id="img_url1" accept="image/gif,image/jpeg,image/jpg,image/png" onchange="selectFile(1)">
+                            <button type="button" class="btn btn-success btn-xs" onclick="addCoverImage()">添加封面图</button>
                         </div>
                     </div>
                 </div>
                 
                 <div class="row dd_input_group">
                     <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">详情图</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-2 control-label dd_input_l">详情图</label>
+                        <div class="col-xs-7 col-sm-8 col-md-6 col-lg-8">
                             <div id="img_preview2">
                                 <?php if (!empty($data['details_img'])){ ?>
                                     <img style="max-width: 580px;" src ="{$data['details_img']}"/>
@@ -63,8 +85,8 @@
                 
                 <div class="row dd_input_group">
                     <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">视频链接</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-2 control-label dd_input_l">视频链接</label>
+                        <div class="col-xs-7 col-sm-8 col-md-6 col-lg-8">
                             <input type="text" name="video_url" class="form-control" placeholder="请输入视频链接"
                                    value="{$data['video_url']??''}">
                         </div>
@@ -73,8 +95,8 @@
                 
                 <div class="row dd_input_group">
                     <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">金额配置</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-2 control-label dd_input_l">金额配置</label>
+                        <div class="col-xs-7 col-sm-8 col-md-6 col-lg-8">
                             <div id="amounts_container">
                                 <?php 
                                 $amounts = [];
@@ -102,6 +124,67 @@
                                 <?php } ?>
                             </div>
                             <button type="button" class="btn btn-success btn-xs" onclick="addAmount()">添加金额配置</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-2 control-label dd_input_l">帮助省</label>
+                        <div class="col-xs-7 col-sm-8 col-md-6 col-lg-8">
+                            <input type="number" name="help_province" class="form-control" placeholder="请输入省ID"
+                                   value="{$data['help_province']??'0'}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-2 control-label dd_input_l">帮助市</label>
+                        <div class="col-xs-7 col-sm-8 col-md-6 col-lg-8">
+                            <input type="number" name="help_city" class="form-control" placeholder="请输入市ID"
+                                   value="{$data['help_city']??'0'}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-2 control-label dd_input_l">帮助区</label>
+                        <div class="col-xs-7 col-sm-8 col-md-6 col-lg-8">
+                            <input type="number" name="help_district" class="form-control" placeholder="请输入区ID"
+                                   value="{$data['help_district']??'0'}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-2 control-label dd_input_l">筹款目标</label>
+                        <div class="col-xs-7 col-sm-8 col-md-6 col-lg-8">
+                            <input type="number" name="fund_goal" class="form-control" placeholder="请输入筹款目标金额" step="0.01"
+                                   value="{$data['fund_goal']??'0.00'}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-2 control-label dd_input_l">已筹款金额</label>
+                        <div class="col-xs-7 col-sm-8 col-md-6 col-lg-8">
+                            <input type="number" name="already_fund" class="form-control" placeholder="已筹款金额" step="0.01"
+                                   value="{$data['already_fund']??'0.00'}">
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-2 control-label dd_input_l">支持人数</label>
+                        <div class="col-xs-7 col-sm-8 col-md-6 col-lg-8">
+                            <input type="number" name="support_numbers" class="form-control" placeholder="支持人数"
+                                   value="{$data['support_numbers']??'0'}">
                         </div>
                     </div>
                 </div>
@@ -154,6 +237,52 @@
             var src = "data:" + file.type + ";base64," + window.btoa(this.result);
             result.innerHTML = '<img style="max-width: 580px;" src ="'+src+'"/>';
         }
+    }
+
+    // 封面图相关函数
+    var coverImageCounter = 0;
+    
+    function addCoverImage() {
+        coverImageCounter++;
+        var container = document.getElementById('cover_images_container');
+        var newItem = document.createElement('div');
+        newItem.className = 'cover-image-item';
+        newItem.style = 'border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px;';
+        newItem.innerHTML = `
+            <div class="row">
+                <div class="col-md-10">
+                    <div class="cover-img-preview" id="cover_img_preview_` + coverImageCounter + `"></div>
+                    <input type="file" class="form-control" name="new_cover_img[]" id="cover_img_file_` + coverImageCounter + `" accept="image/gif,image/jpeg,image/jpg,image/png" onchange="selectCoverFile(` + coverImageCounter + `)">
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger btn-xs" onclick="removeCoverImage(this)">删除</button>
+                </div>
+            </div>
+        `;
+        container.appendChild(newItem);
+    }
+
+    function selectCoverFile(counter) {
+        var fileInput = document.getElementById('cover_img_file_' + counter);
+        var preview = document.getElementById('cover_img_preview_' + counter);
+        preview.innerHTML = '';
+        
+        var files = fileInput.files;
+        if(files.length == 0){
+            return;
+        }
+        
+        var file = files[0];
+        var reader = new FileReader();
+        reader.readAsBinaryString(file);
+        reader.onload = function(){
+            var src = "data:" + file.type + ";base64," + window.btoa(this.result);
+            preview.innerHTML = '<img style="max-width: 100%; max-height: 200px; margin-bottom: 10px;" src="' + src + '"/>';
+        }
+    }
+
+    function removeCoverImage(button) {
+        button.closest('.cover-image-item').remove();
     }
 
     function addAmount() {

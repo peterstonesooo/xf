@@ -30,11 +30,24 @@
                             <tr>
                                 <td>{$v['id']}</td>
                                 <td>
-                                    <?php if (!empty($v['cover_img'])) { ?>
-                                        <img src="{$v['cover_img']}" onclick="seePhoto('{$v['cover_img']}')" style="max-width: 80px;">
-                                    <?php } else { ?>
-                                        <span class="text-muted">无图片</span>
-                                    <?php } ?>
+                                    <?php 
+                                    $cover_imgs = [];
+                                    if (!empty($v['cover_img'])) {
+                                        $cover_imgs = is_array($v['cover_img']) ? $v['cover_img'] : json_decode($v['cover_img'], true);
+                                    }
+                                    if (!empty($cover_imgs) && is_array($cover_imgs)) {
+                                        foreach ($cover_imgs as $index => $img) {
+                                            if ($index < 3) { // 最多显示3张
+                                                echo '<img src="' . $img . '" onclick="seePhoto(\'' . $img . '\')" style="max-width: 60px; margin: 2px;">';
+                                            }
+                                        }
+                                        if (count($cover_imgs) > 3) {
+                                            echo '<span class="text-muted">+' . (count($cover_imgs) - 3) . '</span>';
+                                        }
+                                    } else {
+                                        echo '<span class="text-muted">无图片</span>';
+                                    }
+                                    ?>
                                 </td>
                                 <td>{$v['name']}</td>
                                 <td>

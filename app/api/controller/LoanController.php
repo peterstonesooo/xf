@@ -618,6 +618,11 @@ class LoanController extends AuthController
                 return out(null, 10001, "{$walletName}余额不足，请先充值");
             }
 
+            // 检查是否所有期数都已还清（在事务前查询，避免事务对数据的影响）
+            $unpaidCount = LoanRepaymentPlan::where('application_id', $plan->application_id)
+                ->where('status', '<>', 2)  // 状态不是已还款
+                ->count();
+
             Db::startTrans();
             try {
                 // 扣除用户钱包余额
@@ -654,13 +659,8 @@ class LoanController extends AuthController
                     'remark' => $req['remark'] ?? "使用{$walletName}还款"
                 ]);
 
-                // 检查是否所有期数都已还清（使用count查询，更高效且准确）
-                $unpaidCount = LoanRepaymentPlan::where('application_id', $plan->application_id)
-                    ->where('status', '<>', 2)  // 状态不是已还款
-                    ->count();
-
-                // 如果所有期数都已还清，更新申请状态为已结清
-                if ($unpaidCount == 0) {
+                // 如果还款前未还期数<=1（即还完当前期数后就全部还清了），更新申请状态为已结清
+                if ($unpaidCount <= 1) {
                     $application = LoanApplication::find($plan->application_id);
                     if ($application && $application->status == 4) {
                         $application->status = 5; // 已结清
@@ -903,6 +903,11 @@ class LoanController extends AuthController
                 return out(null, 400, "{$walletName}余额不足");
             }
 
+            // 检查是否所有期数都已还清（在事务前查询，避免事务对数据的影响）
+            $unpaidCount = LoanRepaymentPlan::where('application_id', $plan->application_id)
+                ->where('status', '<>', 2)  // 状态不是已还款
+                ->count();
+
             // 开始事务
             Db::startTrans();
             try {
@@ -944,13 +949,8 @@ class LoanController extends AuthController
                     'created_at' => date('Y-m-d H:i:s')
                 ]);
 
-                // 检查是否所有期数都已还清（使用count查询，更高效且准确）
-                $unpaidCount = LoanRepaymentPlan::where('application_id', $plan->application_id)
-                    ->where('status', '<>', 2)  // 状态不是已还款
-                    ->count();
-
-                // 如果所有期数都已还清，更新申请状态为已结清
-                if ($unpaidCount == 0) {
+                // 如果还款前未还期数<=1（即还完当前期数后就全部还清了），更新申请状态为已结清
+                if ($unpaidCount <= 1) {
                     $application = LoanApplication::find($plan->application_id);
                     if ($application && $application->status == 4) {
                         $application->status = 5; // 已结清

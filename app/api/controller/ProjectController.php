@@ -916,10 +916,14 @@ class ProjectController extends AuthController
      */
     public function tongxingList()
     {
-        $data = ProjectTongxing::field('id, name, intro, cover_img, details_img, video_url, amounts, creat_at, updated_at')
-            ->order(['id' => 'desc'])
+        $data = ProjectTongxing::order(['id' => 'desc'])
             ->select()
             ->each(function($item) {
+                if(!empty($item['cover_img'])){
+                    $item['cover_img'] = is_array($item['cover_img']) ? $item['cover_img'] : json_decode($item['cover_img'], true);
+                }else{
+                    $item['cover_img'] = [];
+                }
                 // 处理金额配置数据
                 if (!empty($item['amounts'])) {
                     $amounts = is_array($item['amounts']) ? $item['amounts'] : json_decode($item['amounts'], true);
@@ -953,14 +957,18 @@ class ProjectController extends AuthController
             'id' => 'require|number'
         ]);
 
-        $data = ProjectTongxing::field('id, name, intro, cover_img, details_img, video_url, amounts, creat_at, updated_at')
-            ->where('id', $req['id'])
+        $data = ProjectTongxing::where('id', $req['id'])
             ->find();
 
         if (!$data) {
             return out(null, 10001, '配置不存在');
         }
 
+        if(!empty($data['cover_img'])){
+            $data['cover_img'] = is_array($data['cover_img']) ? $data['cover_img'] : json_decode($data['cover_img'], true);
+        }else{
+            $data['cover_img'] = [];
+        }
         // 处理金额配置数据
         if (!empty($data['amounts'])) {
             $amounts = is_array($data['amounts']) ? $data['amounts'] : json_decode($data['amounts'], true);

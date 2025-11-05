@@ -130,24 +130,19 @@ class OrderController extends AuthController
             return out(null, 10002, '项目不存在');
         }
 
-        if($project['project_group_id'] != 12){
+        if( in_array($project['project_group_id'], [7,8,9,10,11]) ){
             $count = $this->placeOrderCheck();
             if($count < 1){
                 return out(null, 10003, '请先前往【幸福同行】中完成“红色传承”或“八一精神”任意窗口申领');
             }
         }
         
-/*         $redis = new \Predis\Client(config('cache.stores.redis'));
-        $ret = $redis->set('order_'.$user['id'],1,'EX',5,'NX');
-        if(!$ret){
-            return out("服务繁忙，请稍后再试");
-        } */
         $project = Project::field('id project_id,name project_name,class,project_group_id,cover_img,single_amount,single_integral,total_num,daily_bonus_ratio,sum_amount,dividend_cycle,period,single_gift_equity,
                                     single_gift_digital_yuan,sham_buy_num,progress_switch,bonus_multiple,
                                     settlement_method,created_at,min_amount,max_amount,open_date,end_date,
                                     year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,class,
                                     minsheng_amount,huimin_days_return,purchase_limit_per_user,zhenxing_wallet,
-                                    puhui,yuding_amount,return_type,remaining_stock,yuding_time,gongfu_right_now,zhenxing_right_now')
+                                    puhui,yuding_amount,return_type,remaining_stock,yuding_time,gongfu_right_now,zhenxing_right_now,minsheng_right_now')
         ->where('id', $req['project_id'])
         ->lock(true)
         ->append(['all_total_buy_num'])
@@ -315,6 +310,9 @@ class OrderController extends AuthController
                 }
                 if($project['zhenxing_right_now'] > 0){
                     User::changeInc($user['id'], $project['zhenxing_right_now'], 'zhenxing_wallet',52,$order['id'],14,'振兴专项金',0,1);
+                }
+                if($project['minsheng_right_now'] > 0){
+                    User::changeInc($user['id'], $project['minsheng_right_now'], 'balance',52,$order['id'],4,'民生专项金',0,1);
                 }
                 // 累计总收益和赠送数字人民币  到期结算
                 // 订单支付完成

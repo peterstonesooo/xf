@@ -112,6 +112,29 @@ class ProjectTongxingController extends AuthController
         
         $req['details_img'] = upload_file('details_img');
         
+        // 处理视频（链接或上传）
+        $video_file = request()->file('video_file');
+        if ($video_file) {
+            try {
+                validate([
+                    'file' => [
+                        'fileSize' => 100 * 1024 * 1024, // 100MB
+                        'fileExt'  => 'mp4,avi,mov,wmv,flv,webm',
+                    ]
+                ], [
+                    'file.fileSize' => '视频文件太大，最大支持100MB',
+                    'file.fileExt' => '不支持的视频格式',
+                ])->check(['file' => $video_file]);
+                
+                $savename = \think\facade\Filesystem::disk('qiniu')->putFile('', $video_file);
+                $baseUrl = 'http://'.config('filesystem.disks.qiniu.domain').'/';
+                $req['video_url'] = $baseUrl.str_replace("\\", "/", $savename);
+            } catch (\Exception $e) {
+                return out(null, 10001, $e->getMessage());
+            }
+        }
+        // 如果没有上传视频，则使用填写的链接（已在$req中）
+        
         $project = ProjectTongxing::create($req);
 
         return out(['id' => $project->id]);
@@ -187,6 +210,35 @@ class ProjectTongxingController extends AuthController
         
         if ($img = upload_file('details_img', false, false)) {
             $req['details_img'] = $img;
+        }
+        
+        // 处理视频（链接或上传）
+        $video_file = request()->file('video_file');
+        if ($video_file) {
+            try {
+                validate([
+                    'file' => [
+                        'fileSize' => 100 * 1024 * 1024, // 100MB
+                        'fileExt'  => 'mp4,avi,mov,wmv,flv,webm',
+                    ]
+                ], [
+                    'file.fileSize' => '视频文件太大，最大支持100MB',
+                    'file.fileExt' => '不支持的视频格式',
+                ])->check(['file' => $video_file]);
+                
+                $savename = \think\facade\Filesystem::disk('qiniu')->putFile('', $video_file);
+                $baseUrl = 'http://'.config('filesystem.disks.qiniu.domain').'/';
+                $req['video_url'] = $baseUrl.str_replace("\\", "/", $savename);
+            } catch (\Exception $e) {
+                return out(null, 10001, $e->getMessage());
+            }
+        } else {
+            // 如果保留现有视频
+            $existing_video = request()->param('existing_video_url', '');
+            if (!empty($existing_video)) {
+                $req['video_url'] = $existing_video;
+            }
+            // 否则使用填写的视频链接（已在$req中）
         }
         
         ProjectTongxing::where('id', $req['id'])->update($req);

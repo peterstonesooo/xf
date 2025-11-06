@@ -124,12 +124,12 @@ class ProjectTongxingController extends AuthController
             'name|名称' => 'require|max:32',
             'intro|简介' => 'max:255',
             'video_url|视频链接' => 'max:255',
-            'help_province|帮助省' => 'number',
-            'help_city|帮助市' => 'number',
-            'help_district|帮助区' => 'number',
-            'fund_goal|筹款目标' => 'number',
-            'already_fund|已筹款金额' => 'number',
-            'support_numbers|支持人数' => 'number',
+            'help_province|帮助省' => 'require',
+            'help_city|帮助市' => 'require',
+            'help_district|帮助区' => 'require',
+            'fund_goal|筹款目标' => 'require',
+            'already_fund|已筹款金额' => 'require',
+            'support_numbers|支持人数' => 'require',
         ]);
         
         // 处理金额、说明数据

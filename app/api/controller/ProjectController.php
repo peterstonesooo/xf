@@ -1010,9 +1010,12 @@ class ProjectController extends AuthController
     public function tongxingZhixingList()
     {
         $data = ProjectTongxingZhixing::order(['order' => 'asc', 'id' => 'desc'])
-            ->field('id,title,detial,cover_img,city,order')
-            ->select();
+            ->field('id,title,detial,cover_img,city,order,creat_at')
+            ->select()->toArray();
         
+        foreach($data as $key => $v){
+            $data[$key]['creat_at'] = date('Y/m/d', strtotime($v['creat_at']));
+        }
         return out($data);
     }
 

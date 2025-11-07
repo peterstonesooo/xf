@@ -59,14 +59,15 @@ class LoanOverdueManager extends Command
             $today = date('Y-m-d');
             $count = 0;
             
-            // 查找已逾期但状态未更新的还款计划
+            // 查找逾期的还款计划（包含首次逾期和已逾期未结清的）
             $overduePlans = LoanRepaymentPlan::with(['user', 'application'])
                 ->where('due_date', '<', $today)
-                ->where('status', 1) // 待还款状态
+                ->whereIn('status', [1, 3]) // 1: 待还款，3: 逾期
+                ->where('remaining_amount', '>', 0)
                 ->select();
 
             if ($overduePlans->isEmpty()) {
-                $output->writeln('没有发现新的逾期记录');
+                $output->writeln('没有需要处理的逾期记录');
                 return;
             }
 
@@ -78,7 +79,9 @@ class LoanOverdueManager extends Command
                 }
                 
                 // 更新逾期状态
-                $plan->status = 3; // 逾期
+                if ($plan->status != 3) {
+                    $plan->status = 3; // 逾期
+                }
                 $plan->overdue_days = $overdueDays;
                 
                 // 计算逾期利息

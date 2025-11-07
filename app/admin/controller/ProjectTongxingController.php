@@ -110,11 +110,30 @@ class ProjectTongxingController extends AuthController
         }
         $req['cover_img'] = $cover_images;
         
-        $req['details_img'] = upload_file('details_img');
+        $details_img_error = null;
+        if (isset($_FILES['details_img'])) {
+            $details_img_error = $_FILES['details_img']['error'];
+            if (is_array($details_img_error)) {
+                $details_img_error = reset($details_img_error);
+            }
+        }
+        if ($details_img_error === null || (int)$details_img_error !== UPLOAD_ERR_NO_FILE) {
+            $req['details_img'] = upload_file('details_img');
+        }
         
         // 处理视频（链接或上传）
         $video_file = request()->file('video_file');
-        if ($video_file) {
+        if (is_array($video_file)) {
+            $video_file = reset($video_file);
+        }
+        $video_error = null;
+        if (isset($_FILES['video_file'])) {
+            $video_error = $_FILES['video_file']['error'];
+            if (is_array($video_error)) {
+                $video_error = reset($video_error);
+            }
+        }
+        if ($video_file && method_exists($video_file, 'isValid') && $video_file->isValid()) {
             try {
                 validate([
                     'file' => [
@@ -132,6 +151,8 @@ class ProjectTongxingController extends AuthController
             } catch (\Exception $e) {
                 return out(null, 10001, $e->getMessage());
             }
+        } elseif ($video_error !== null && (int)$video_error !== UPLOAD_ERR_NO_FILE) {
+            return out(null, 10001, '视频上传失败，请重试');
         }
         // 如果没有上传视频，则使用填写的链接（已在$req中）
         
@@ -208,13 +229,32 @@ class ProjectTongxingController extends AuthController
         
         $req['cover_img'] = $cover_images;
         
-        if ($img = upload_file('details_img', false, false)) {
-            $req['details_img'] = $img;
+        $details_img_error = null;
+        if (isset($_FILES['details_img'])) {
+            $details_img_error = $_FILES['details_img']['error'];
+            if (is_array($details_img_error)) {
+                $details_img_error = reset($details_img_error);
+            }
+        }
+        if ($details_img_error === null || (int)$details_img_error !== UPLOAD_ERR_NO_FILE) {
+            if ($img = upload_file('details_img', false, false)) {
+                $req['details_img'] = $img;
+            }
         }
         
         // 处理视频（链接或上传）
         $video_file = request()->file('video_file');
-        if ($video_file) {
+        if (is_array($video_file)) {
+            $video_file = reset($video_file);
+        }
+        $video_error = null;
+        if (isset($_FILES['video_file'])) {
+            $video_error = $_FILES['video_file']['error'];
+            if (is_array($video_error)) {
+                $video_error = reset($video_error);
+            }
+        }
+        if ($video_file && method_exists($video_file, 'isValid') && $video_file->isValid()) {
             try {
                 validate([
                     'file' => [
@@ -232,6 +272,8 @@ class ProjectTongxingController extends AuthController
             } catch (\Exception $e) {
                 return out(null, 10001, $e->getMessage());
             }
+        } elseif ($video_error !== null && (int)$video_error !== UPLOAD_ERR_NO_FILE) {
+            return out(null, 10001, '视频上传失败，请重试');
         } else {
             // 如果保留现有视频
             $existing_video = request()->param('existing_video_url', '');

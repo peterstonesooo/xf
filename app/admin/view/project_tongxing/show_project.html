@@ -422,6 +422,22 @@
         
         // 根据选择的视频类型清理不需要的数据
         var videoType = $('input[name="video_type"]:checked').val();
+        var videoInput = document.getElementById('video_file_input');
+        var hasVideoFile = videoInput && videoInput.files && videoInput.files.length > 0;
+        var existingVideo = formData.get('existing_video_url');
+        var currentVideoUrl = formData.get('video_url');
+        if (videoType === 'upload' && !hasVideoFile) {
+            var fallbackVideoUrl = existingVideo || currentVideoUrl || '';
+            $('input[name="video_type"][value="url"]').prop('checked', true);
+            $('#video_url_section').show();
+            $('#video_upload_section').hide();
+            videoType = 'url';
+            formData.set('video_type', 'url');
+            if (fallbackVideoUrl) {
+                formData.set('video_url', fallbackVideoUrl);
+            }
+        }
+
         if (videoType === 'url') {
             // 如果选择视频链接，移除上传的视频文件
             formData.delete('video_file');

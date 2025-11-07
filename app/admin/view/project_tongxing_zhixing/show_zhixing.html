@@ -69,6 +69,25 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-2 control-label dd_input_l">创建时间</label>
+                        <div class="col-xs-7 col-sm-8 col-md-6 col-lg-8">
+                            <?php
+                                $creatAtValue = '';
+                                if (!empty($data['creat_at'])) {
+                                    $timestamp = strtotime($data['creat_at']);
+                                    if ($timestamp !== false) {
+                                        $creatAtValue = date('Y-m-d\TH:i', $timestamp);
+                                    }
+                                }
+                            ?>
+                            <input type="datetime-local" name="creat_at" class="form-control" value="<?php echo $creatAtValue; ?>">
+                            <small class="text-muted">不填写则默认使用当前时间</small>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="row dd_input_group">
                     <div class="form-group">

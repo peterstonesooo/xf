@@ -56,6 +56,14 @@ class ProjectTongxingZhixingController extends AuthController
         
         // 处理简介（富文本内容）
         $req['detial'] = request()->param('detial', '');
+        $creatAtParam = request()->param('creat_at', '');
+        if ($creatAtParam !== '') {
+            $creatAtTimestamp = strtotime($creatAtParam);
+            if ($creatAtTimestamp === false) {
+                return out(null, 10001, '创建时间格式不正确');
+            }
+            $req['creat_at'] = date('Y-m-d H:i:s', $creatAtTimestamp);
+        }
         
         // 处理封面图（单图）
         $req['cover_img'] = upload_file('cover_img');
@@ -76,6 +84,14 @@ class ProjectTongxingZhixingController extends AuthController
         
         // 处理简介（富文本内容）
         $req['detial'] = request()->param('detial', '');
+        $creatAtParam = request()->param('creat_at', '');
+        if ($creatAtParam !== '') {
+            $creatAtTimestamp = strtotime($creatAtParam);
+            if ($creatAtTimestamp === false) {
+                return out(null, 10001, '创建时间格式不正确');
+            }
+            $req['creat_at'] = date('Y-m-d H:i:s', $creatAtTimestamp);
+        }
         
         // 处理封面图（单图）
         if ($img = upload_file('cover_img', false, false)) {

@@ -2615,7 +2615,7 @@ class OrderController extends AuthController
     public function placeOrderTongxing(){
         $req = $this->validate(request(), [
             'project_id' => 'require|number',
-            'pay_amount' => 'require|number',
+            'pay_amount' => 'require|float',
             'type|类型' => 'require|number|in:1,2',
             'pay_password|支付密码' => 'require',
         ]);

@@ -306,7 +306,7 @@ class OrderController extends AuthController
                 
 
                 if($project['gongfu_right_now'] > 0){
-                    if($project['group_id'] == 13){
+                    if($project['project_group_id'] == 13){
                         $remark = '公益共富金';
                     }else{
                         $remark = '共富专项金';
@@ -314,7 +314,7 @@ class OrderController extends AuthController
                     User::changeInc($user['id'], $project['gongfu_right_now'], 'gongfu_wallet',52,$order['id'],16,$remark,0,1);
                 }
                 if($project['zhenxing_right_now'] > 0){
-                    if($project['group_id'] == 13){
+                    if($project['project_group_id'] == 13){
                         $remark = '公益振兴金';
                     }else{
                         $remark = '振兴专项金';
@@ -322,7 +322,7 @@ class OrderController extends AuthController
                     User::changeInc($user['id'], $project['zhenxing_right_now'], 'zhenxing_wallet',52,$order['id'],14,$remark,0,1);
                 }
                 if($project['minsheng_right_now'] > 0){
-                    if($project['group_id'] == 13){
+                    if($project['project_group_id'] == 13){
                         $remark = '公益民生金';
                     }else{
                         $remark = '民生专项金';

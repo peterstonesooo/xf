@@ -306,13 +306,28 @@ class OrderController extends AuthController
                 
 
                 if($project['gongfu_right_now'] > 0){
-                    User::changeInc($user['id'], $project['gongfu_right_now'], 'gongfu_wallet',52,$order['id'],16,'共富专项金',0,1);
+                    if($project['group_id'] == 13){
+                        $remark = '公益共富金';
+                    }else{
+                        $remark = '共富专项金';
+                    }
+                    User::changeInc($user['id'], $project['gongfu_right_now'], 'gongfu_wallet',52,$order['id'],16,$remark,0,1);
                 }
                 if($project['zhenxing_right_now'] > 0){
-                    User::changeInc($user['id'], $project['zhenxing_right_now'], 'zhenxing_wallet',52,$order['id'],14,'振兴专项金',0,1);
+                    if($project['group_id'] == 13){
+                        $remark = '公益振兴金';
+                    }else{
+                        $remark = '振兴专项金';
+                    }
+                    User::changeInc($user['id'], $project['zhenxing_right_now'], 'zhenxing_wallet',52,$order['id'],14,$remark,0,1);
                 }
                 if($project['minsheng_right_now'] > 0){
-                    User::changeInc($user['id'], $project['minsheng_right_now'], 'balance',52,$order['id'],4,'民生专项金',0,1);
+                    if($project['group_id'] == 13){
+                        $remark = '公益民生金';
+                    }else{
+                        $remark = '民生专项金';
+                    }
+                    User::changeInc($user['id'], $project['minsheng_right_now'], 'balance',52,$order['id'],4,$remark,0,1);
                 }
                 // 累计总收益和赠送数字人民币  到期结算
                 // 订单支付完成
@@ -2684,6 +2699,12 @@ class OrderController extends AuthController
             }else{
                 User::changeInc($user['id'], -$req['pay_amount'], 'xingfu_tickets', 69, $order['id'], 12, $project['name'], 0, 1);
             }
+            //添加赠送金额和人数
+            Db::name('project_tongxing')
+                ->where('id', $req['project_id'])
+                ->inc('already_fund', $pay_amount)
+                ->inc('support_numbers', 1)
+                ->update();
             
             Db::commit();
             

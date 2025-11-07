@@ -623,6 +623,8 @@ class LoanController extends AuthController
                 ->where('status', '<>', 2)  // 状态不是已还款
                 ->count();
 
+            $overdue_interest = $plan->overdue_interest;
+            $overdue_days = $plan->overdue_days;
             Db::startTrans();
             try {
                 // 扣除用户钱包余额
@@ -654,6 +656,8 @@ class LoanController extends AuthController
                     'repayment_amount' => $repaymentAmount,
                     'repayment_type' => 3, // 逾期还款
                     'repayment_method' => 2, // 手动还款
+                    'overdue_interest_snapshot' => $overdue_interest,
+                    'overdue_days_snapshot' => $overdue_days,
                     'wallet_type' => $req['wallet_type'], // 记录使用的钱包类型
                     'wallet_name' => $walletName,
                     'remark' => $req['remark'] ?? "使用{$walletName}还款"

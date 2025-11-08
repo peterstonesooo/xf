@@ -168,14 +168,14 @@ class HomeController extends AuthController
         $donationQuery = OrderTongxing::where('status', '>', 1)->where('pay_time', '>', 0);
 
         $arr['title'] = '捐款总人数';
-        $arr['value'] = (clone $donationQuery)->distinct(true)->count('user_id');
+        $arr['value'] = (clone $donationQuery)->group('user_id')->count();
 
         $arr['title1'] = '今日捐款人数';
         $arr['value1'] = (clone $donationQuery)
             ->where('pay_time', '>=', $today_start)
             ->where('pay_time', '<=', $today_end)
-            ->distinct(true)
-            ->count('user_id');
+            ->group('user_id')
+            ->count();
 
         $arr['title2'] = '昨日捐款金额';
         $arr['value2'] = round(

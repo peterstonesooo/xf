@@ -22,6 +22,27 @@ class ProjectTongxingZhixingController extends AuthController
         
         $data = $builder->paginate(['query' => $req]);
 
+        $data->each(function ($item) {
+            if (!empty($item['cover_img'])) {
+                $coverImg = $item['cover_img'];
+                if (!is_array($coverImg)) {
+                    $decoded = json_decode($coverImg, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        $coverImg = $decoded;
+                    } else {
+                        $coverImg = [$coverImg];
+                    }
+                }
+                $coverImg = array_values(array_filter($coverImg, function ($img) {
+                    return !empty($img);
+                }));
+                $item['cover_img'] = $coverImg;
+            } else {
+                $item['cover_img'] = [];
+            }
+            return $item;
+        });
+
         $this->assign('req', $req);
         $this->assign('data', $data);
 
@@ -34,6 +55,20 @@ class ProjectTongxingZhixingController extends AuthController
         $data = [];
         if (!empty($req['id'])) {
             $data = ProjectTongxingZhixing::where('id', $req['id'])->find();
+            if ($data && !empty($data['cover_img'])) {
+                $coverImg = $data['cover_img'];
+                if (!is_array($coverImg)) {
+                    $decoded = json_decode($coverImg, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        $coverImg = $decoded;
+                    } else {
+                        $coverImg = [$coverImg];
+                    }
+                }
+                $data['cover_img'] = $coverImg;
+            } elseif ($data) {
+                $data['cover_img'] = [];
+            }
         }
         
         $this->assign('data', $data);
@@ -65,8 +100,50 @@ class ProjectTongxingZhixingController extends AuthController
             $req['creat_at'] = date('Y-m-d H:i:s', $creatAtTimestamp);
         }
         
-        // 处理封面图（单图）
-        $req['cover_img'] = upload_file('cover_img');
+        // 处理封面图（多图）
+        $cover_images = [];
+        
+        $existing_images = request()->param('existing_cover_img/a', []);
+        if (!empty($existing_images)) {
+            foreach ($existing_images as $img) {
+                if (!empty($img)) {
+                    $cover_images[] = $img;
+                }
+            }
+        }
+        
+        $files = request()->file('new_cover_img');
+        if ($files) {
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+            foreach ($files as $file) {
+                if ($file) {
+                    try {
+                        validate([
+                            'file' => [
+                                'fileSize' => 10 * 1024 * 1024,
+                                'fileExt'  => 'png,jpg,jpeg,gif',
+                            ]
+                        ], [
+                            'file.fileSize' => '文件太大',
+                            'file.fileExt' => '不支持的文件后缀',
+                        ])->check(['file' => $file]);
+                        
+                        $savename = \think\facade\Filesystem::disk('qiniu')->putFile('', $file);
+                        $baseUrl = 'http://'.config('filesystem.disks.qiniu.domain').'/';
+                        $cover_images[] = $baseUrl.str_replace("\\", "/", $savename);
+                    } catch (\Exception $e) {
+                        // 单个文件上传失败时忽略
+                    }
+                }
+            }
+        }
+        
+        $cover_images = array_values(array_filter($cover_images, function ($item) {
+            return !empty($item);
+        }));
+        $req['cover_img'] = json_encode($cover_images, JSON_UNESCAPED_SLASHES);
         
         $zhixing = ProjectTongxingZhixing::create($req);
 
@@ -93,10 +170,50 @@ class ProjectTongxingZhixingController extends AuthController
             $req['creat_at'] = date('Y-m-d H:i:s', $creatAtTimestamp);
         }
         
-        // 处理封面图（单图）
-        if ($img = upload_file('cover_img', false, false)) {
-            $req['cover_img'] = $img;
+        // 处理封面图（多图）
+        $cover_images = [];
+        
+        $existing_images = request()->param('existing_cover_img/a', []);
+        if (!empty($existing_images)) {
+            foreach ($existing_images as $img) {
+                if (!empty($img)) {
+                    $cover_images[] = $img;
+                }
+            }
         }
+        
+        $files = request()->file('new_cover_img');
+        if ($files) {
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+            foreach ($files as $file) {
+                if ($file) {
+                    try {
+                        validate([
+                            'file' => [
+                                'fileSize' => 10 * 1024 * 1024,
+                                'fileExt'  => 'png,jpg,jpeg,gif',
+                            ]
+                        ], [
+                            'file.fileSize' => '文件太大',
+                            'file.fileExt' => '不支持的文件后缀',
+                        ])->check(['file' => $file]);
+                        
+                        $savename = \think\facade\Filesystem::disk('qiniu')->putFile('', $file);
+                        $baseUrl = 'http://'.config('filesystem.disks.qiniu.domain').'/';
+                        $cover_images[] = $baseUrl.str_replace("\\", "/", $savename);
+                    } catch (\Exception $e) {
+                        // 单个文件上传失败时忽略
+                    }
+                }
+            }
+        }
+        
+        $cover_images = array_values(array_filter($cover_images, function ($item) {
+            return !empty($item);
+        }));
+        $req['cover_img'] = json_encode($cover_images, JSON_UNESCAPED_SLASHES);
         
         ProjectTongxingZhixing::where('id', $req['id'])->update($req);
 

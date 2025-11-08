@@ -1009,11 +1009,25 @@ class ProjectController extends AuthController
      */
     public function tongxingZhixingList()
     {
-        $data = ProjectTongxingZhixing::order(['order' => 'asc', 'id' => 'desc'])
+        $data = ProjectTongxingZhixing::order(['order' => 'desc', 'id' => 'desc'])
             ->field('id,title,detial,cover_img,city,order,creat_at')
             ->select()->toArray();
         
         foreach($data as $key => $v){
+            if (!empty($v['cover_img'])) {
+                if (is_array($v['cover_img'])) {
+                    $coverImg = $v['cover_img'];
+                } else {
+                    $decoded = json_decode($v['cover_img'], true);
+                    $coverImg = (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) ? $decoded : [$v['cover_img']];
+                }
+                $coverImg = array_values(array_filter($coverImg, function ($item) {
+                    return !empty($item);
+                }));
+                $data[$key]['cover_img'] = $coverImg;
+            } else {
+                $data[$key]['cover_img'] = [];
+            }
             $data[$key]['creat_at'] = date('Y/m/d', strtotime($v['creat_at']));
         }
         return out($data);

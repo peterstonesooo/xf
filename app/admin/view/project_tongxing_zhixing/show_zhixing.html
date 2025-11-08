@@ -40,12 +40,37 @@
                     <div class="form-group">
                         <label class="col-xs-4 col-sm-2 col-md-2 col-lg-2 control-label dd_input_l">封面图</label>
                         <div class="col-xs-7 col-sm-8 col-md-6 col-lg-8">
-                            <div id="img_preview1">
-                                <?php if (!empty($data['cover_img'])){ ?>
-                                    <img style="max-width: 580px;" src ="{$data['cover_img']}"/>
-                                <?php } ?>
+                            <div id="cover_images_container">
+                                <?php 
+                                $cover_images = [];
+                                if (!empty($data['cover_img'])) {
+                                    $cover_images = is_array($data['cover_img']) ? $data['cover_img'] : json_decode($data['cover_img'], true);
+                                    if (!$cover_images) {
+                                        $cover_images = [];
+                                    }
+                                }
+                                if (!empty($cover_images)) {
+                                    foreach ($cover_images as $img_url) {
+                                ?>
+                                <div class="cover-image-item" style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
+                                    <div class="row">
+                                        <div class="col-md-10">
+                                            <div class="cover-img-preview">
+                                                <img style="max-width: 100%; max-height: 200px;" src="<?php echo $img_url; ?>"/>
+                                            </div>
+                                            <input type="hidden" name="existing_cover_img[]" value="<?php echo $img_url; ?>">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="button" class="btn btn-danger btn-xs" onclick="removeCoverImage(this)">删除</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php 
+                                    }
+                                }
+                                ?>
                             </div>
-                            <input type="file" class="form-control" name="cover_img" id="img_url1" accept="image/gif,image/jpeg,image/jpg,image/png" onchange="selectFile(1)">
+                            <button type="button" class="btn btn-success btn-xs" onclick="addCoverImage()">添加封面图</button>
                         </div>
                     </div>
                 </div>
@@ -165,20 +190,54 @@
         });
     }
 
-    function selectFile(i)
-    {
-        $('#img_preview'+i).html('');
-        var files = document.getElementById('img_url'+i).files;
-        if(files.length == 0){
+    var coverImageCounter = $('#cover_images_container .cover-image-item').length;
+    
+    function addCoverImage() {
+        coverImageCounter++;
+        var container = document.getElementById('cover_images_container');
+        var newItem = document.createElement('div');
+        newItem.className = 'cover-image-item';
+        newItem.style = 'border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px;';
+        newItem.innerHTML = `
+            <div class="row">
+                <div class="col-md-10">
+                    <div class="cover-img-preview" id="cover_img_preview_${coverImageCounter}"></div>
+                    <input type="file" class="form-control" name="new_cover_img[]" id="cover_img_file_${coverImageCounter}" accept="image/gif,image/jpeg,image/jpg,image/png" onchange="selectCoverFile(${coverImageCounter})">
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger btn-xs" onclick="removeCoverImage(this)">删除</button>
+                </div>
+            </div>
+        `;
+        container.appendChild(newItem);
+    }
+
+    function selectCoverFile(counter) {
+        var fileInput = document.getElementById('cover_img_file_' + counter);
+        var preview = document.getElementById('cover_img_preview_' + counter);
+        if (!fileInput || !preview) {
             return;
         }
-        var file = files[0]; //把上传的图片显示出来
+        preview.innerHTML = '';
+        
+        var files = fileInput.files;
+        if(!files || files.length == 0){
+            return;
+        }
+        
+        var file = files[0];
         var reader = new FileReader();
         reader.readAsBinaryString(file);
         reader.onload = function(){
-            var result = document.getElementById('img_preview'+i);
             var src = "data:" + file.type + ";base64," + window.btoa(this.result);
-            result.innerHTML = '<img style="max-width: 580px;" src ="'+src+'"/>';
+            preview.innerHTML = '<img style="max-width: 100%; max-height: 200px; margin-bottom: 10px;" src="' + src + '"/>';
+        }
+    }
+
+    function removeCoverImage(button) {
+        var item = button.closest('.cover-image-item');
+        if (item) {
+            item.remove();
         }
     }
 

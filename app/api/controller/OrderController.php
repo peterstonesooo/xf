@@ -297,7 +297,7 @@ class OrderController extends AuthController
                 User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$remark,0,1);
                 
                 //抽奖机会加一
-                User::where('id',$user['id'])->inc('order_lottery_tickets',1)->update();
+                User::where('id',$user['id'])->inc('order_lottery_tickets',$numbers)->update();
                 // 给上3级团队奖
                 if($project['return_type'] == 0){
                     $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3])->select();
@@ -476,7 +476,7 @@ class OrderController extends AuthController
                 // 扣余额
                 User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$project['project_name'],0,1);
                 //抽奖机会加一
-                User::where('id',$user['id'])->inc('order_lottery_tickets',1)->update();
+                User::where('id',$user['id'])->inc('order_lottery_tickets',$numbers)->update();
                 if($project['minsheng_amount'] > 0){
                     User::changeInc($user['id'], $project['minsheng_amount'] * $numbers, 'balance',52,$order['id'],4,$project['project_name'],0,1);
                 }
@@ -645,7 +645,7 @@ class OrderController extends AuthController
                 // 扣余额
                 User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$project['project_name'],0,1);
                 //抽奖机会加一
-                User::where('id',$user['id'])->inc('order_lottery_tickets',1)->update();
+                User::where('id',$user['id'])->inc('order_lottery_tickets',$numbers)->update();
                 // User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,$project['project_name'].'共富金');
                 // 给上3级团队奖
                 $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3])->select();

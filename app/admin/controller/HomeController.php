@@ -165,7 +165,8 @@ class HomeController extends AuthController
         $yesterday_start = strtotime($yesterday);
         $yesterday_end_ts = strtotime($yesterday_end);
 
-        $donationQuery = OrderTongxing::where('status', '>', 1)->where('pay_time', '>', 0);
+        $donationQuery = OrderTongxing::where('status', '>', 1)
+        ->where('pay_time', '>', 0)->where('created_at', '>=', '2025-11-08 00:00:00');
 
         $arr['title'] = '捐款总人数';
         $arr['value'] = (clone $donationQuery)->group('user_id')->count();
@@ -177,14 +178,12 @@ class HomeController extends AuthController
             ->group('user_id')
             ->count();
 
-        $arr['title2'] = '昨日捐款金额';
-        $arr['value2'] = round(
-            (clone $donationQuery)
+        $arr['title2'] = '昨日捐款人数';
+        $arr['value2'] = (clone $donationQuery)
                 ->where('pay_time', '>=', $yesterday_start)
                 ->where('pay_time', '<=', $yesterday_end_ts)
-                ->sum('single_amount'),
-            2
-        );
+                ->group('user_id')
+                ->count();
         $arr['url'] = '';
         $data[] = $arr;
 

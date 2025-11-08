@@ -272,7 +272,8 @@ class Order extends Model
             ]);
         }
         //份额减一
-        Project::where('id', $order['project_id'])->inc('remaining_stock', -1)->update();
+        $buyNum = $order['buy_num'] > 0 ? (int)$order['buy_num'] : 1;
+        Project::where('id', $order['project_id'])->inc('remaining_stock', -$buyNum)->update();
 
             //购买产品和恢复资产用户激活
             if ($order['user']['is_active'] == 0 ) {

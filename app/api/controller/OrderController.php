@@ -49,6 +49,8 @@ class OrderController extends AuthController
         if (!empty($req['pay_password']) && $user['pay_password'] !== sha1(md5($req['pay_password']))) {
             return out(null, 10001, '支付密码错误');
         }
+
+        $numbers = isset($req['numbers']) && (int)$req['numbers'] > 0 ? (int)$req['numbers'] : 1;
         $order = Order::where('id', $req['order_id'])
             ->where('status', 2)
             ->where('return_type', 1)
@@ -103,6 +105,7 @@ class OrderController extends AuthController
     {
         $req = $this->validate(request(), [
             'project_id' => 'require|number',
+            'numbers' => 'number',
             'pay_amount' => 'require|number',
             'pay_method' => 'require|number',
             'payment_config_id' => 'requireIf:pay_method,2|requireIf:pay_method,3|requireIf:pay_method,4|requireIf:pay_method,6|number',
@@ -148,24 +151,24 @@ class OrderController extends AuthController
         ->append(['all_total_buy_num'])
         ->find()
         ->toArray();
-
+        $numbers = (int)$numbers > 0 ? (int)$numbers : 1;
         if($project['open_date'] && $project['end_date']){
             if(time() < strtotime($project['open_date']) || time() > strtotime($project['end_date'])){
                 return out(null, 10004, '尚未开放');
             }
         }
         
-        if($project['remaining_stock'] <= 0){
-            return out(null, 10004, '名额已满');
+        if($project['remaining_stock'] < $numbers){
+            return out(null, 10004, '名额不足');
         }
         
         if($project['daily_bonus_ratio'] > 0 && $project['project_group_id'] != 12){
-            return $this->placeOrderDailyBonus($req,$project);
+            return $this->placeOrderDailyBonus($req,$project, $numbers);
         }
         
         //如果是体验项目且有每日分红，逻辑单独处理
         if($project['project_group_id'] == 12 && $project['daily_bonus_ratio'] > 0){
-            return $this->placeOrderTiyanDailyBonus($req,$project);
+            return $this->placeOrderTiyanDailyBonus($req,$project, $numbers);
         }
         //如果是体验项目，逻辑单独处理
         if($project['project_group_id'] == 12 && $project['project_id'] == 3 ){
@@ -188,8 +191,12 @@ class OrderController extends AuthController
                     //周一到周五的订单
                     $monday = date('Y-m-d 00:00:00', strtotime('monday this week'));
                     $friday = date('Y-m-d 23:59:59', strtotime('friday this week'));
-                    $buy_orders = Order::where('project_id', $req['project_id'])->where('created_at', '>=', $monday)->where('created_at', '<=', $friday)->count();
-                    if($buy_orders >= $buy_num && $buy_num > 0){
+                    $buy_orders = Order::where('project_id', $req['project_id'])
+                        ->where('created_at', '>=', $monday)
+                        ->where('created_at', '<=', $friday)
+                        ->sum('buy_num');
+                    $buy_orders = $buy_orders ?: 0;
+                    if(($buy_orders + $numbers) > $buy_num && $buy_num > 0){
                         $msg = '今日“'.$project['project_name'].'”名额已满';
                         return out(null, 10003, $msg);
                     }
@@ -198,8 +205,12 @@ class OrderController extends AuthController
                     $saturday = date('Y-m-d 00:00:00', time());    
                     $sunday = date('Y-m-d 23:59:59', time());
                     $buy_num = $project['remaining_quota'];       
-                    $buy_orders = Order::where('project_id', $req['project_id'])->where('created_at', '>=', $saturday)->where('created_at', '<=', $sunday)->count();
-                    if($buy_orders >= $buy_num && $buy_num > 0){
+                    $buy_orders = Order::where('project_id', $req['project_id'])
+                        ->where('created_at', '>=', $saturday)
+                        ->where('created_at', '<=', $sunday)
+                        ->sum('buy_num');
+                    $buy_orders = $buy_orders ?: 0;
+                    if(($buy_orders + $numbers) > $buy_num && $buy_num > 0){
                         $msg = '今日“'.$project['project_name'].'”名额已满';
                         return out(null, 10003, $msg);
                     }
@@ -215,7 +226,8 @@ class OrderController extends AuthController
         try {
             $user = User::where('id', $user['id'])->lock(true)->find();
             //检查是否已经购买
-            $order_count = Order::where('user_id', $user['id'])->where('project_id', $req['project_id'])->count();
+            $order_count = Order::where('user_id', $user['id'])->where('project_id', $req['project_id'])->sum('buy_num');
+            $order_count = $order_count ?: 0;
             
             if($project['return_type'] == 1){
                 if( time() > strtotime($project['yuding_time'])  ){
@@ -224,7 +236,7 @@ class OrderController extends AuthController
             }
 
             if($project['purchase_limit_per_user'] > 0){
-                if($order_count >= $project['purchase_limit_per_user']){
+                if(($order_count + $numbers) > $project['purchase_limit_per_user']){
                     return out(null, 10006, '您已达到购买上限');
                 }
             }
@@ -236,7 +248,8 @@ class OrderController extends AuthController
             }else{
                 $discount = 1;
             }
-            $pay_amount = round($project['single_amount'] * $discount, 2);
+            $unit_amount = round($project['single_amount'] * $discount, 2);
+            $pay_amount = round($unit_amount * $numbers, 2);
 
 
             if ($pay_amount >  ($user['topup_balance'] + $user['reward_balance'])) {
@@ -265,7 +278,7 @@ class OrderController extends AuthController
             $project['user_id'] = $user['id'];
             $project['up_user_id'] = $user['up_user_id'];
             $project['order_sn'] = $order_sn;
-            $project['buy_num'] = 1;
+            $project['buy_num'] = $numbers;
             $project['pay_method'] = $req['pay_method'];
             $project['price'] = $pay_amount;
             $project['buy_amount'] = $pay_amount;
@@ -290,7 +303,7 @@ class OrderController extends AuthController
                     $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3])->select();
                     $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
                     foreach ($relation as $v) {
-                        $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount'], 2);
+                        $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount']*$numbers, 2);
                         if($reward > 0){
                             User::changeInc($v['user_id'],$reward,'team_bonus_balance',8,$order['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
                             RelationshipRewardLog::insert([
@@ -311,7 +324,7 @@ class OrderController extends AuthController
                     }else{
                         $remark = '共富专项金';
                     }
-                    User::changeInc($user['id'], $project['gongfu_right_now'], 'gongfu_wallet',52,$order['id'],16,$remark,0,1);
+                    User::changeInc($user['id'], $project['gongfu_right_now'] * $numbers, 'gongfu_wallet',52,$order['id'],16,$remark,0,1);
                 }
                 if($project['zhenxing_right_now'] > 0){
                     if($project['project_group_id'] == 13){
@@ -319,7 +332,7 @@ class OrderController extends AuthController
                     }else{
                         $remark = '振兴专项金';
                     }
-                    User::changeInc($user['id'], $project['zhenxing_right_now'], 'zhenxing_wallet',52,$order['id'],14,$remark,0,1);
+                    User::changeInc($user['id'], $project['zhenxing_right_now'] * $numbers, 'zhenxing_wallet',52,$order['id'],14,$remark,0,1);
                 }
                 if($project['minsheng_right_now'] > 0){
                     if($project['project_group_id'] == 13){
@@ -327,7 +340,7 @@ class OrderController extends AuthController
                     }else{
                         $remark = '民生专项金';
                     }
-                    User::changeInc($user['id'], $project['minsheng_right_now'], 'balance',52,$order['id'],4,$remark,0,1);
+                    User::changeInc($user['id'], $project['minsheng_right_now'] * $numbers, 'balance',52,$order['id'],4,$remark,0,1);
                 }
                 // 累计总收益和赠送数字人民币  到期结算
                 // 订单支付完成
@@ -398,7 +411,7 @@ class OrderController extends AuthController
     }
 
     //体验项目每日分红订单
-    public function placeOrderTiyanDailyBonus($req,$project){
+    public function placeOrderTiyanDailyBonus($req,$project, $numbers = 1){
         $user = $this->user;
         $project = Project::field('id project_id,name project_name,class,project_group_id,
         cover_img,single_amount,single_integral,total_num,daily_bonus_ratio,sum_amount
@@ -411,9 +424,12 @@ class OrderController extends AuthController
         ->append(['all_total_buy_num'])
         ->find()
         ->toArray();
+        $numbers = (int)$numbers > 0 ? (int)$numbers : 1;
+
         if($project['purchase_limit_per_user'] > 0){
-            $order_count = OrderDailyBonus::where('user_id', $user['id'])->where('project_id', $project['project_id'])->count();
-            if($order_count >= $project['purchase_limit_per_user']){
+            $order_count = OrderDailyBonus::where('user_id', $user['id'])->where('project_id', $project['project_id'])->sum('buy_num');
+            $order_count = $order_count ?: 0;
+            if(($order_count + $numbers) > $project['purchase_limit_per_user']){
                 exit_out(null, 10006, '您已达到购买上限');
             }
         }
@@ -436,7 +452,8 @@ class OrderController extends AuthController
             }else{
                 $discount = 1;
             }
-            $pay_amount = round($project['single_amount'] * $discount, 2);
+            $unit_amount = round($project['single_amount'] * $discount, 2);
+            $pay_amount = round($unit_amount * $numbers, 2);
 
             if ($pay_amount >  ($user['topup_balance'] + $user['reward_balance'])) {
                 exit_out(null, 10090, '余额不足');
@@ -447,7 +464,7 @@ class OrderController extends AuthController
             $project['user_id'] = $user['id'];
             $project['up_user_id'] = $user['up_user_id'];
             $project['order_sn'] = $order_sn;
-            $project['buy_num'] = 1;
+            $project['buy_num'] = $numbers;
             $project['pay_method'] = $req['pay_method'];
             $project['price'] = $pay_amount;
             $project['buy_amount'] = $pay_amount;
@@ -461,20 +478,20 @@ class OrderController extends AuthController
                 //抽奖机会加一
                 User::where('id',$user['id'])->inc('order_lottery_tickets',1)->update();
                 if($project['minsheng_amount'] > 0){
-                    User::changeInc($user['id'], $project['minsheng_amount'], 'balance',52,$order['id'],4,$project['project_name'],0,1);
+                    User::changeInc($user['id'], $project['minsheng_amount'] * $numbers, 'balance',52,$order['id'],4,$project['project_name'],0,1);
                 }
                 if($project['gongfu_right_now'] > 0){
-                    User::changeInc($user['id'], $project['gongfu_right_now'], 'gongfu_wallet',52,$order['id'],16,'共富专项金',0,1);
+                    User::changeInc($user['id'], $project['gongfu_right_now'] * $numbers, 'gongfu_wallet',52,$order['id'],16,'共富专项金',0,1);
                 }
                 if($project['zhenxing_right_now'] > 0){
-                    User::changeInc($user['id'], $project['zhenxing_right_now'], 'zhenxing_wallet',52,$order['id'],14,'振兴专项金',0,1);
+                    User::changeInc($user['id'], $project['zhenxing_right_now'] * $numbers, 'zhenxing_wallet',52,$order['id'],14,'振兴专项金',0,1);
                 }
                 // User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,$project['project_name'].'共富金');
                 // 给上3级团队奖
                 $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3])->select();
                 $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
                 foreach ($relation as $v) {
-                    $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount'], 2);
+                    $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount']*$numbers, 2);
                     if($reward > 0){
                         User::changeInc($v['user_id'],$reward,'team_bonus_balance',8,$order['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
                         RelationshipRewardLog::insert([
@@ -503,8 +520,9 @@ class OrderController extends AuthController
     }
 
     //每日返利订单
-    public function placeOrderDailyBonus($req,$project){
+    public function placeOrderDailyBonus($req,$project, $numbers = 1){
         $user = $this->user;
+        $numbers = (int)$numbers > 0 ? (int)$numbers : 1;
         
         $project = Project::field('id project_id,name project_name,class,project_group_id,cover_img,
         single_amount,single_integral,total_num,daily_bonus_ratio,sum_amount,dividend_cycle,period,
@@ -533,8 +551,12 @@ class OrderController extends AuthController
                         //周一到周五的订单
                         $monday = date('Y-m-d 00:00:00', strtotime('monday this week'));
                         $friday = date('Y-m-d 23:59:59', strtotime('friday this week'));
-                        $buy_orders = OrderDailyBonus::where('project_id', $req['project_id'])->where('created_at', '>=', $monday)->where('created_at', '<=', $friday)->count();
-                        if($buy_orders >= $buy_num && $buy_num > 0){
+                        $buy_orders = OrderDailyBonus::where('project_id', $req['project_id'])
+                            ->where('created_at', '>=', $monday)
+                            ->where('created_at', '<=', $friday)
+                            ->sum('buy_num');
+                        $buy_orders = $buy_orders ?: 0;
+                        if(($buy_orders + $numbers) > $buy_num && $buy_num > 0){
                             $msg = '今日“'.$project['project_name'].'”名额已满';
                             return out(null, 10003, $msg);
                         }
@@ -543,8 +565,12 @@ class OrderController extends AuthController
                         $saturday = date('Y-m-d 00:00:00', time());    
                         $sunday = date('Y-m-d 23:59:59', time());
                         $buy_num = $project['remaining_quota'];       
-                        $buy_orders = OrderDailyBonus::where('project_id', $req['project_id'])->where('created_at', '>=', $saturday)->where('created_at', '<=', $sunday)->count();
-                        if($buy_orders >= $buy_num && $buy_num > 0){
+                        $buy_orders = OrderDailyBonus::where('project_id', $req['project_id'])
+                            ->where('created_at', '>=', $saturday)
+                            ->where('created_at', '<=', $sunday)
+                            ->sum('buy_num');
+                        $buy_orders = $buy_orders ?: 0;
+                        if(($buy_orders + $numbers) > $buy_num && $buy_num > 0){
                             $msg = '今日“'.$project['project_name'].'”名额已满';
                             return out(null, 10003, $msg);
                         }
@@ -559,8 +585,12 @@ class OrderController extends AuthController
                 }
             }
             if($project['total_quota'] > 0){
-                $buy_orders = OrderDailyBonus::where('project_id', $req['project_id'])->where('created_at', '>=', date('Y-m-d 00:00:00', time()))->where('created_at', '<=', date('Y-m-d 23:59:59', time()))->count();
-                if($buy_orders >= $project['total_quota'] && $project['total_quota'] > 0){
+                $buy_orders = OrderDailyBonus::where('project_id', $req['project_id'])
+                    ->where('created_at', '>=', date('Y-m-d 00:00:00', time()))
+                    ->where('created_at', '<=', date('Y-m-d 23:59:59', time()))
+                    ->sum('buy_num');
+                $buy_orders = $buy_orders ?: 0;
+                if(($buy_orders + $numbers) > $project['total_quota'] && $project['total_quota'] > 0){
                     $msg = '今日“'.$project['project_name'].'”名额已满';
                     return out(null, 10003, $msg);
                 }
@@ -568,8 +598,9 @@ class OrderController extends AuthController
         }
 
         if($project['purchase_limit_per_user'] > 0){
-            $order_count_check = OrderDailyBonus::where('user_id', $this->user['id'])->where('project_id', $project['project_id'])->count();
-            if($order_count_check >= $project['purchase_limit_per_user']){
+            $order_count_check = OrderDailyBonus::where('user_id', $this->user['id'])->where('project_id', $project['project_id'])->sum('buy_num');
+            $order_count_check = $order_count_check ?: 0;
+            if(($order_count_check + $numbers) > $project['purchase_limit_per_user']){
                 exit_out(null, 10006, '您已达到购买上限');
             }
         }
@@ -580,7 +611,8 @@ class OrderController extends AuthController
         try {
             $user = User::where('id', $user['id'])->lock(true)->find();
             //检查是否已经购买
-            $order_count = OrderDailyBonus::where('user_id', $user['id'])->where('project_id', $req['project_id'])->count();
+            $order_count = OrderDailyBonus::where('user_id', $user['id'])->where('project_id', $req['project_id'])->sum('buy_num');
+            $order_count = $order_count ?: 0;
             
             //計算折扣
             $discountArr = TeamGloryLog::where('user_id',$user['id'])->order('vip_level','desc')->find();
@@ -589,7 +621,8 @@ class OrderController extends AuthController
             }else{
                 $discount = 1;
             }
-            $pay_amount = round($project['single_amount'] * $discount, 2);
+            $unit_amount = round($project['single_amount'] * $discount, 2);
+            $pay_amount = round($unit_amount * $numbers, 2);
 
             if ($pay_amount >  ($user['topup_balance'] + $user['reward_balance'])) {
                 exit_out(null, 10090, '余额不足');
@@ -600,7 +633,7 @@ class OrderController extends AuthController
             $project['user_id'] = $user['id'];
             $project['up_user_id'] = $user['up_user_id'];
             $project['order_sn'] = $order_sn;
-            $project['buy_num'] = 1;
+            $project['buy_num'] = $numbers;
             $project['pay_method'] = $req['pay_method'];
             $project['price'] = $pay_amount;
             $project['buy_amount'] = $pay_amount;
@@ -618,7 +651,7 @@ class OrderController extends AuthController
                 $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3])->select();
                 $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
                 foreach ($relation as $v) {
-                    $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount'], 2);
+                    $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount']*$numbers, 2);
                     if($reward > 0){
                         User::changeInc($v['user_id'],$reward,'team_bonus_balance',8,$order['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
                         RelationshipRewardLog::insert([
@@ -633,13 +666,13 @@ class OrderController extends AuthController
                 
                 if($project['project_group_id'] == 13){
                     // 同心福
-                    User::changeInc($user['id'],$project['minsheng_amount'],'balance',3,$order['id'],4,'民生补贴',0,1);
+                    User::changeInc($user['id'],$project['minsheng_amount'] * $numbers,'balance',3,$order['id'],4,'民生补贴',0,1);
                 }
                 if($project['gongfu_right_now'] > 0){
-                    User::changeInc($user['id'], $project['gongfu_right_now'], 'gongfu_wallet',52,$order['id'],16,'共富专项金',0,1);
+                    User::changeInc($user['id'], $project['gongfu_right_now'] * $numbers, 'gongfu_wallet',52,$order['id'],16,'共富专项金',0,1);
                 }
                 if($project['zhenxing_right_now'] > 0){
-                    User::changeInc($user['id'], $project['zhenxing_right_now'], 'zhenxing_wallet',52,$order['id'],14,'振兴专项金',0,1);
+                    User::changeInc($user['id'], $project['zhenxing_right_now'] * $numbers, 'zhenxing_wallet',52,$order['id'],14,'振兴专项金',0,1);
                 }
                 // 累计总收益和赠送数字人民币  到期结算
                 // 订单支付完成
@@ -2671,6 +2704,7 @@ class OrderController extends AuthController
             }else{
                 $pay_amount = $req['pay_amount']*10;
             }
+            
             // 生成订单号
             $order_sn = 'TONGXING'.build_order_sn($user['id']);
             

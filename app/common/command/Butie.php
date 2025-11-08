@@ -69,11 +69,11 @@ class Butie extends Command
                                 if($retpuhui>0){
                                     User::changeInc($order['user_id'],$retpuhui,'puhui',59,$order['id'],13, '福泽普惠专享');
                                 }
-                                $retgongfu = isset($huimin_days_return[$period_change_day]['gongfu']) ? $huimin_days_return[$period_change_day]['gongfu'] * $buyNum : 0;
+                                $retgongfu = isset($huimin_days_return[$period_change_day]['gongfu_amount']) ? $huimin_days_return[$period_change_day]['gongfu_amount'] * $buyNum : 0;
                                 if($retgongfu>0){
                                     User::changeInc($order['user_id'],$retgongfu,'gongfu_wallet',59,$order['id'],16, '购买商品到期分红');
                                 }
-                                $retminsheng = isset($huimin_days_return[$period_change_day]['minsheng']) ? $huimin_days_return[$period_change_day]['minsheng'] * $buyNum : 0;
+                                $retminsheng = isset($huimin_days_return[$period_change_day]['minsheng_amount']) ? $huimin_days_return[$period_change_day]['minsheng_amount'] * $buyNum : 0;
                                 if($retminsheng>0){
                                     User::changeInc($order['user_id'],$retminsheng,'balance',59,$order['id'],4, '购买商品到期分红');
                                 }

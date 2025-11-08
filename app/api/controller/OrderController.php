@@ -140,6 +140,8 @@ class OrderController extends AuthController
             }
         }
         
+        $numbers = isset($req['numbers']) && (int)$req['numbers'] > 0 ? (int)$req['numbers'] : 1;
+
         $project = Project::field('id project_id,name project_name,class,project_group_id,cover_img,single_amount,single_integral,total_num,daily_bonus_ratio,sum_amount,dividend_cycle,period,single_gift_equity,
                                     single_gift_digital_yuan,sham_buy_num,progress_switch,bonus_multiple,
                                     settlement_method,created_at,min_amount,max_amount,open_date,end_date,
@@ -151,7 +153,6 @@ class OrderController extends AuthController
         ->append(['all_total_buy_num'])
         ->find()
         ->toArray();
-        $numbers = (int)$numbers > 0 ? (int)$numbers : 1;
         if($project['open_date'] && $project['end_date']){
             if(time() < strtotime($project['open_date']) || time() > strtotime($project['end_date'])){
                 return out(null, 10004, '尚未开放');

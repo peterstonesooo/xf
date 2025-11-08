@@ -2,6 +2,7 @@
 
 namespace app\admin\controller;
 
+use app\model\OrderTongxing;
 use app\model\ProjectTongxing;
 use think\facade\Cache;
 
@@ -24,6 +25,53 @@ class ProjectTongxingController extends AuthController
 
         $this->assign('req', $req);
         $this->assign('data', $data);
+
+        return $this->fetch();
+    }
+
+    public function donationList()
+    {
+        $req = request()->param();
+
+        $builder = OrderTongxing::alias('ot')
+            ->leftJoin('project_tongxing pt', 'ot.project_id = pt.id')
+            ->leftJoin('user u', 'ot.user_id = u.id')
+            ->where('ot.status', '>', 1)
+            ->where('ot.pay_time', '>', 0)
+            ->where('ot.created_at', '>=', '2025-11-08 00:00:00')
+            ->order('ot.id', 'desc');
+
+        if (!empty($req['id'])) {
+            $builder->where('ot.id', $req['id']);
+        }
+
+        if (!empty($req['phone'])) {
+            $builder->whereLike('u.phone', '%' . trim($req['phone']) . '%');
+        }
+
+        if (!empty($req['daterange_start'])) {
+            $start = strtotime($req['daterange_start'] . ' 00:00:00');
+            if ($start !== false) {
+                $builder->where('ot.pay_time', '>=', $start);
+            }
+        }
+
+        if (!empty($req['daterange_end'])) {
+            $end = strtotime($req['daterange_end'] . ' 23:59:59');
+            if ($end !== false) {
+                $builder->where('ot.pay_time', '<=', $end);
+            }
+        }
+
+        $data = $builder
+            ->field('ot.*, pt.name as config_project_name, u.phone, u.realname')
+            ->paginate(['query' => $req]);
+
+        $statusMap = OrderTongxing::$statusMap;
+
+        $this->assign('req', $req);
+        $this->assign('data', $data);
+        $this->assign('statusMap', $statusMap);
 
         return $this->fetch();
     }

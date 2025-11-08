@@ -3,6 +3,8 @@
         <input type="text" value="{$req['id']??''}" name="id" placeholder="搜索ID" class="form-control">
         <input type="text" value="{$req['name']??''}" name="name" placeholder="搜索名称" class="form-control">
         <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <a {:auth_show_judge('ProjectTongxing/donationList')} class="btn btn-flat btn-warning m_10 f_r"
+        href="{:url('admin/ProjectTongxing/donationList')}"><i class="fa fa-list m-r-10"></i>捐款明细</a>
         <a {:auth_show_judge('ProjectTongxing/addProject')} class="btn btn-flat btn-success m_10 f_r"
         href="{:url('admin/ProjectTongxing/showProject')}"><i class="fa fa-plus m-r-10"></i>添 加</a>
         <a {:auth_show_judge('ProjectTongxingZhixing/zhixingList')} class="btn btn-flat btn-info m_10 f_r"

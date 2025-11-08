@@ -1,0 +1,57 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['id']??''}" name="id" placeholder="订单ID" class="form-control">
+        <input type="text" value="{$req['phone']??''}" name="phone" placeholder="手机号" class="form-control">
+        <input type="date" value="{$req['daterange_start']??''}" name="daterange_start" class="form-control">
+        <input type="date" value="{$req['daterange_end']??''}" name="daterange_end" class="form-control">
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <a class="btn btn-flat btn-default m_10 f_r" href="{:url('admin/ProjectTongxing/projectList')}"><i class="fa fa-undo m-r-10"></i>返回列表</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>订单ID</th>
+                            <th>手机号</th>
+                            <th>姓名</th>
+                            <th>捐款金额</th>
+                            <th>支付时间</th>
+                            <th>创建时间</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td><?php echo !empty($v['phone']) ? $v['phone'] : '-'; ?></td>
+                                <td><?php echo !empty($v['realname']) ? $v['realname'] : '-'; ?></td>
+                                <td><?php echo number_format((float)$v['single_amount'], 2); ?></td>
+                                <td><?php echo $v['pay_time'] ? date('Y-m-d H:i:s', $v['pay_time']) : '-'; ?></td>
+                                <td>
+                                    <?php
+                                    if (!empty($v['created_at'])) {
+                                        if ($v['created_at'] instanceof \DateTimeInterface) {
+                                            echo $v['created_at']->format('Y-m-d H:i:s');
+                                        } else {
+                                            echo $v['created_at'];
+                                        }
+                                    } else {
+                                        echo '-';
+                                    }
+                                    ?>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+

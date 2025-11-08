@@ -35,6 +35,7 @@ class Butie extends Command
                 ['end_time', '<', time()]
             ])->order('id', 'asc')->chunk(500, function($orders) use (&$successCount, &$failCount,&$output) {
                 foreach ($orders as $order) {
+                    $buyNum = isset($order['buy_num']) && (int)$order['buy_num'] > 0 ? (int)$order['buy_num'] : 1;
                     Db::startTrans();
                     try {
                         if($order['huimin_days_return'] && $order['huimin_days_return'] != null){
@@ -55,7 +56,7 @@ class Butie extends Command
                                     continue;
                                 }
 
-                                $rethuimin = isset($huimin_days_return[$period_change_day]['huimin']) ? $huimin_days_return[$period_change_day]['huimin'] : 0;
+                                $rethuimin = isset($huimin_days_return[$period_change_day]['huimin']) ? $huimin_days_return[$period_change_day]['huimin'] * $buyNum : 0;
                                 if($rethuimin>0){
                                     //如果项目id是70 特殊处理
                                     if($order['project_id']==70){
@@ -64,19 +65,19 @@ class Butie extends Command
                                         User::changeInc($order['user_id'],$rethuimin,'digit_balance',59,$order['id'],5, '购买商品到期分红');
                                     }
                                 }
-                                $retpuhui = isset($huimin_days_return[$period_change_day]['puhui']) ? $huimin_days_return[$period_change_day]['puhui'] : 0;
+                                $retpuhui = isset($huimin_days_return[$period_change_day]['puhui']) ? $huimin_days_return[$period_change_day]['puhui'] * $buyNum : 0;
                                 if($retpuhui>0){
                                     User::changeInc($order['user_id'],$retpuhui,'puhui',59,$order['id'],13, '福泽普惠专享');
                                 }
-                                $retgongfu = isset($huimin_days_return[$period_change_day]['gongfu']) ? $huimin_days_return[$period_change_day]['gongfu'] : 0;
+                                $retgongfu = isset($huimin_days_return[$period_change_day]['gongfu']) ? $huimin_days_return[$period_change_day]['gongfu'] * $buyNum : 0;
                                 if($retgongfu>0){
                                     User::changeInc($order['user_id'],$retgongfu,'gongfu_wallet',59,$order['id'],16, '购买商品到期分红');
                                 }
-                                $retminsheng = isset($huimin_days_return[$period_change_day]['minsheng']) ? $huimin_days_return[$period_change_day]['minsheng'] : 0;
+                                $retminsheng = isset($huimin_days_return[$period_change_day]['minsheng']) ? $huimin_days_return[$period_change_day]['minsheng'] * $buyNum : 0;
                                 if($retminsheng>0){
                                     User::changeInc($order['user_id'],$retminsheng,'balance',59,$order['id'],4, '购买商品到期分红');
                                 }
-                                $retzhenxing = isset($huimin_days_return[$period_change_day]['zhenxing_wallet']) ? $huimin_days_return[$period_change_day]['zhenxing_wallet'] : 0;
+                                $retzhenxing = isset($huimin_days_return[$period_change_day]['zhenxing_wallet']) ? $huimin_days_return[$period_change_day]['zhenxing_wallet'] * $buyNum : 0;
                                 if($retzhenxing>0){
                                     User::changeInc($order['user_id'],$retzhenxing,'zhenxing_wallet',59,$order['id'],14, '购买商品到期分红');
                                 }
@@ -98,20 +99,20 @@ class Butie extends Command
                                 //12期订单特殊处理
                                 if($order['project_id']>=50 && $order['project_id']<=69){
                                     
-                                    $huimin_amount =  $order['huimin_amount'];
+                                    $huimin_amount =  $order['huimin_amount'] * $buyNum;
                                     if($huimin_amount > 0){
                                         User::changeInc($order['user_id'],$huimin_amount,'gongfu_wallet',59,$order['id'],16, '周盈共富金');
                                     }   
                                 }else{
-                                    $huimin_amount =  $order['huimin_amount'];
+                                    $huimin_amount =  $order['huimin_amount'] * $buyNum;
                                     if($huimin_amount > 0){
                                         User::changeInc($order['user_id'],$huimin_amount,'gongfu_wallet',59,$order['id'],16, '购买商品每周分红');
                                     }
-                                    $minsheng_amount =  $order['minsheng_amount'];
+                                    $minsheng_amount =  $order['minsheng_amount'] * $buyNum;
                                     if($minsheng_amount > 0){
                                         User::changeInc($order['user_id'],$minsheng_amount,'balance',59,$order['id'],4, '购买商品每周分红');
                                     }
-                                    $gongfu_amount =  $order['gongfu_amount'];
+                                    $gongfu_amount =  $order['gongfu_amount'] * $buyNum;
                                     if($gongfu_amount > 0){
                                         User::changeInc($order['user_id'],$gongfu_amount,'gongfu_wallet',59,$order['id'],16, '购买商品每周分红');
                                     }
@@ -125,19 +126,19 @@ class Butie extends Command
                                     $order->status = 4;
                                 }
                             }else{
-                                $ret =  $order['huimin_amount'];
+                                $ret =  $order['huimin_amount'] * $buyNum;
                                 if($ret>0){
                                     User::changeInc($order['user_id'],$ret,'gongfu_wallet',59,$order['id'],16, '购买商品到期分红');
                                 }
-                                $gongfu_amount =  $order['gongfu_amount'];
+                                $gongfu_amount =  $order['gongfu_amount'] * $buyNum;
                                 if($gongfu_amount>0){
                                     User::changeInc($order['user_id'],$gongfu_amount,'gongfu_wallet',59,$order['id'],16, '购买商品到期分红');
                                 }
-                                $zhenxing_amount =  $order['zhenxing_wallet'];
+                                $zhenxing_amount =  $order['zhenxing_wallet'] * $buyNum;
                                 if($zhenxing_amount>0){
                                     User::changeInc($order['user_id'],$zhenxing_amount,'zhenxing_wallet',59,$order['id'],14, '购买商品到期分红');
                                 }
-                                $puhui_amount =  $order['puhui'];
+                                $puhui_amount =  $order['puhui'] * $buyNum;
                                 if($puhui_amount>0){
                                     User::changeInc($order['user_id'],$puhui_amount,'puhui',59,$order['id'],13, '购买商品到期分红');
                                 }

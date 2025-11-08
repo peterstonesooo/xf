@@ -63,6 +63,10 @@ class ProjectTongxingController extends AuthController
             }
         }
 
+        $summaryQuery = clone $builder;
+        $totalAmount = (float) (clone $summaryQuery)->sum('ot.single_amount');
+        $totalUsers = (clone $summaryQuery)->group('ot.user_id')->count();
+
         $data = $builder
             ->field('ot.*, pt.name as config_project_name, u.phone, u.realname')
             ->paginate(['query' => $req]);
@@ -72,6 +76,8 @@ class ProjectTongxingController extends AuthController
         $this->assign('req', $req);
         $this->assign('data', $data);
         $this->assign('statusMap', $statusMap);
+        $this->assign('totalAmount', round($totalAmount, 2));
+        $this->assign('totalUsers', $totalUsers);
 
         return $this->fetch();
     }

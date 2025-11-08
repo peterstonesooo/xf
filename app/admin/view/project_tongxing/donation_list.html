@@ -49,6 +49,18 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="box-footer">
+                    <div class="row">
+                        <div class="col-sm-6 col-xs-12">
+                            <strong>捐款金额统计：</strong>
+                            <?php echo isset($totalAmount) ? number_format((float)$totalAmount, 2) : '0.00'; ?>
+                        </div>
+                        <div class="col-sm-6 col-xs-12">
+                            <strong>捐款人数统计：</strong>
+                            <?php echo isset($totalUsers) ? (int)$totalUsers : 0; ?> 人
+                        </div>
+                    </div>
+                </div>
                 <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
             </div>
         </div>

@@ -8,6 +8,7 @@ use app\model\User;
 use app\model\UserBalanceLog;
 use app\model\UserSignin;
 use app\model\OrderTiyan;
+use app\model\OrderTongxing;
 use app\model\YuanmengUser;
 use app\model\OrderDailyBonus;
 use app\model\Project;
@@ -158,20 +159,32 @@ class HomeController extends AuthController
         //     $today_projescs = Project::where('status', 1)->column('id');
         // }
         
-        // 统计幸福激活数据
-        $arr['title'] = '今日幸福激活人数';
-        $today_start = date('Y-m-d 00:00:00');
-        $today_end = date('Y-m-d 23:59:59');
-        $arr['value'] = HappinessEquityActivation::where('status', 1)
-            ->where('created_at', '>=', $today_start)
-            ->where('created_at', '<=', $today_end)
-            ->count();
+        // 统计捐款数据
+        $today_start = strtotime(date('Y-m-d 00:00:00'));
+        $today_end = strtotime(date('Y-m-d 23:59:59'));
+        $yesterday_start = strtotime($yesterday);
+        $yesterday_end_ts = strtotime($yesterday_end);
 
-        $arr['title1'] = '幸福激活总人数';
-        $arr['value1'] = HappinessEquityActivation::where('status', 1)->count();
+        $donationQuery = OrderTongxing::where('status', '>', 1)->where('pay_time', '>', 0);
 
-        $arr['title2'] = '幸福激活总金额';
-        $arr['value2'] = round(HappinessEquityActivation::where('status', 1)->sum('payment_amount'), 2);
+        $arr['title'] = '捐款总人数';
+        $arr['value'] = (clone $donationQuery)->distinct(true)->count('user_id');
+
+        $arr['title1'] = '今日捐款人数';
+        $arr['value1'] = (clone $donationQuery)
+            ->where('pay_time', '>=', $today_start)
+            ->where('pay_time', '<=', $today_end)
+            ->distinct(true)
+            ->count('user_id');
+
+        $arr['title2'] = '昨日捐款金额';
+        $arr['value2'] = round(
+            (clone $donationQuery)
+                ->where('pay_time', '>=', $yesterday_start)
+                ->where('pay_time', '<=', $yesterday_end_ts)
+                ->sum('single_amount'),
+            2
+        );
         $arr['url'] = '';
         $data[] = $arr;
 

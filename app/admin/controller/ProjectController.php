@@ -198,6 +198,7 @@ class ProjectController extends AuthController
             'end_date|发行开始日' => 'max:32',
             'year_income|年收益' => 'float',
             'huimin_days_return|惠民金周期返利' => 'array',
+            'class|项目期数' => 'integer|>=:1',
         ]);
         if(Cache::get('project_addProject')){
             return out(null, 10001, '操作过于频繁，请稍后再试');
@@ -219,6 +220,9 @@ class ProjectController extends AuthController
             $req['rebate_rate'] = 0;
         }else{
             $req['daily_bonus_ratio'] = 0;
+        }
+        if(empty($req['class']) || $req['class'] < 1){
+            $req['class'] = 1;
         }
         
         // 处理惠民金周期返利数据
@@ -274,6 +278,7 @@ class ProjectController extends AuthController
             'end_date|发行开始日' => 'max:32',
             'year_income|年收益' => 'float',
             'huimin_days_return|惠民金周期返利' => 'array',
+            'class|项目期数' => 'integer|>=:1',
         ]);
         $req['intro'] = request()->param('intro', '');
         $methods = explode(',', $req['support_pay_methods']);
@@ -292,6 +297,9 @@ class ProjectController extends AuthController
             $req['rebate_rate'] = 0;
         }else{
             $req['daily_bonus_ratio'] = 0;
+        }
+        if(empty($req['class']) || $req['class'] < 1){
+            $req['class'] = 1;
         }
         
         // 处理惠民金周期返利数据

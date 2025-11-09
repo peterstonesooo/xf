@@ -55,8 +55,7 @@ class ResetProjectProgress extends Command
         });
 
         $output->writeln(sprintf('项目进度重置完成，共更新 %d 个项目。', $updated));
-
-        return self::SUCCESS;
+        return 0;
     }
 }
 

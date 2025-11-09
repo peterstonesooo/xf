@@ -66,6 +66,7 @@ return [
         'Settlezhuihui' => 'app\common\command\Settlezhuihui',
         'RujinPointsTaskBatch' => 'app\common\command\RujinPointsTaskBatch',
         'freezeInactiveUsers' => 'app\common\command\FreezeInactiveUsers',
+        'project:reset-progress' => 'app\common\command\ResetProjectProgress',
         
         // 黄金K线系统命令
         'sync:gold-kline' => 'app\common\command\SyncGoldKline',

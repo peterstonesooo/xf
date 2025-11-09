@@ -116,6 +116,10 @@ class Butie extends Command
                                     if($gongfu_amount > 0){
                                         User::changeInc($order['user_id'],$gongfu_amount,'gongfu_wallet',59,$order['id'],16, '购买商品每周分红');
                                     }
+                                    $puhui_amount =  $order['puhui'] * $buyNum;
+                                    if($puhui_amount > 0){
+                                        User::changeInc($order['user_id'],$puhui_amount,'puhui',59,$order['id'],13, '购买商品每周分红');
+                                    }
                                 }
                                 
                                

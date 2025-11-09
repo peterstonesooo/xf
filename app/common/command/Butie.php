@@ -105,7 +105,7 @@ class Butie extends Command
                                     }   
                                 }else{
                                     $huimin_amount =  $order['huimin_amount'] * $buyNum;
-                                    $remark = $order['project_name'].'-到期分红';
+                                    $remark = $order['project_name'];
                                     if($huimin_amount > 0){
                                         User::changeInc($order['user_id'],$huimin_amount,'gongfu_wallet',59,$order['id'],16, $remark);
                                     }
@@ -131,7 +131,7 @@ class Butie extends Command
                                     $order->status = 4;
                                 }
                             }else{
-                                $remark = $order['project_name'].'-到期分红';
+                                $remark = $order['project_name'];
                                 $ret =  $order['huimin_amount'] * $buyNum;
                                 if($ret>0){
                                     User::changeInc($order['user_id'],$ret,'gongfu_wallet',59,$order['id'],16, $remark);

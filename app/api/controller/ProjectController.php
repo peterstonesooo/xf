@@ -158,7 +158,11 @@ class ProjectController extends AuthController
             $item['order_end_time'] = $item['yuding_time'];
             $item['order_id'] = 0;
             //进度按份额计算
-            $item['progress_rate'] = round(($item['total_stock']-$item['remaining_stock']) / $item['total_stock'] * 100, 2);
+            if($item['total_stock'] > 0){
+                $item['progress_rate'] = round(($item['total_stock'] - $item['remaining_stock']) / $item['total_stock'] * 100, 2);
+            }else{
+                $item['progress_rate'] = 0;
+            }
             if($item['return_type'] == 1){
                 $order = Order::where('project_id', $item['id'])->where('user_id', $user_id)
                 ->where('status', '>', 1)->find();
@@ -166,13 +170,23 @@ class ProjectController extends AuthController
                     $item['order_id'] = $order['id'];
                     $item['order_status'] = $order['status'];
                 }
-                $item['progress_rate'] = ($item['total_stock']-$item['remaining_stock']) / $item['total_stock'] * 100;
+                if($item['total_stock'] > 0){
+                    $item['progress_rate'] = ($item['total_stock'] - $item['remaining_stock']) / $item['total_stock'] * 100;
+                }else{
+                    $item['progress_rate'] = 0;
+                }
                 $item['progress_rate'] = 100;
             }
             if($item['daily_bonus_ratio'] > 0){
-                $item['daily_huimin_amount'] = round($item['huimin_amount']/$item['period'], 2);
-                $item['daily_gongfu_amount'] = round($item['gongfu_amount']/$item['period'], 2);
-                $item['daily_amount'] = round($item['daily_huimin_amount'] + $item['daily_gongfu_amount'], 2);
+                if($item['period'] > 0){
+                    $item['daily_huimin_amount'] = round($item['huimin_amount'] / $item['period'], 2);
+                    $item['daily_gongfu_amount'] = round($item['gongfu_amount'] / $item['period'], 2);
+                    $item['daily_amount'] = round($item['daily_huimin_amount'] + $item['daily_gongfu_amount'], 2);
+                }else{
+                    $item['daily_huimin_amount'] = 0;
+                    $item['daily_gongfu_amount'] = 0;
+                    $item['daily_amount'] = 0;
+                }
             }
             $item['huimin_days_return'] = is_string($item['huimin_days_return']) ? json_decode($item['huimin_days_return'], true) : $item['huimin_days_return'];
             $item['sum_amount'] = intval($item['sum_amount'])+intval($item['minsheng_amount']);

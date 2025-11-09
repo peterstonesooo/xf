@@ -95,7 +95,7 @@ class Butie extends Command
                                 }
                             }
                         }else{
-                            if($order['dividend_cycle'] > 0){//每周返现
+                            if($order['dividend_cycle'] > 0){//固定周期返现
                                 //12期订单特殊处理
                                 if($order['project_id']>=50 && $order['project_id']<=69){
                                     

@@ -24,7 +24,7 @@ class ResetProjectProgress extends Command
 
         $updated = 0;
 
-        Project::where('status', 1)->chunk(200, function ($projects) use (&$updated) {
+        Project::where('status', 1)->where('project_group_id','in',[7,8,9,10,11])->chunk(200, function ($projects) use (&$updated) {
             foreach ($projects as $project) {
                 $totalStock = (int)($project['total_stock'] ?? 0);
                 if ($totalStock <= 0) {

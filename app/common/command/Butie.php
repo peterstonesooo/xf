@@ -105,20 +105,21 @@ class Butie extends Command
                                     }   
                                 }else{
                                     $huimin_amount =  $order['huimin_amount'] * $buyNum;
+                                    $remark = $order['project_name'].'-到期分红';
                                     if($huimin_amount > 0){
-                                        User::changeInc($order['user_id'],$huimin_amount,'gongfu_wallet',59,$order['id'],16, '购买商品每周分红');
+                                        User::changeInc($order['user_id'],$huimin_amount,'gongfu_wallet',59,$order['id'],16, $remark);
                                     }
                                     $minsheng_amount =  $order['minsheng_amount'] * $buyNum;
                                     if($minsheng_amount > 0){
-                                        User::changeInc($order['user_id'],$minsheng_amount,'balance',59,$order['id'],4, '购买商品每周分红');
+                                        User::changeInc($order['user_id'],$minsheng_amount,'balance',59,$order['id'],4, $remark);
                                     }
                                     $gongfu_amount =  $order['gongfu_amount'] * $buyNum;
                                     if($gongfu_amount > 0){
-                                        User::changeInc($order['user_id'],$gongfu_amount,'gongfu_wallet',59,$order['id'],16, '购买商品每周分红');
+                                        User::changeInc($order['user_id'],$gongfu_amount,'gongfu_wallet',59,$order['id'],16, $remark);
                                     }
                                     $puhui_amount =  $order['puhui'] * $buyNum;
                                     if($puhui_amount > 0){
-                                        User::changeInc($order['user_id'],$puhui_amount,'puhui',59,$order['id'],13, '购买商品每周分红');
+                                        User::changeInc($order['user_id'],$puhui_amount,'puhui',59,$order['id'],13, $remark);
                                     }
                                 }
                                 
@@ -130,21 +131,22 @@ class Butie extends Command
                                     $order->status = 4;
                                 }
                             }else{
+                                $remark = $order['project_name'].'-到期分红';
                                 $ret =  $order['huimin_amount'] * $buyNum;
                                 if($ret>0){
-                                    User::changeInc($order['user_id'],$ret,'gongfu_wallet',59,$order['id'],16, '购买商品到期分红');
+                                    User::changeInc($order['user_id'],$ret,'gongfu_wallet',59,$order['id'],16, $remark);
                                 }
                                 $gongfu_amount =  $order['gongfu_amount'] * $buyNum;
                                 if($gongfu_amount>0){
-                                    User::changeInc($order['user_id'],$gongfu_amount,'gongfu_wallet',59,$order['id'],16, '购买商品到期分红');
+                                    User::changeInc($order['user_id'],$gongfu_amount,'gongfu_wallet',59,$order['id'],16, $remark);
                                 }
                                 $zhenxing_amount =  $order['zhenxing_wallet'] * $buyNum;
                                 if($zhenxing_amount>0){
-                                    User::changeInc($order['user_id'],$zhenxing_amount,'zhenxing_wallet',59,$order['id'],14, '购买商品到期分红');
+                                    User::changeInc($order['user_id'],$zhenxing_amount,'zhenxing_wallet',59,$order['id'],14, $remark);
                                 }
                                 $puhui_amount =  $order['puhui'] * $buyNum;
                                 if($puhui_amount>0){
-                                    User::changeInc($order['user_id'],$puhui_amount,'puhui',59,$order['id'],13, '购买商品到期分红');
+                                    User::changeInc($order['user_id'],$puhui_amount,'puhui',59,$order['id'],13, $remark);
                                 }
                                 
                                 $order->period_change_day = 1;

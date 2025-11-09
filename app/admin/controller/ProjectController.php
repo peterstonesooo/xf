@@ -184,6 +184,7 @@ class ProjectController extends AuthController
             'puhui|普惠金' => 'float',
             'purchase_limit_per_user|每人限购数量' => 'integer|>=:0',
             'rebate_rate|返佣比例' => 'float',
+            'dividend_cycle|返现次数' => 'max:32',
             // 'virtually_progress|虚拟进度' => 'integer',
             'total_quota|总名额' => 'max:32',
             'remaining_quota|剩余名额' => 'max:32',

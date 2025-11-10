@@ -9,6 +9,117 @@ class Project extends Model
     // JSON字段
     protected $json = ['huimin_days_return'];
     protected $jsonAssoc = true;
+
+    /**
+     * 发放黄金奖励（统一入口）
+     *
+     * @param int $userId               用户ID
+     * @param float $quantity           黄金克数（支持小数）
+     * @param string $logRemark         资金日志备注
+     * @param array $options            额外配置项：
+     *                                  - related_id(int)           关联ID（默认0）
+     *                                  - gold_price(float)         金价（元/克，默认实时金价）
+     *                                  - change_type(int)          User::changeInc type（默认52）
+     *                                  - log_type(int)             资金流水类型（默认18）
+     *                                  - change_admin_id(int)      管理员ID（默认0）
+     *                                  - change_status(int)        资金流水状态（默认1）
+     *                                  - change_order_prefix(string)资金流水单号前缀（默认'GOLD'）
+     *                                  - change_is_delete(int)     资金流水是否删除标识（默认0）
+     *                                  - gold_order_type(int)      黄金订单类型（默认GoldOrder::TYPE_REWARD）
+     *                                  - gold_order_prefix(string) 黄金订单号前缀（默认'GOLDREWARD'）
+     *                                  - gold_order_remark(string) 黄金订单备注（默认与logRemark一致）
+     * @return GoldOrder|null
+     */
+    public static function rewardGold(int $userId, float $quantity, string $logRemark, array $options = []): ?GoldOrder
+    {
+        $rewardGold = round($quantity, 6);
+        if ($userId <= 0 || $rewardGold <= 0) {
+            return null;
+        }
+
+        $options = array_merge([
+            'related_id' => 0,
+            'gold_price' => 0.0,
+            'change_type' => 52,
+            'log_type' => 18,
+            'change_admin_id' => 0,
+            'change_status' => 1,
+            'change_order_prefix' => 'GOLD',
+            'change_is_delete' => 0,
+            'gold_order_type' => GoldOrder::TYPE_REWARD,
+            'gold_order_prefix' => 'GOLDREWARD',
+            'gold_order_remark' => $logRemark,
+        ], $options);
+
+        $wallet = UserGoldWallet::getOrCreate($userId);
+        $balanceBefore = round(floatval($wallet['gold_balance']), 6);
+        $costPriceBefore = round(floatval($wallet['cost_price']), 6);
+
+        $goldPrice = floatval($options['gold_price']);
+        if ($goldPrice <= 0) {
+            $goldPrice = self::getCurrentGoldPrice();
+        }
+        $goldPrice = round($goldPrice, 4);
+
+        $amount = $goldPrice > 0 ? round($goldPrice * $rewardGold, 2) : 0;
+        $balanceAfter = round($balanceBefore + $rewardGold, 6);
+
+        if ($goldPrice > 0 && $balanceAfter > 0) {
+            if ($balanceBefore <= 0) {
+                $costPriceAfter = $goldPrice;
+            } else {
+                $costPriceAfter = round((($costPriceBefore * $balanceBefore) + ($goldPrice * $rewardGold)) / $balanceAfter, 6);
+            }
+        } else {
+            $costPriceAfter = $costPriceBefore;
+        }
+
+        $orderNo = $options['gold_order_prefix'] . date('YmdHis') . str_pad($userId, 6, '0', STR_PAD_LEFT) . rand(1000, 9999);
+        $goldOrder = GoldOrder::create([
+            'order_no' => $orderNo,
+            'user_id' => $userId,
+            'type' => $options['gold_order_type'],
+            'quantity' => $rewardGold,
+            'price' => $goldPrice,
+            'amount' => $amount,
+            'fee' => 0,
+            'fee_rate' => 0,
+            'actual_amount' => $amount,
+            'cost_price_before' => $costPriceBefore,
+            'cost_price_after' => $costPriceAfter,
+            'balance_before' => $balanceBefore,
+            'balance_after' => $balanceAfter,
+            'profit' => 0,
+            'status' => GoldOrder::STATUS_COMPLETED,
+            'remark' => $options['gold_order_remark'],
+        ]);
+
+        User::changeInc(
+            $userId,
+            $rewardGold,
+            'gold_wallet',
+            $options['change_type'],
+            $goldOrder->id,
+            $options['log_type'],
+            $logRemark,
+            $options['change_admin_id'],
+            $options['change_status'],
+            $options['change_order_prefix'],
+            $options['change_is_delete']
+        );
+
+        $wallet->gold_balance = $balanceAfter;
+        if ($goldPrice > 0 && $balanceAfter > 0) {
+            $wallet->cost_price = $costPriceAfter;
+        }
+        $wallet->total_buy_quantity = round(floatval($wallet['total_buy_quantity']) + $rewardGold, 6);
+        if ($amount > 0) {
+            $wallet->total_buy_amount = round(floatval($wallet['total_buy_amount']) + $amount, 2);
+        }
+        $wallet->save();
+
+        return $goldOrder;
+    }
     
     public static function order5(array $array)
     {

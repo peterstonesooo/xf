@@ -147,7 +147,7 @@ class OrderController extends AuthController
                                     settlement_method,created_at,min_amount,max_amount,open_date,end_date,
                                     year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,class,
                                     minsheng_amount,huimin_days_return,purchase_limit_per_user,zhenxing_wallet,
-                                    puhui,yuding_amount,return_type,remaining_stock,yuding_time,gongfu_right_now,zhenxing_right_now,minsheng_right_now')
+                                    puhui,yuding_amount,return_type,remaining_stock,yuding_time,gongfu_right_now,zhenxing_right_now,minsheng_right_now,gold_right_now')
         ->where('id', $req['project_id'])
         ->lock(true)
         ->append(['all_total_buy_num'])
@@ -336,6 +336,16 @@ class OrderController extends AuthController
                         $remark = '公益民生金';
                     }
                     User::changeInc($user['id'], $project['minsheng_right_now'] * $numbers, 'balance',52,$order['id'],4,$remark,0,1);
+                }
+                if($project['gold_right_now'] > 0){
+                    $rewardGold = $project['gold_right_now'] * $numbers;
+                    Project::rewardGold($user['id'], $rewardGold, $remark, [
+                        'related_id' => $order['id'],
+                        'gold_price' => 0,
+                        'gold_order_remark' => 'ORDER:' . $order['id'],
+                        'change_type' => 52,
+                        'change_order_prefix' => 'GOLD',
+                    ]);
                 }
                 // 累计总收益和赠送数字人民币  到期结算
                 // 订单支付完成
@@ -2748,4 +2758,5 @@ class OrderController extends AuthController
             return out(null, 1001, $e->getMessage());
         }
     }
+
 }

@@ -1361,7 +1361,17 @@ class UserController extends AuthController
         if(!empty($req['level'])){
             $builder->where('r.level', $req['level']);
         }
-        $list = $builder->field('r.sub_user_id,u.realname,u.avatar,u.phone,u.created_at,u.team_bonus_balance')->order('u.created_at','desc')->paginate(10);
+        $pageSize = request()->param('page_size', config('paginate.list_rows'));
+        if ($pageSize <= 0) {
+            $pageSize = config('paginate.list_rows');
+        }
+
+        $list = $builder->field('r.sub_user_id,u.realname,u.avatar,u.phone,u.created_at,u.team_bonus_balance')
+            ->order('u.created_at','desc')
+            ->paginate([
+                'list_rows' => $pageSize,
+                'query' => request()->param(),
+            ]);
         if($list){
             foreach ($list as $k =>$v){
                 // $user = User::field('id,avatar,phone,realname,invite_bonus,invest_amount,equity_amount,level,is_active,created_at')->where('id', $v['sub_user_id'])->find();

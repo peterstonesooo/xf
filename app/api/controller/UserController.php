@@ -1361,9 +1361,12 @@ class UserController extends AuthController
         if(!empty($req['level'])){
             $builder->where('r.level', $req['level']);
         }
-        $pageSize = request()->param('page_size', config('paginate.list_rows'));
+        $pageSize = (int)request()->param('page_size', 0);
         if ($pageSize <= 0) {
-            $pageSize = config('paginate.list_rows');
+            $pageSize = (int)config('paginate.list_rows');
+        }
+        if ($pageSize <= 0) {
+            $pageSize = 10;
         }
 
         $list = $builder->field('r.sub_user_id,u.realname,u.avatar,u.phone,u.created_at,u.team_bonus_balance')

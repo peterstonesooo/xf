@@ -61,7 +61,7 @@ class ProjectController extends AuthController
          }else{
              $discount = 1;
          }
-        $data = Project::field('id, name, name_background, intro, cover_img, details_img, single_amount,status, sum_amount, period, support_pay_methods, created_at,project_group_id,total_quota,remaining_quota,open_date,end_date,huimin_amount,gongfu_amount,daily_bonus_ratio,class,minsheng_amount,huimin_days_return,rebate_rate,purchase_limit_per_user,zhenxing_wallet,puhui,return_type,total_stock,remaining_stock,yuding_time,gongfu_right_now,zhenxing_right_now')
+        $data = Project::field('id, name, name_background, intro, cover_img, details_img, single_amount,status, sum_amount, period, support_pay_methods, created_at,project_group_id,total_quota,remaining_quota,open_date,end_date,huimin_amount,gongfu_amount,daily_bonus_ratio,class,minsheng_amount,huimin_days_return,rebate_rate,purchase_limit_per_user,zhenxing_wallet,puhui,return_type,total_stock,remaining_stock,yuding_time,gongfu_right_now,zhenxing_right_now,gold_right_now')
                 ->where('status', 1)
                 ->where('project_group_id',$req['project_group_id'] ?? 7)
                 ->order(['sort' => 'asc', 'id' => 'desc'])
@@ -203,7 +203,7 @@ class ProjectController extends AuthController
         ]);
 
         $data = Project::where('id', $req['project_id'])
-            ->field('cover_img,name,single_amount,period,huimin_amount,gongfu_amount,minsheng_amount,rebate_rate,total_quota,remaining_quota,daily_bonus_ratio,zhenxing_wallet,puhui,gongfu_right_now,zhenxing_right_now')->find()->toArray();
+            ->field('cover_img,name,single_amount,period,huimin_amount,gongfu_amount,minsheng_amount,rebate_rate,total_quota,remaining_quota,daily_bonus_ratio,zhenxing_wallet,puhui,gongfu_right_now,zhenxing_right_now,gold_right_now')->find()->toArray();
         
         if($data['daily_bonus_ratio'] > 0){
             $order =  OrderDailyBonus::where('project_id', $req['project_id'])->where('user_id', $this->user->id)->where('status','>',1)->find();

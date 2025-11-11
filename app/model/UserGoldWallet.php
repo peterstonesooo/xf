@@ -30,6 +30,8 @@ class UserGoldWallet extends Model
     
     // 自动时间戳
     protected $autoWriteTimestamp = true;
+    protected $createTime = 'created_at';
+    protected $updateTime = 'updated_at';
     
     /**
      * 获取或创建用户黄金钱包

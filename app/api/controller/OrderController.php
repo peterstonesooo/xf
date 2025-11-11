@@ -2500,14 +2500,14 @@ class OrderController extends AuthController
                 ->where('o.id', $req['order_id'])
                 ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,
                 o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,
-                p.dividend_cycle,o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type,o.gongfu_right_now,o.zhenxing_right_now,p.minsheng_right_now')
+                p.dividend_cycle,o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type,o.gongfu_right_now,o.zhenxing_right_now,p.minsheng_right_now,p.gold_right_now')
                  ->find();
             }else{
                 $data = Order::alias('o')->leftJoin('mp_project p', 'p.id = o.project_id')->where('o.user_id', $user['id'])
                 ->where('o.id', $req['order_id'])
                 ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,
                 o.pay_method,o.period,o.huimin_amount shoyi,o.gongfu_amount buzhu,o.minsheng_amount,p.dividend_cycle,
-                o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type,o.gongfu_right_now,o.zhenxing_right_now,p.minsheng_right_now')
+                o.zhenxing_wallet,o.puhui,o.huimin_days_return,o.yuding_amount,o.return_type,o.gongfu_right_now,o.zhenxing_right_now,p.minsheng_right_now,p.gold_right_now')
                  ->find();
             }
         }

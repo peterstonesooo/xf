@@ -422,7 +422,7 @@ class OrderController extends AuthController
         cover_img,single_amount,single_integral,total_num,daily_bonus_ratio,sum_amount
         dividend_cycle,period,single_gift_equity,single_gift_digital_yuan,sham_buy_num,
         progress_switch,bonus_multiple,settlement_method,created_at,min_amount,max_amount,
-        open_date,end_date,year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,
+        open_date,end_date,year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,puhui,
         minsheng_amount,purchase_limit_per_user,yuding_amount,return_type,gongfu_right_now,zhenxing_right_now,gold_right_now')
         ->where('id', $req['project_id'])
         ->lock(true)

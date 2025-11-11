@@ -538,7 +538,7 @@ class UserController extends AuthController
             //     }
             // }
 
-                $remark = $project['project_name'];
+                $remark = (string)($project['name'] ?? ($project['project_name'] ?? ''));
                 $numbers = 1;
                //抽奖机会加一
                 User::where('id',$req['user_id'])->inc('order_lottery_tickets',$numbers)->update();

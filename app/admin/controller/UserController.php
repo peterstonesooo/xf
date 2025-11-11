@@ -458,12 +458,12 @@ class UserController extends AuthController
         }
 
         // 检查用户赠送次数限制
-        if (!GiftRecord::canGift($req['user_id'])) {
-            $completedGroups = UserProjectGroup::getUserCompletedGroups($req['user_id']);
-            $giftCount = GiftRecord::getUserGiftCount($req['user_id']);
-            $maxAllowed = min($completedGroups, 5);
-            return out(null, 10001, "该用户已完成{$completedGroups}个产品组，已赠送{$giftCount}次，最多可赠送{$maxAllowed}次，无法继续赠送");
-        }
+        // if (!GiftRecord::canGift($req['user_id'])) {
+        //     $completedGroups = UserProjectGroup::getUserCompletedGroups($req['user_id']);
+        //     $giftCount = GiftRecord::getUserGiftCount($req['user_id']);
+        //     $maxAllowed = min($completedGroups, 5);
+        //     return out(null, 10001, "该用户已完成{$completedGroups}个产品组，已赠送{$giftCount}次，最多可赠送{$maxAllowed}次，无法继续赠送");
+        // }
 
         Db::startTrans();
         try {
@@ -538,15 +538,29 @@ class UserController extends AuthController
             //     }
             // }
 
-            // 如果项目有共富专项金，直接发放
-            if($project['gongfu_amount'] > 0){
-                User::changeInc($req['user_id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,'共富专项金',0,1);
-            }
-            
-            // 如果项目有民生保障金，直接发放
-            if($project['minsheng_amount'] > 0){
-                User::changeInc($req['user_id'], $project['minsheng_amount'], 'balance',52,$order['id'],4,'民生保障金',0,1);
-            }
+                $remark = $project['project_name'];
+                $numbers = 1;
+               //抽奖机会加一
+                User::where('id',$req['user_id'])->inc('order_lottery_tickets',$numbers)->update();
+                if($project['minsheng_amount'] > 0){
+                    User::changeInc($req['user_id'], $project['minsheng_amount'] * $numbers, 'balance',52,$order['id'],4,$remark,0,1);
+                }
+                if($project['gongfu_right_now'] > 0){
+                    User::changeInc($req['user_id'], $project['gongfu_right_now'] * $numbers, 'gongfu_wallet',52,$order['id'],16,$remark,0,1);
+                }
+                if($project['zhenxing_right_now'] > 0){
+                    User::changeInc($req['user_id'], $project['zhenxing_right_now'] * $numbers, 'zhenxing_wallet',52,$order['id'],14,$remark,0,1);
+                }
+                if($project['gold_right_now'] > 0){
+                    $rewardGold = $project['gold_right_now'] * $numbers;
+                    Project::rewardGold($req['user_id'], $rewardGold, $remark, [
+                        'related_id' => $order['id'],
+                        'gold_price' => 0,
+                        'gold_order_remark' => 'ORDER:' . $order['id'],
+                        'change_type' => 52,
+                        'change_order_prefix' => 'GOLD',
+                    ]);
+                }
 
             Db::commit();
             return out(['order_id' => $order['id']], 0, '产品赠送成功');

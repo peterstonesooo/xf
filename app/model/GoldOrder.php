@@ -36,6 +36,8 @@ class GoldOrder extends Model
     
     // 自动时间戳
     protected $autoWriteTimestamp = true;
+    protected $createTime = 'created_at';
+    protected $updateTime = 'updated_at';
     
     /**
      * 交易类型常量

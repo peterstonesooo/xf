@@ -377,20 +377,25 @@ return array(
                 ),
             14 =>
                 array(
+                    'name' => 'User/giftProduct',
+                    'title' => '提交赠送产品',
+                ),
+            15 =>
+                array(
                     'name' => 'User/userTeamList',
                     'title' => '查看团队人数',
                 ),
-            15 =>
+            16 =>
                 array(
                     'name' => 'User/updateBank',
                     'title' => '实名认证',
                 ),
-            16 =>
+            17 =>
                 array(
                     'name' => 'User/message',
                     'title' => '发送站内信',
                 ),
-            17 =>
+            18 =>
                 array(
                     'name' => 'User/getTeamActivationData',
                     'title' => '查看团队激活数据',

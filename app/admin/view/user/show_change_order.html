@@ -126,10 +126,10 @@
         }
         
         var availableCount = parseInt($('#available_count').text().split('次')[0]);
-        if (availableCount <= 0) {
-            layer.msg('该用户没有可赠送次数，请先完成产品组', {icon: 5, time: 3000});
-            return;
-        }
+        // if (availableCount <= 0) {
+        //     layer.msg('该用户没有可赠送次数，请先完成产品组', {icon: 5, time: 3000});
+        //     return;
+        // }
         
         layer.confirm('确认要赠送该产品吗？', {
             btn: ['确认','取消']

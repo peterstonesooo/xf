@@ -415,7 +415,7 @@ class UserController extends AuthController
         UserProjectGroup::checkAndUpdateUserGroups($req['user_id']);
 
         $this->assign('req', $req);
-        $this->assign('project1', Project::where('id', 70)->order('id', 'desc')->select()->toArray());
+        $this->assign('project1', Project::where('id', 155)->order('id', 'desc')->select()->toArray());
         
         return $this->fetch();
     }

@@ -460,7 +460,7 @@ class UserController extends AuthController
                                     year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,class,
                                     minsheng_amount,huimin_days_return,purchase_limit_per_user,zhenxing_wallet,
                                     puhui,yuding_amount,return_type,remaining_stock,yuding_time,gongfu_right_now,zhenxing_right_now,minsheng_right_now,gold_right_now')
-        ->where('status', 1)->find();
+        ->where('status', 1)->find()->toArray();
         if (!$project) {
             return out(null, 10001, '项目不存在或已下架');
         }

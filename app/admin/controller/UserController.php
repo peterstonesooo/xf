@@ -502,7 +502,7 @@ class UserController extends AuthController
             GiftRecord::create([
                 'user_id' => $req['user_id'],
                 'project_id' => $req['project_id'],
-                'project_name' => $project['name'],
+                'project_name' => $project['project_name'],
                 'order_sn' => $order_sn,
                 'gift_amount' => $project['single_amount'],
                 'admin_user_id' => $adminUser['id'],

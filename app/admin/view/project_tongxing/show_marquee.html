@@ -1,0 +1,87 @@
+<div class="search">
+    <form class="form-inline">
+        <a class="btn btn-flat btn-primary m_10_l_0" href="{:url('admin/ProjectTongxing/marqueeList')}">显示全部</a>
+        <a class="btn btn-flat btn-default m_10 f_r" onclick="javascript:history.back(-1)"><i class="fa fa-undo m-r-10"></i>返 回</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-sm-12 col-xs-12">
+        <form id="marqueeForm">
+            <div class="box box-body">
+                <input type="hidden" name="id" value="{$data['id'] ?? ''}">
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">手机号</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="text" class="form-control" name="phone" value="{$data['phone'] ?? ''}" placeholder="请输入展示的手机号" maxlength="255">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">单份金额</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <input type="number" step="0.01" class="form-control" name="single_amount" value="{$data['single_amount'] ?? ''}" placeholder="请输入金额">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">订单状态</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <select name="status" class="form-control">
+                                <option value="1" <?php echo isset($data['status']) && (int)$data['status'] === 1 ? 'selected' : ''; ?>>显示</option>
+                                <option value="0" <?php echo isset($data['status']) && (int)$data['status'] === 0 ? 'selected' : ''; ?>>不显示</option>
+                            </select>
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">支付时间</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <?php
+                            $payTimeValue = '';
+                            if (!empty($data['pay_time'])) {
+                                $payTimeValue = date('Y-m-d\TH:i', $data['pay_time']);
+                            }
+                            ?>
+                            <input type="datetime-local" class="form-control" name="pay_time" value="<?php echo $payTimeValue; ?>">
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts"></div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <div class="col-xs-12 col-sm-8 col-md-6 col-lg-5 text-center">
+                            <button type="button" class="btn btn-flat btn-primary" onclick="submitForm()">保 存</button>
+                            <button type="button" class="btn btn-flat btn-default" onclick="javascript:history.back(-1)">返 回</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function submitForm()
+    {
+        var id = $('input[name="id"]').val();
+        var url = id ? '{:url("admin/ProjectTongxing/editMarquee")}' : '{:url("admin/ProjectTongxing/addMarquee")}';
+        $.post(url, $('#marqueeForm').serialize(), function (res) {
+            if (res.code == '200') {
+                layer.msg('保存成功', {icon: 1, time: 1500}, function () {
+                    window.location.href = '{:url("admin/ProjectTongxing/marqueeList")}';
+                });
+            } else {
+                layer.msg(res.msg, {icon: 5, time: 3000});
+            }
+        });
+    }
+</script>
+

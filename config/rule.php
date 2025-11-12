@@ -200,6 +200,64 @@ return array(
                     'title' => '发送项目通知',
                 ),
         ),
+    '同心同行配置' =>
+        array(
+            0 =>
+                array(
+                    'name' => 'ProjectTongxing/projectList',
+                    'title' => '查看同心同行项目列表',
+                ),
+            1 =>
+                array(
+                    'name' => 'ProjectTongxing/showProject',
+                    'title' => '查看同心同行项目详情',
+                ),
+            2 =>
+                array(
+                    'name' => 'ProjectTongxing/addProject',
+                    'title' => '添加同心同行项目',
+                ),
+            3 =>
+                array(
+                    'name' => 'ProjectTongxing/editProject',
+                    'title' => '编辑同心同行项目',
+                ),
+            4 =>
+                array(
+                    'name' => 'ProjectTongxing/delProject',
+                    'title' => '删除同心同行项目',
+                ),
+            5 =>
+                array(
+                    'name' => 'ProjectTongxing/donationList',
+                    'title' => '查看捐款明细',
+                ),
+            6 =>
+                array(
+                    'name' => 'ProjectTongxing/marqueeList',
+                    'title' => '查看捐款跑马灯配置',
+                ),
+            7 =>
+                array(
+                    'name' => 'ProjectTongxing/showMarquee',
+                    'title' => '查看捐款跑马灯表单',
+                ),
+            8 =>
+                array(
+                    'name' => 'ProjectTongxing/addMarquee',
+                    'title' => '新增捐款跑马灯记录',
+                ),
+            9 =>
+                array(
+                    'name' => 'ProjectTongxing/editMarquee',
+                    'title' => '编辑捐款跑马灯记录',
+                ),
+            10 =>
+                array(
+                    'name' => 'ProjectTongxing/delMarquee',
+                    'title' => '删除捐款跑马灯记录',
+                ),
+        ),
     '交易订单' =>
         array(
             0 =>

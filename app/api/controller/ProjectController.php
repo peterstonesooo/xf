@@ -1047,4 +1047,33 @@ class ProjectController extends AuthController
         return out($data);
     }
 
+    /**
+     * 捐款跑马灯列表
+     */
+    public function donationMarquee()
+    {
+        $req = request()->param();
+        $limit = isset($req['limit']) ? max(1, min(100, intval($req['limit']))) : 20;
+
+        $list = Db::name('order_tongxing_show')
+            ->where('status', 1)
+            ->order('id', 'desc')
+            ->limit($limit)
+            ->select()
+            ->toArray();
+
+        $result = array_map(function ($item) {
+            return [
+                'id' => (int)$item['id'],
+                'phone' => (string)$item['phone'],
+                'single_amount' => (float)$item['single_amount'],
+                'pay_time' => (int)$item['pay_time'],
+                'created_at' => $item['created_at'],
+                'updated_at' => $item['updated_at'],
+            ];
+        }, $list);
+
+        return out($result);
+    }
+
 }

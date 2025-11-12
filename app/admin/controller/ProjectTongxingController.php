@@ -5,6 +5,7 @@ namespace app\admin\controller;
 use app\model\OrderTongxing;
 use app\model\ProjectTongxing;
 use think\facade\Cache;
+use think\facade\Db;
 
 class ProjectTongxingController extends AuthController
 {
@@ -80,6 +81,145 @@ class ProjectTongxingController extends AuthController
         $this->assign('totalUsers', $totalUsers);
 
         return $this->fetch();
+    }
+
+    public function marqueeList()
+    {
+        $req = request()->param();
+
+        $builder = Db::name('order_tongxing_show')->order('id', 'desc');
+
+        if (isset($req['phone']) && $req['phone'] !== '') {
+            $builder->whereLike('phone', '%' . trim($req['phone']) . '%');
+        }
+        if (isset($req['status']) && $req['status'] !== '') {
+            $builder->where('status', intval($req['status']));
+        }
+
+        if (!empty($req['daterange_start'])) {
+            $builder->where('created_at', '>=', $req['daterange_start'] . ' 00:00:00');
+        }
+        if (!empty($req['daterange_end'])) {
+            $builder->where('created_at', '<=', $req['daterange_end'] . ' 23:59:59');
+        }
+
+        $data = $builder->paginate(['query' => $req]);
+
+        $statusMap = [
+            1 => '显示',
+            0 => '不显示',
+        ];
+
+        $this->assign('req', $req);
+        $this->assign('data', $data);
+        $this->assign('statusMap', $statusMap);
+
+        return $this->fetch();
+    }
+
+    public function showMarquee()
+    {
+        $req = request()->param();
+        $data = [];
+        if (!empty($req['id'])) {
+            $data = Db::name('order_tongxing_show')->where('id', (int)$req['id'])->find();
+            if (!$data) {
+                $this->error('记录不存在');
+            }
+        }
+
+        $statusMap = OrderTongxing::$statusMap;
+
+        $this->assign('data', $data);
+        $this->assign('statusMap', $statusMap);
+
+        return $this->fetch();
+    }
+
+    public function addMarquee()
+    {
+        $req = $this->validate(request(), [
+            'phone' => 'require|max:255',
+            'status' => 'require|in:0,1',
+            'single_amount' => 'require|float',
+            'pay_time' => 'max:19',
+        ]);
+
+        $data = [
+            'phone' => trim($req['phone']),
+            'status' => (int)$req['status'],
+            'single_amount' => (float)$req['single_amount'],
+        ];
+
+        $payTime = $req['pay_time'] ?? '';
+        if ($payTime !== '') {
+            $timestamp = strtotime($payTime);
+            if ($timestamp === false) {
+                return out(null, 10001, '支付时间格式错误');
+            }
+            $data['pay_time'] = $timestamp;
+        } else {
+            $data['pay_time'] = 0;
+        }
+
+        $data['created_at'] = date('Y-m-d H:i:s');
+        $data['updated_at'] = date('Y-m-d H:i:s');
+
+        $id = Db::name('order_tongxing_show')->insertGetId($data);
+
+        return out(['id' => $id], 200, '新增成功');
+    }
+
+    public function editMarquee()
+    {
+        $req = $this->validate(request(), [
+            'id' => 'require|integer',
+            'phone' => 'require|max:255',
+            'status' => 'require|in:0,1',
+            'single_amount' => 'require|float',
+            'pay_time' => 'max:19',
+        ]);
+
+        $record = Db::name('order_tongxing_show')->where('id', (int)$req['id'])->find();
+        if (!$record) {
+            return out(null, 10001, '记录不存在');
+        }
+
+        $data = [
+            'phone' => trim($req['phone']),
+            'status' => (int)$req['status'],
+            'single_amount' => (float)$req['single_amount'],
+            'updated_at' => date('Y-m-d H:i:s'),
+        ];
+
+        $payTime = $req['pay_time'] ?? '';
+        if ($payTime !== '') {
+            $timestamp = strtotime($payTime);
+            if ($timestamp === false) {
+                return out(null, 10001, '支付时间格式错误');
+            }
+            $data['pay_time'] = $timestamp;
+        } else {
+            $data['pay_time'] = 0;
+        }
+
+        Db::name('order_tongxing_show')->where('id', (int)$req['id'])->update($data);
+
+        return out(['id' => (int)$req['id']], 200, '保存成功');
+    }
+
+    public function delMarquee()
+    {
+        $req = $this->validate(request(), [
+            'id' => 'require|integer',
+        ]);
+
+        $affected = Db::name('order_tongxing_show')->where('id', (int)$req['id'])->delete();
+        if (!$affected) {
+            return out(null, 10001, '记录不存在或已删除');
+        }
+
+        return out();
     }
 
     public function showProject()

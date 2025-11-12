@@ -1,0 +1,85 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['phone'] ?? ''}" name="phone" placeholder="手机号" class="form-control">
+        <select name="status" class="form-control">
+            <option value="">订单状态</option>
+            <?php foreach ($statusMap as $key => $label) { ?>
+                <option value="{$key}" <?php echo (isset($req['status']) && $req['status'] !== '' && (int)$req['status'] === $key) ? 'selected' : ''; ?>>{$label}</option>
+            <?php } ?>
+        </select>
+        <input type="date" value="{$req['daterange_start'] ?? ''}" name="daterange_start" class="form-control">
+        <span>至</span>
+        <input type="date" value="{$req['daterange_end'] ?? ''}" name="daterange_end" class="form-control">
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <a {:auth_show_judge('ProjectTongxing/showMarquee')} class="btn btn-flat btn-success m_10 f_r"
+           href="{:url('admin/ProjectTongxing/showMarquee')}"><i class="fa fa-plus m-r-10"></i>新 增</a>
+        <a class="btn btn-flat btn-default m_10" href="{:url('admin/ProjectTongxing/projectList')}"><i class="fa fa-arrow-left m-r-10"></i>返回配置列表</a>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>手机号</th>
+                            <th>单份金额</th>
+                            <th>订单状态</th>
+                            <th>支付时间</th>
+                            <th>创建时间</th>
+                            <th>更新时间</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php foreach ($data as $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>{$v['phone']}</td>
+                                <td><?php echo number_format($v['single_amount'], 2); ?></td>
+                                <td><?php echo $statusMap[$v['status']] ?? '-'; ?></td>
+                                <td><?php echo !empty($v['pay_time']) ? date('Y-m-d H:i:s', $v['pay_time']) : '-'; ?></td>
+                                <td>{$v['created_at']}</td>
+                                <td>{$v['updated_at']}</td>
+                                <td>
+                                    <a {:auth_show_judge('ProjectTongxing/showMarquee')} class="btn btn-flat btn-info btn-xs"
+                                       href="{:url('admin/ProjectTongxing/showMarquee', ['id' => $v['id']])}"><i class="fa fa-edit"></i> 编辑</a>
+                                    <a {:auth_show_judge('ProjectTongxing/delMarquee')} class="btn btn-flat btn-danger btn-xs"
+                                       href="javascript:;" onclick="delMarquee({$v['id']})"><i class="fa fa-trash-o"></i> 删除</a>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                        <?php if (count($data) === 0) { ?>
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">暂无数据</td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function delMarquee(id)
+    {
+        layer.confirm('确认删除该记录吗？', {icon: 3, title: '提示'}, function (index) {
+            layer.close(index);
+            $.post('{:url("admin/ProjectTongxing/delMarquee")}', {id: id}, function (res) {
+                if (res.code == '200') {
+                    layer.msg('删除成功', {icon: 1, time: 1500}, function () {
+                        location.reload(true);
+                    });
+                } else {
+                    layer.msg(res.msg, {icon: 5, time: 3000});
+                }
+            });
+        });
+    }
+</script>
+

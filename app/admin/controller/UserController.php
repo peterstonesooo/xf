@@ -7,6 +7,7 @@ use app\model\Order5;
 use app\model\RelationshipRewardLog;
 use app\model\UserCardRecord;
 use app\model\OrderTiyan;
+use app\model\OrderDailyBonus;
 use think\facade\Cache;
 use app\model\Apply;
 use app\model\Capital;
@@ -452,7 +453,14 @@ class UserController extends AuthController
         }
 
         // 检查项目是否存在
-        $project = Project::where('id', $req['project_id'])->where('status', 1)->find();
+        $project = Project::where('id', $req['project_id'])
+        ->field('id project_id,name project_name,class,project_group_id,cover_img,single_amount,single_integral,total_num,daily_bonus_ratio,sum_amount,dividend_cycle,period,single_gift_equity,
+                                    single_gift_digital_yuan,sham_buy_num,progress_switch,bonus_multiple,
+                                    settlement_method,created_at,min_amount,max_amount,open_date,end_date,
+                                    year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,class,
+                                    minsheng_amount,huimin_days_return,purchase_limit_per_user,zhenxing_wallet,
+                                    puhui,yuding_amount,return_type,remaining_stock,yuding_time,gongfu_right_now,zhenxing_right_now,minsheng_right_now,gold_right_now')
+        ->where('status', 1)->find();
         if (!$project) {
             return out(null, 10001, '项目不存在或已下架');
         }
@@ -471,48 +479,21 @@ class UserController extends AuthController
             $order_sn = 'GIFT'.build_order_sn($req['user_id']);
             
             // 准备订单数据
-            $orderData = [
-                'user_id' => $req['user_id'],
-                'up_user_id' => $user['up_user_id'],
-                'order_sn' => $order_sn,
-                'project_id' => $req['project_id'],
-                'project_name' => $project['name'],
-                'project_group_id' => $project['project_group_id'],
-                'class' => $project['class'],
-                'cover_img' => $project['cover_img'],
-                'single_amount' => $project['single_amount'],
-                'single_integral' => $project['single_integral'],
-                'total_num' => $project['total_num'],
-                'daily_bonus_ratio' => $project['daily_bonus_ratio'],
-                'sum_amount' => $project['sum_amount'],
-                'dividend_cycle' => $project['dividend_cycle'],
-                'period' => $project['period'],
-                'single_gift_equity' => $project['single_gift_equity'],
-                'single_gift_digital_yuan' => $project['single_gift_digital_yuan'],
-                'sham_buy_num' => $project['sham_buy_num'],
-                'progress_switch' => $project['progress_switch'],
-                'bonus_multiple' => $project['bonus_multiple'],
-                'settlement_method' => $project['settlement_method'],
-                'min_amount' => $project['min_amount'],
-                'max_amount' => $project['max_amount'],
-                'year_income' => $project['year_income'],
-                'total_quota' => $project['total_quota'],
-                'remaining_quota' => $project['remaining_quota'],
-                'gongfu_amount' => $project['gongfu_amount'],
-                'minsheng_amount' => $project['minsheng_amount'],
-                'huimin_days_return' => $project['huimin_days_return'],
-                'buy_num' => 1,
-                'pay_method' => 1, // 赠送方式
-                'price' => $project['single_amount'],
-                'buy_amount' => $project['single_amount'],
-                'status' => 2, // 直接设置为已支付状态
-                'pay_time' => time(),
-                'is_admin_confirm' => 1,
-                'created_at' => date('Y-m-d H:i:s'),
-            ];
-
-            // 创建订单
-            $order = Order::create($orderData);
+            $project['user_id'] = $req['user_id'];
+            $project['up_user_id'] = $user['up_user_id'];
+            $project['order_sn'] = $order_sn;
+            $project['buy_num'] = 1;
+            $project['pay_method'] = 1;
+            $project['price'] = $project['single_amount'];
+            $project['buy_amount'] = $project['single_amount'];
+            $project['is_admin_confirm'] = 1;
+            $project['created_at'] = date('Y-m-d H:i:s');
+            $project['huimin_days_return'] = $project['huimin_days_return'] ?? null;
+            if($project['daily_bonus_ratio'] > 0){
+                $order = OrderDailyBonus::create($project);
+            }else{
+                $order = Order::create($project);
+            }
 
             // 记录赠送记录
             GiftRecord::create([

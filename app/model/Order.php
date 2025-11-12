@@ -264,10 +264,15 @@ class Order extends Model
             }else{
                 $period = $order['period'];
             }
+            if($period==1){
+                $end_time = strtotime(date('Y-m-d 00:00:00', time())) + $period * 86400;
+            }else{
+                $end_time = time() + $period * 86400;
+            }
             Order::where('id', $order['id'])->update([
                 'status' => 2,
                 'pay_time' => time(),
-                'end_time' => time() + $period * 86400,
+                'end_time' => $end_time,
                 'next_bonus_time' => strtotime(date('Y-m-d 00:00:00', strtotime('+ 1day')))
             ]);
         }

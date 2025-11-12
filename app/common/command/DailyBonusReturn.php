@@ -43,30 +43,31 @@ class DailyBonusReturn extends Command
                             $order->save();
                             continue;
                         }
+                        $remark = $order['project_name'];
                         $period = $order['period'];
                         //11期订单特殊处理
                         if($order['project_id'] >= 50){
                             $daily_huimin_amount = $order['huimin_amount'] * $buyNum;
                             if($daily_huimin_amount>0){
-                                User::changeInc($order['user_id'],$daily_huimin_amount,'gongfu_wallet',68,$order['id'],16, '日盈共富金');
+                                User::changeInc($order['user_id'],$daily_huimin_amount,'gongfu_wallet',68,$order['id'],16, $remark);
                             }
                             
                             $daily_puhui_amount = $order['puhui'] * $buyNum;
                             if($daily_puhui_amount>0){
-                                User::changeInc($order['user_id'],$daily_puhui_amount,'puhui',119,$order['id'],13, '日盈普惠金');
+                                User::changeInc($order['user_id'],$daily_puhui_amount,'puhui',119,$order['id'],13, $remark);
                             }
                             $daily_zhenxing_wallet = $order['zhenxing_wallet'] * $buyNum;
                             if($daily_zhenxing_wallet>0){
-                                User::changeInc($order['user_id'],$daily_zhenxing_wallet,'zhenxing_wallet',120,$order['id'],14, '日盈振兴金');
+                                User::changeInc($order['user_id'],$daily_zhenxing_wallet,'zhenxing_wallet',120,$order['id'],14, $remark);
                             }
                         }else{
                             $daily_gongfu_amount = round(($order['gongfu_amount'] * $buyNum)/$period, 2);
                             $daily_huimin_amount = round(($order['huimin_amount'] * $buyNum)/$period, 2);
                             if($daily_gongfu_amount>0){
-                                User::changeInc($order['user_id'],$daily_gongfu_amount,'gongfu_wallet',67,$order['id'],16, '日享共富金');
+                                User::changeInc($order['user_id'],$daily_gongfu_amount,'gongfu_wallet',67,$order['id'],16, $remark);
                             }   
                             if($daily_huimin_amount>0){
-                                User::changeInc($order['user_id'],$daily_huimin_amount,'gongfu_wallet',68,$order['id'],16, '日享共富金');
+                                User::changeInc($order['user_id'],$daily_huimin_amount,'gongfu_wallet',68,$order['id'],16, $remark);
                             }
                         }
                         

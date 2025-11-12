@@ -125,7 +125,11 @@ class Butie extends Command
                                 
                                
                                 $order->period_change_day = $order['period_change_day'] + 1;
+                                if($order['period'] == 1){
+                                    $order['pay_time'] = strtotime(date('Y-m-d 00:00:00', $order['pay_time']));
+                                }
                                 $order->end_time = $order['pay_time'] + ($order['period'] * 86400)*($order->period_change_day+1);
+                                
                                 // 更新订单状态
                                 if($order->period_change_day >= $order['dividend_cycle']){
                                     $order->status = 4;

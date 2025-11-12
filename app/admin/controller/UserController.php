@@ -491,8 +491,11 @@ class UserController extends AuthController
             $project['huimin_days_return'] = $project['huimin_days_return'] ?? null;
             if($project['daily_bonus_ratio'] > 0){
                 $order = OrderDailyBonus::create($project);
+                OrderDailyBonus::orderPayComplete($order['id'], $project, $req['user_id'], $project['single_amount']);
             }else{
                 $order = Order::create($project);
+                // 完成订单支付流程（参考placeOrder方法，但不扣钱）
+                Order::orderPayComplete($order['id'], $project, $req['user_id'], $project['single_amount']);
             }
 
             // 记录赠送记录
@@ -506,8 +509,7 @@ class UserController extends AuthController
                 'created_at' => date('Y-m-d H:i:s'),
             ]);
 
-            // 完成订单支付流程（参考placeOrder方法，但不扣钱）
-            Order::orderPayComplete($order['id'], $project, $req['user_id'], $project['single_amount']);
+            
 
             // 给上3级团队奖
             // $relation = UserRelation::where('sub_user_id', $req['user_id'])->select();
@@ -519,7 +521,7 @@ class UserController extends AuthController
             //     }
             // }
 
-                $remark = (string)($project['name'] ?? ($project['project_name'] ?? ''));
+                $remark = (string)($project['project_name'] ?? ($project['project_name'] ?? ''));
                 $numbers = 1;
                //抽奖机会加一
                 User::where('id',$req['user_id'])->inc('order_lottery_tickets',$numbers)->update();

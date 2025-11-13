@@ -433,7 +433,9 @@ class OrderController extends AuthController
 
         if($project['purchase_limit_per_user'] > 0){
             $order_count = OrderDailyBonus::where('user_id', $user['id'])->where('project_id', $project['project_id'])->sum('buy_num');
-            $order_count = $order_count ?: 0;
+            $o_count = Order::where('user_id', $user['id'])->where('project_id', $project['project_id'])->sum('buy_num');
+            $o_count = $o_count ?: 0;
+            $order_count = $order_count + $o_count;
             if(($order_count + $numbers) > $project['purchase_limit_per_user']){
                 exit_out(null, 10006, '您已达到购买上限');
             }

@@ -53,6 +53,7 @@ class ResWarp
         'common/paynotify_huichuang',
         'common/paynotify_shuihu',
         'common/test3',
+        'common/isEncrypt',
     ];
 
     public function handle($request, \Closure $next)

@@ -2449,4 +2449,8 @@ class CommonController extends BaseController
         return out($agreement);
     }
 
+    public function isEncrypt(){
+        return out(['is_encrypt' => dbconfig('is_req_encypt')]);
+    }
+
 }

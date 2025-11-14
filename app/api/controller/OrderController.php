@@ -302,7 +302,7 @@ class OrderController extends AuthController
                 // 给上3级团队奖
                 if($project['return_type'] == 0){
                     $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3,4,5])->select();
-                    $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
+                    $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio', 4 => 'fourth_team_reward_ratio', 5 => 'fifth_team_reward_ratio'];
                     foreach ($relation as $v) {
                         $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount']*$numbers, 2);
                         if($reward > 0){
@@ -513,7 +513,7 @@ class OrderController extends AuthController
                 // User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,$project['project_name'].'共富金');
                 // 给上3级团队奖
                 $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3,4,5])->select();
-                $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
+                $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio', 4 => 'fourth_team_reward_ratio', 5 => 'fifth_team_reward_ratio'];
                 foreach ($relation as $v) {
                     $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount']*$numbers, 2);
                     if($reward > 0){
@@ -679,7 +679,7 @@ class OrderController extends AuthController
                 // User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,$project['project_name'].'共富金');
                 // 给上3级团队奖
                 $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3,4,5])->select();
-                $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
+                $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio', 4 => 'fourth_team_reward_ratio', 5 => 'fifth_team_reward_ratio'];
                 foreach ($relation as $v) {
                     $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount']*$numbers, 2);
                     if($reward > 0){

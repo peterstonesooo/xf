@@ -301,11 +301,17 @@ class OrderController extends AuthController
                 User::where('id',$user['id'])->inc('order_lottery_tickets',$numbers)->update();
                 // 给上3级团队奖
                 if($project['return_type'] == 0){
-                    $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3])->select();
+                    $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3,4,5])->select();
                     $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
                     foreach ($relation as $v) {
                         $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount']*$numbers, 2);
                         if($reward > 0){
+                            if($v['level'] == 4 || $v['level'] == 5){
+                                $level_users = User::where('id', $v['user_id'])->field('id,realname,vip_status')->find();
+                                if($level_users['vip_status'] != 1){
+                                    continue;
+                                }
+                            }
                             User::changeInc($v['user_id'],$reward,'team_bonus_balance',8,$order['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
                             RelationshipRewardLog::insert([
                                 'uid' => $v['user_id'],
@@ -506,11 +512,17 @@ class OrderController extends AuthController
                 }
                 // User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,$project['project_name'].'共富金');
                 // 给上3级团队奖
-                $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3])->select();
+                $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3,4,5])->select();
                 $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
                 foreach ($relation as $v) {
                     $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount']*$numbers, 2);
                     if($reward > 0){
+                        if($v['level'] == 4 || $v['level'] == 5){
+                            $level_users = User::where('id', $v['user_id'])->field('id,realname,vip_status')->find();
+                            if($level_users['vip_status'] != 1){
+                                continue;
+                            }
+                        }
                         User::changeInc($v['user_id'],$reward,'team_bonus_balance',8,$order['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
                         RelationshipRewardLog::insert([
                             'uid' => $v['user_id'],
@@ -666,11 +678,17 @@ class OrderController extends AuthController
                 User::where('id',$user['id'])->inc('order_lottery_tickets',$numbers)->update();
                 // User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,$project['project_name'].'共富金');
                 // 给上3级团队奖
-                $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3])->select();
+                $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3,4,5])->select();
                 $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
                 foreach ($relation as $v) {
                     $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount']*$numbers, 2);
                     if($reward > 0){
+                        if($v['level'] == 4 || $v['level'] == 5){
+                            $level_users = User::where('id', $v['user_id'])->field('id,realname,vip_status')->find();
+                            if($level_users['vip_status'] != 1){
+                                continue;
+                            }
+                        }
                         User::changeInc($v['user_id'],$reward,'team_bonus_balance',8,$order['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
                         RelationshipRewardLog::insert([
                             'uid' => $v['user_id'],
@@ -985,200 +1003,6 @@ class OrderController extends AuthController
         return out(['data' => $data]);
     }
 
-    public function yuanShenbaoPlaceOrder()
-    {
-
-        $req = $this->validate(request(), [
-            'amount|最终纳税金额' => 'require',
-            'is_off|税务抵用券' => 'require',
-            'shenbao_amount|申报金额' => 'require',
-            'pay_password|支付密码' => 'require',
-        ]);
-
-        $user = $this->user;
-
-        if (empty($user['pay_password'])) {
-            return out(null, 10001, '请先设置支付密码');
-        }
-        if (!empty($req['pay_password']) && $user['pay_password'] !== sha1(md5($req['pay_password']))) {
-            return out(null, 10001, '支付密码错误');
-        }
-
-        Db::startTrans();
-        try {
-            $user = User::where('id', $user['id'])->lock(true)->find();
-
-            $pay_amount = $req['amount'];
-            if ($pay_amount >  ($user['topup_balance'] + $user['team_bonus_balance'] + $user['balance'] + $user['release_balance'])) {
-                exit_out(null, 10090, '余额不足');
-            }
-
-            if($user['topup_balance'] >= $pay_amount) {
-                User::changeInc($user['id'],-$pay_amount,'topup_balance',57,$user['id'],1);
-            } else {
-                User::changeInc($user['id'],-$user['topup_balance'],'topup_balance',57,$user['id'],1);
-                $topup_amount = bcsub($pay_amount, $user['topup_balance'],2);
-                if($user['team_bonus_balance'] >= $topup_amount) {
-                    User::changeInc($user['id'],-$topup_amount,'team_bonus_balance',57,$user['id'],1);
-                } else {
-                    User::changeInc($user['id'],-$user['team_bonus_balance'],'team_bonus_balance',57,$user['id'],1);
-                    $signin_amount = bcsub($topup_amount, $user['team_bonus_balance'],2);
-                    if($user['balance'] >= $signin_amount) {
-                        User::changeInc($user['id'],-$signin_amount,'balance',57,$user['id'],1);
-                    } else {
-                        User::changeInc($user['id'],-$user['balance'],'balance',57,$user['id'],1);
-                        $balance_amount = bcsub($signin_amount, $user['balance'],2);
-                        User::changeInc($user['id'],-$balance_amount,'release_balance',57,$user['id'],1);
-                    }
-                    
-                }
-            }
-            // 扣余额
-            //User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$project['project_name'],0,1);
-            
-            // 给上3级团队奖
-            $relation = UserRelation::where('sub_user_id', $user['id'])->select();
-            $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
-            foreach ($relation as $v) {
-                $reward = round(dbconfig($map[$v['level']])/100*$pay_amount, 2);
-                if($reward > 0){
-                    User::changeInc($v['user_id'],$reward,'balance',8,$user['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
-                    RelationshipRewardLog::insert([
-                        'uid' => $v['user_id'],
-                        'reward' => $reward,
-                        'son' => $user['id'],
-                        'son_lay' => $v['level'],
-                        'created_at' => date('Y-m-d H:i:s')
-                    ]);
-                }
-            }
-            User::where('id',$user['id'])->inc('invest_amount',$pay_amount)->update();
-            //判断是否活动时间内记录活动累计消费 4.30-5.6
-            $time = time();
-            if($time > 1714406400 && $time < 1715011200) {
-                Db::name('user')->where('id', $user['id'])->inc('30_6_invest_amount', $pay_amount)->update();
-            }
-            User::upLevel($user['id']);
-
-            if($req['is_off'] > 0) {
-                Taxoff::where('user_id', $user['id'])->where('off', $req['is_off'])->update(['status'=> 1]);
-            };
-
-            User::where('id',$user['id'])->inc('yuan_shenbao_amount',$req['shenbao_amount'])->update();
-            $insert = [
-                'user_id' => $user['id'],
-                'amount' => $req['amount'],
-                'is_off' => $req['is_off'],
-                'shenbao_amount' => $req['shenbao_amount'],
-            ];
-            YuanOrder::create($insert);
-
-            User::where('id',$user['id'])->inc('private_bank_balance',$req['shenbao_amount'])->update();
-            Db::commit();
-        } catch (Exception $e) {
-            Db::rollback();
-            throw $e;
-        }
-        return out();
-
-    }
-
-    public function jijinShenbaoPlaceOrder()
-    {
-
-        $req = $this->validate(request(), [
-            'amount|最终纳税金额' => 'require',
-            'is_off|税务抵用券' => 'require',
-            'shenbao_amount|申报金额' => 'require',
-            'pay_password|支付密码' => 'require',
-        ]);
-
-        $user = $this->user;
-
-        if (empty($user['pay_password'])) {
-            return out(null, 10001, '请先设置支付密码');
-        }
-        if (!empty($req['pay_password']) && $user['pay_password'] !== sha1(md5($req['pay_password']))) {
-            return out(null, 10001, '支付密码错误');
-        }
-
-        Db::startTrans();
-        try {
-            $user = User::where('id', $user['id'])->lock(true)->find();
-
-            $pay_amount = $req['amount'];
-            if ($pay_amount >  ($user['topup_balance'] + $user['team_bonus_balance'] + $user['balance'] + $user['release_balance'])) {
-                exit_out(null, 10090, '余额不足');
-            }
-
-            if($user['topup_balance'] >= $pay_amount) {
-                User::changeInc($user['id'],-$pay_amount,'topup_balance',58,$user['id'],1);
-            } else {
-                User::changeInc($user['id'],-$user['topup_balance'],'topup_balance',58,$user['id'],1);
-                $topup_amount = bcsub($pay_amount, $user['topup_balance'],2);
-                if($user['team_bonus_balance'] >= $topup_amount) {
-                    User::changeInc($user['id'],-$topup_amount,'team_bonus_balance',58,$user['id'],1);
-                } else {
-                    User::changeInc($user['id'],-$user['team_bonus_balance'],'team_bonus_balance',58,$user['id'],1);
-                    $signin_amount = bcsub($topup_amount, $user['team_bonus_balance'],2);
-                    if($user['balance'] >= $signin_amount) {
-                        User::changeInc($user['id'],-$signin_amount,'balance',58,$user['id'],1);
-                    } else {
-                        User::changeInc($user['id'],-$user['balance'],'balance',58,$user['id'],1);
-                        $balance_amount = bcsub($signin_amount, $user['balance'],2);
-                        User::changeInc($user['id'],-$balance_amount,'release_balance',58,$user['id'],1);
-                    }
-                    
-                }
-            }
-            // 扣余额
-            //User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$project['project_name'],0,1);
-            
-            // 给上3级团队奖
-            $relation = UserRelation::where('sub_user_id', $user['id'])->select();
-            $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
-            foreach ($relation as $v) {
-                $reward = round(dbconfig($map[$v['level']])/100*$pay_amount, 2);
-                if($reward > 0){
-                    User::changeInc($v['user_id'],$reward,'balance',8,$user['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
-                    RelationshipRewardLog::insert([
-                        'uid' => $v['user_id'],
-                        'reward' => $reward,
-                        'son' => $user['id'],
-                        'son_lay' => $v['level'],
-                        'created_at' => date('Y-m-d H:i:s')
-                    ]);
-                }
-            }
-            User::where('id',$user['id'])->inc('invest_amount',$pay_amount)->update();
-            //判断是否活动时间内记录活动累计消费 4.30-5.6
-            $time = time();
-            if($time > 1714406400 && $time < 1715011200) {
-                Db::name('user')->where('id', $user['id'])->inc('30_6_invest_amount', $pay_amount)->update();
-            }
-            User::upLevel($user['id']);
-
-            if($req['is_off'] > 0) {
-                Taxoff::where('user_id', $user['id'])->where('off', $req['is_off'])->update(['status'=> 1]);
-            };
-
-            User::where('id',$user['id'])->inc('jijin_shenbao_amount',$req['shenbao_amount'])->update();
-            $insert = [
-                'user_id' => $user['id'],
-                'amount' => $req['amount'],
-                'is_off' => $req['is_off'],
-                'shenbao_amount' => $req['shenbao_amount'],
-            ];
-            JijinOrder::create($insert);
-
-            Db::commit();
-        } catch (Exception $e) {
-            Db::rollback();
-            throw $e;
-        }
-        return out();
-
-    }
 
     public function taxPlaceOrder()
     {
@@ -1215,343 +1039,6 @@ class OrderController extends AuthController
         Taxoff::create($insert);
         return out();
     }
-
-    public function openBondPlaceOrder()
-    {
-        $req = $this->validate(request(), [
-            'pay_password|支付密码' => 'require',
-        ]);
-
-        $user = $this->user;
-
-        if (empty($user['pay_password'])) {
-            return out(null, 10001, '请先设置支付密码');
-        }
-        if (!empty($req['pay_password']) && $user['pay_password'] !== sha1(md5($req['pay_password']))) {
-            return out(null, 10001, '支付密码错误');
-        }
-
-        Db::startTrans();
-        try {
-            $user = User::where('id', $user['id'])->lock(true)->find();
-            if($user['bond_open'] == 1) {
-                exit_out(null, 10001, '您已经开户债券托管账户');
-            }
-
-            if($user['private_bank_open'] == 0) {
-                exit_out(null, 10001, '请先开户私人银行');
-            }
-
-            $pay_amount = 236;
-            if ($pay_amount >  ($user['topup_balance'] + $user['team_bonus_balance'] + $user['balance'] + $user['release_balance'])) {
-                exit_out(null, 10090, '余额不足');
-            }
-
-            if($user['topup_balance'] >= $pay_amount) {
-                User::changeInc($user['id'],-$pay_amount,'topup_balance',50,$user['id'],1);
-            } else {
-                User::changeInc($user['id'],-$user['topup_balance'],'topup_balance',50,$user['id'],1);
-                $topup_amount = bcsub($pay_amount, $user['topup_balance'],2);
-                if($user['team_bonus_balance'] >= $topup_amount) {
-                    User::changeInc($user['id'],-$topup_amount,'team_bonus_balance',50,$user['id'],1);
-                } else {
-                    User::changeInc($user['id'],-$user['team_bonus_balance'],'team_bonus_balance',50,$user['id'],1);
-                    $signin_amount = bcsub($topup_amount, $user['team_bonus_balance'],2);
-                    if($user['balance'] >= $signin_amount) {
-                        User::changeInc($user['id'],-$signin_amount,'balance',50,$user['id'],1);
-                    } else {
-                        User::changeInc($user['id'],-$user['balance'],'balance',50,$user['id'],1);
-                        $balance_amount = bcsub($signin_amount, $user['balance'],2);
-                        User::changeInc($user['id'],-$balance_amount,'release_balance',50,$user['id'],1);
-                    }
-                    
-                }
-            }
-            // 扣余额
-            //User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$project['project_name'],0,1);
-            
-            // 给上3级团队奖
-            $relation = UserRelation::where('sub_user_id', $user['id'])->select();
-            $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
-            foreach ($relation as $v) {
-                $reward = round(dbconfig($map[$v['level']])/100*$pay_amount, 2);
-                if($reward > 0){
-                    User::changeInc($v['user_id'],$reward,'balance',8,$user['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
-                    RelationshipRewardLog::insert([
-                        'uid' => $v['user_id'],
-                        'reward' => $reward,
-                        'son' => $user['id'],
-                        'son_lay' => $v['level'],
-                        'created_at' => date('Y-m-d H:i:s')
-                    ]);
-                }
-            }
-            User::where('id',$user['id'])->inc('invest_amount',$pay_amount)->update();
-            //判断是否活动时间内记录活动累计消费 4.30-5.6
-            $time = time();
-            if($time > 1714406400 && $time < 1715011200) {
-                Db::name('user')->where('id', $user['id'])->inc('30_6_invest_amount', $pay_amount)->update();
-            }
-            User::where('id',$user['id'])->inc('huodong',1)->update();
-            User::upLevel($user['id']);
-
-            User::where('id',$user['id'])->update(['bond_open' => 1]);
-
-            Db::commit();
-        } catch (Exception $e) {
-            Db::rollback();
-            throw $e;
-        }
-        return out();
-    }
-
-    public function openBankPlaceOrder()
-    {
-        $req = $this->validate(request(), [
-            'name|真实姓名' => 'require',
-            'phone|手机号' => 'require',
-            'id_card|身份证号' => 'require',
-            'pay_password|支付密码' => 'require',
-            'bank_password|设置密码' => 'require',
-            're_bank_password|重复密码' => 'require',
-        ]);
-
-        $user = $this->user;
-
-        if (empty($user['pay_password'])) {
-            return out(null, 10001, '请先设置支付密码');
-        }
-        if (!empty($req['pay_password']) && $user['pay_password'] !== sha1(md5($req['pay_password']))) {
-            return out(null, 10001, '支付密码错误');
-        }
-
-        if($req['bank_password'] != $req['re_bank_password']) {
-            return out(null, 10001, '您两次输入的密码不一致');
-        }
-
-        Db::startTrans();
-        try {
-            $user = User::where('id', $user['id'])->lock(true)->find();
-            if($user['private_bank_open'] == 1) {
-                exit_out(null, 10001, '您已经开户私人专属银行');
-            }
-
-            if($user['all_digit_balance'] >= 6000000) {
-                $pay_amount = 0;
-            } else {
-                $pay_amount = 980;
-            }
-            if ($pay_amount >  ($user['topup_balance'] + $user['team_bonus_balance'] + $user['balance'] + $user['release_balance'])) {
-                exit_out(null, 10090, '余额不足');
-            }
-
-            $part1 = '621788';
-            $part2 =  str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
-            //$part2 = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
-            $part3 = str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT);
-
-            $num = [
-                1 => 1111,
-                2 => 2222,
-                3 => 3333,
-                4 => 4444,
-                5 => 5555,
-                6 => 6666,
-                7 => 7777,
-                8 => 8888,
-                9 => 9999,
-                10 => 0000,
-            ];
-
-            $part4 = $num[mt_rand(1,10)];
-        
-            $randomNumber = $part1.$part2.$part3.$part4;
-
-            $insert['name'] = $req['name'];
-            $insert['user_id'] = $user['id'];
-            $insert['phone'] = $req['phone'];
-            $insert['id_card'] = $req['id_card'];
-            $insert['bank_code'] = $randomNumber;
-            $order = UserPrivateBank::create($insert);
-
-            if($pay_amount > 0) {
-                if($user['topup_balance'] >= $pay_amount) {
-                    User::changeInc($user['id'],-$pay_amount,'topup_balance',49,$order['id'],1);
-                } else {
-                    User::changeInc($user['id'],-$user['topup_balance'],'topup_balance',49,$order['id'],1);
-                    $topup_amount = bcsub($pay_amount, $user['topup_balance'],2);
-                    if($user['team_bonus_balance'] >= $topup_amount) {
-                        User::changeInc($user['id'],-$topup_amount,'team_bonus_balance',49,$order['id'],1);
-                    } else {
-                        User::changeInc($user['id'],-$user['team_bonus_balance'],'team_bonus_balance',49,$order['id'],1);
-                        $signin_amount = bcsub($topup_amount, $user['team_bonus_balance'],2);
-                        if($user['balance'] >= $signin_amount) {
-                            User::changeInc($user['id'],-$signin_amount,'balance',49,$order['id'],1);
-                        } else {
-                            User::changeInc($user['id'],-$user['balance'],'balance',49,$order['id'],1);
-                            $balance_amount = bcsub($signin_amount, $user['balance'],2);
-                            User::changeInc($user['id'],-$balance_amount,'release_balance',49,$order['id'],1);
-                        }
-                        
-                    }
-                }
-
-                // 扣余额
-                //User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$project['project_name'],0,1);
-                
-                // 给上3级团队奖
-                $relation = UserRelation::where('sub_user_id', $user['id'])->select();
-                $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
-                foreach ($relation as $v) {
-                    $reward = round(dbconfig($map[$v['level']])/100*$pay_amount, 2);
-                    if($reward > 0){
-                        User::changeInc($v['user_id'],$reward,'balance',8,$order['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
-                        RelationshipRewardLog::insert([
-                            'uid' => $v['user_id'],
-                            'reward' => $reward,
-                            'son' => $user['id'],
-                            'son_lay' => $v['level'],
-                            'created_at' => date('Y-m-d H:i:s')
-                        ]);
-                    }
-                }
-                User::where('id',$user['id'])->inc('invest_amount',$pay_amount)->update();
-            }
-
-
-            //判断是否活动时间内记录活动累计消费 4.30-5.6
-            $time = time();
-            if($time > 1714406400 && $time < 1715011200) {
-                Db::name('user')->where('id', $user['id'])->inc('30_6_invest_amount', $pay_amount)->update();
-            }
-            User::where('id',$user['id'])->inc('huodong',1)->update();
-            User::upLevel($user['id']);
-
-            User::where('id',$user['id'])->update(['private_bank_open' => 1, 'bank_password' => sha1(md5($req['bank_password']))]);
-            $data = Order::where('user_id', $user['id'])->where('status', 6)->where('project_group_id', 2)->select();
-            $money = 0;
-            foreach ($data as $key => $value) {
-                $add = bcadd($value['gain_bonus'], $value['all_bonus'], 2);
-                $money += bcsub($add, $value['checkingAmount'], 2);
-            }
-            User::changeInc($user['id'],$money,'private_bank_balance',53,$order['id'],1);
-            Db::commit();
-        } catch (Exception $e) {
-            Db::rollback();
-            throw $e;
-        }
-        return out();
-    }
-
-
-    public function shuhuiPlaceOrder()
-    {
-        $req = $this->validate(request(), [
-            'order_id' => 'require|number',
-            'pay_amount' => 'require|number',
-            'shuhui_img_url|签名凭证' => 'require|url',
-        ]);
-
-        $user = $this->user;
-
-        if (empty($user['pay_password'])) {
-            return out(null, 801, '请先设置支付密码');
-        }
-        if (!empty($req['pay_password']) && $user['pay_password'] !== sha1(md5($req['pay_password']))) {
-            return out(null, 10001, '支付密码错误');
-        }
-
-        $order = Order::where('id', $req['order_id'])->find();
-        if(!$order){
-            return out(null, 10001, '项目不存在');
-        }
-
-        if($order['status'] == 2) {
-            return out(null, 10001, '基金还未到期');
-        }
-
-        Db::startTrans();
-        try {
-            $pay_amount = $req['pay_amount'];
-            if ($pay_amount >  ($user['topup_balance'] + $user['team_bonus_balance'] + $user['balance'] + $user['release_balance'])) {
-                exit_out(null, 10090, '余额不足');
-            }
-
-            if($user['topup_balance'] >= $pay_amount) {
-                User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,'基金赎回'.$order['project_name'],0,1);
-            } else {
-                User::changeInc($user['id'],-$user['topup_balance'],'topup_balance',3,$order['id'],1,'基金赎回'.$order['project_name'],0,1);
-                $topup_amount = bcsub($pay_amount, $user['topup_balance'],2);
-                if($user['team_bonus_balance'] >= $topup_amount) {
-                    User::changeInc($user['id'],-$topup_amount,'team_bonus_balance',3,$order['id'],1,'基金赎回'.$order['project_name'],0,1);
-                } else {
-                    User::changeInc($user['id'],-$user['team_bonus_balance'],'team_bonus_balance',3,$order['id'],1,'基金赎回'.$order['project_name'],0,1);
-                    $signin_amount = bcsub($topup_amount, $user['team_bonus_balance'],2);
-                    if($user['balance'] >= $signin_amount) {
-                        User::changeInc($user['id'],-$signin_amount,'balance',3,$order['id'],1,'基金赎回'.$order['project_name'],0,1);
-                    } else {
-                        User::changeInc($user['id'],-$user['balance'],'balance',3,$order['id'],1,'基金赎回'.$order['project_name'],0,1);
-                        $balance_amount = bcsub($signin_amount, $user['balance'],2);
-                        User::changeInc($user['id'],-$balance_amount,'release_balance',3,$order['id'],1,'基金赎回'.$order['project_name'],0,1);
-                    }
-                }
-            }
-            // 扣余额
-            //User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$project['project_name'],0,1);
-            
-            // 给上3级团队奖
-            $relation = UserRelation::where('sub_user_id', $user['id'])->select();
-            $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
-            foreach ($relation as $v) {
-                $reward = round(dbconfig($map[$v['level']])/100*$pay_amount, 2);
-                if($reward > 0){
-                    User::changeInc($v['user_id'],$reward,'balance',8,$order['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
-                    RelationshipRewardLog::insert([
-                        'uid' => $v['user_id'],
-                        'reward' => $reward,
-                        'son' => $user['id'],
-                        'son_lay' => $v['level'],
-                        'created_at' => date('Y-m-d H:i:s')
-                    ]);
-                }
-            }
-            User::where('id',$user['id'])->inc('invest_amount',$pay_amount)->update();
-            //判断是否活动时间内记录活动累计消费 4.30-5.6
-            $time = time();
-            if($time > 1714406400 && $time < 1715011200) {
-                Db::name('user')->where('id', $user['id'])->inc('30_6_invest_amount', $pay_amount)->update();
-            }
-            User::where('id',$user['id'])->inc('huodong',1)->update();
-            User::upLevel($user['id']);
-
-            $currentDate = date("Y-m-d"); // 假设这是交易日
-            $holidays = ['2024-06-08', '2024-06-09', '2024-06-10']; // 假设这是假期列表
-            
-            $nextTradeDay = $this->getNextTradeDay($currentDate, $holidays);
-
-            //Order::where('id', $req['order_id'])->update(['status' => 5, 'shuhui_img_url' => $req['shuhui_img_url'], 'shuhui_time' => date('Y-m-d H:i:s'), 'shuhui_end_time' => strtotime($nextTradeDay)]);
-
-            $add = bcadd($order['gain_bonus'], $order['all_bonus'], 2);
-            $money = bcsub($add, $order['checkingAmount'], 2);
-
-            $user = User::where('id', $order['user_id'])->find();
-            if($user['private_bank_open'] == 1) {
-                User::changeInc($order['user_id'],$money,'private_bank_balance',53,$order['id'],1, '银联入账');
-                User::where('id', $order['user_id'])->inc('all_digit_balance', $money)->update();
-            } else {
-                User::where('id', $order['user_id'])->inc('digit_balance', $money)->update();
-                User::where('id', $order['user_id'])->inc('all_digit_balance', $money)->update();
-            }
-            Order::where('id',$order->id)->update(['status'=>6, 'shuhui_img_url' => $req['shuhui_img_url'], 'shuhui_time' => date('Y-m-d H:i:s'), 'shuhui_end_time' => strtotime($nextTradeDay)]);
-
-            Db::commit();
-        } catch (Exception $e) {
-            Db::rollback();
-            throw $e;
-        }
-        return out();
-    }
-
 
     public function getNextTradeDay($currentDate, $holidays = []) {
         // 将日期转换为时间戳

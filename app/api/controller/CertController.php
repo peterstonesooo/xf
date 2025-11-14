@@ -286,72 +286,7 @@ class CertController extends AuthController
         return out();
     }
 
-    // 保证
-    public function deposit()
-    {
-        $req = $this->validate(request(), [
-            'pay_password|支付密码' => 'require',
-        ]);
     
-        $user = $this->user;
-            
-        if (empty($user['pay_password'])) {
-            return out(null, 801, '请先设置支付密码');
-        }
-        if (!empty($req['pay_password']) && $user['pay_password'] !== sha1(md5($req['pay_password']))) {
-            return out(null, 10001, '支付密码错误');
-        }
-    
-        $deposit = Db::table('mp_deposit')->where('user_id', $user['id'])->find();
-
-        if ($deposit) {
-            return out(null, 10001, '已支付保证金');
-        }
-    
-        $pay_amount = 2000;
-        if ($pay_amount >  ($user['topup_balance'] + $user['team_bonus_balance'] + $user['balance'] + $user['release_balance'])) {
-            return out(null, 10090, '余额不足');
-        }
-
-        Db::startTrans();
-        try {
-            $user = User::where('id', $user['id'])->lock(true)->find();
-            $this->deductFromBalances($user['id'], $pay_amount, $user, '保证金支付', 66);
-            User::changeInc($user['id'], $pay_amount, 'private_bank_balance', 67, $user['id'], 1, '保证金到账');
-            Db::table('mp_deposit')->insert([
-                'user_id' => $user['id'],
-                'amount' => $pay_amount,
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
-            ]);
-
-            // 给上3级团队奖
-            $relation = UserRelation::where('sub_user_id', $user['id'])->select();
-            $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio'];
-            foreach ($relation as $v) {
-                $reward = round(dbconfig($map[$v['level']])/100*$pay_amount, 2);
-                if($reward > 0){
-                    User::changeInc($v['user_id'],$reward,'balance',8,$user['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
-                    RelationshipRewardLog::insert([
-                        'uid' => $v['user_id'],
-                        'reward' => $reward,
-                        'son' => $user['id'],
-                        'son_lay' => $v['level'],
-                        'created_at' => date('Y-m-d H:i:s')
-                    ]);
-                }
-            }
-            User::where('id',$user['id'])->inc('invest_amount',$pay_amount)->update();
-            User::upLevel($user['id']);
-
-            Db::commit();
-            return out();
-        } catch (Exception $e) {
-            Db::rollback();
-            Log::error('Deposit error:' . json_encode($e->getMessage(), JSON_UNESCAPED_UNICODE));
-            return out(null, 10001, '保证金支付失败');
-        }
-    }
 
     public function deductFromBalances($userId, $payAmount, $userBalances, $reason, $transType, $relationId = 0) {
         $amountRemaining = $payAmount;

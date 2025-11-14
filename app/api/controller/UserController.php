@@ -3336,7 +3336,8 @@ class UserController extends AuthController
                 0,
                 1
             );
-
+            //抽奖机会加一
+            User::where('id',$user['id'])->inc('lottery_tickets',1)->update();
             User::where('id', $user['id'])->update(['vip_status' => 1]);
             VipLog::create([
                 'user_id' => $user['id'],

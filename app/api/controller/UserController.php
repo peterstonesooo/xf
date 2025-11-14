@@ -40,6 +40,7 @@ use app\model\ZhufangOrder;
 use app\model\UserPointsSwap;
 use app\model\OrderTiyan;
 use app\model\OrderTongxing;
+use app\model\VipLog;
 use think\facade\Db;
 use Exception;
 use Endroid\QrCode\QrCode;
@@ -3282,6 +3283,75 @@ class UserController extends AuthController
          
         }
         return out();
+    }
+
+    /**
+     * 开通VIP
+     */
+    public function openVip()
+    {
+        $req = $this->validate(request(), [
+            'pay_password|支付密码' => 'require',
+        ]);
+
+        $user = User::where('id', $this->user['id'])->field('id,phone,pay_password,vip_status')->find();
+        if (!$user) {
+            return out(null, 10001, '账号不存在');
+        }
+
+        if (empty($user['pay_password'])) {
+            return out(null, 10001, '请先设置支付密码');
+        }
+
+        if ($user['pay_password'] !== sha1(md5($req['pay_password']))) {
+            return out(null, 10001, '支付密码错误');
+        }
+
+        if ((int) $user['vip_status'] === 1) {
+            return out(null, 10001, '您已开通VIP');
+        }
+
+        $payAmount = (float) dbconfig('vip_pay_amount');
+        if ($payAmount <= 0) {
+            return out(null, 10001, '暂未开放VIP购买');
+        }
+
+        $payField = 'topup_balance';
+
+        Db::startTrans();
+        try {
+            if ($user[$payField] < $payAmount) {
+                Db::rollback();
+                return out(null, 10001, '余额不足');
+            }
+
+            User::changeInc(
+                $user['id'],
+                -$payAmount,
+                $payField,
+                126,
+                0,
+                1,
+                '开通VIP',
+                0,
+                1
+            );
+
+            User::where('id', $user['id'])->update(['vip_status' => 1]);
+            VipLog::create([
+                'user_id' => $user['id'],
+                'status' => 1,
+                'pay_amount' => $payAmount,
+                'pay_time' => time(),
+            ]);
+
+            Db::commit();
+        } catch (Exception $e) {
+            Db::rollback();
+            throw $e;
+        }
+
+        return out(['vip_status' => 1], 0, 'VIP开通成功');
     }
 }
 

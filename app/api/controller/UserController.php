@@ -3294,7 +3294,7 @@ class UserController extends AuthController
             'pay_password|支付密码' => 'require',
         ]);
 
-        $user = User::where('id', $this->user['id'])->field('id,phone,pay_password,vip_status')->find();
+        $user = User::where('id', $this->user['id'])->field('id,phone,pay_password,vip_status,topup_balance')->find();
         if (!$user) {
             return out(null, 10001, '账号不存在');
         }
@@ -3311,7 +3311,7 @@ class UserController extends AuthController
             return out(null, 10001, '您已开通VIP');
         }
 
-        $payAmount = (float) dbconfig('vip_pay_amount');
+        $payAmount = dbconfig('vip_pay_amount');
         if ($payAmount <= 0) {
             return out(null, 10001, '暂未开放VIP购买');
         }

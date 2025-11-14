@@ -1840,23 +1840,26 @@ class CommonController extends BaseController
         }
 
         if ($req['status'] == 'TRADE_SUCCESS') {
-            $payment = Payment::where('trade_sn', $req['out_order'])->find();
-            if ($payment['status'] != 1) {
-                return 'success';
-            }
             Db::startTrans();
             try {
-                Payment::where('id', $payment['id'])->update([ 'payment_time' => time(), 'status' => 2]);
-                // 投资项目
-                if ($payment['product_type'] == 1) {
-                    Order::warpOrderComplete($payment['order_id']);
+                $payment = Payment::where('trade_sn', $req['out_order'])->lock(true)->find();
+                if (!$payment) {
+                    Db::rollback();
+                    return 'fail订单不存在';
                 }
-                // 充值
-                elseif ($payment['product_type'] == 2) {
+                if ($payment['status'] != 1) {
+                    Db::rollback();
+                    return 'success';
+                }
+
+                Payment::where('id', $payment['id'])->update([
+                    'payment_time' => time(),
+                    'status' => 2,
+                ]);
+
+                if ($payment['product_type'] == 2) {
                     Capital::topupPayComplete($payment['capital_id']);
                 }
-                $userModel = new User();
-              //  $userModel->teamBonus($payment['user_id'], $payment['pay_amount'],$payment['id']);
                 // 判断通道是否超过最大限额，超过了就关闭通道
                 PaymentConfig::checkMaxPaymentLimit($payment['type'], $payment['channel'], $payment['mark']);
 

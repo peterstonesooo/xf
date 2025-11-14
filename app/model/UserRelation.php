@@ -20,7 +20,7 @@ class UserRelation extends Model
 
     public static function saveUserRelation($user_id)
     {
-        $allUpUserIds = User::getThreeUpUserId($user_id);
+        $allUpUserIds = User::getAllUpUserId($user_id);
         foreach ($allUpUserIds as $k => $v) {
             UserRelation::create([
                 'user_id' => $v,

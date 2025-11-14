@@ -8,7 +8,11 @@ use think\console\Command;
 use think\console\Input;
 use think\console\Output;
 use think\facade\Db;
-
+/**
+ * 修正 mp_user_relation 数据，确保层级关系与用户上级链路一致
+ * 预览：php think fix:user-relation --dry-run
+ *  实际修复（默认 chunk=500，可调整）：php think fix:user-relation --chunk=300
+ */
 class FixUserRelation extends Command
 {
     protected function configure()
@@ -149,7 +153,7 @@ class FixUserRelation extends Command
             $stats['active_synced']
         ));
 
-        return self::SUCCESS;
+        return 0;
     }
 }
 

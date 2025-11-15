@@ -85,7 +85,16 @@ class ProjectController extends AuthController
                     $item['is_buy'] = 0;
                 }
             }else{
-                $item['discount'] = round($item['single_amount'] * $discount, 2);
+                if($discount != 1){
+                    $item['discount'] = round($item['single_amount'] * $discount, 2);
+                }else{
+                    $item['discount'] = $item['single_amount'];
+                    if($user['vip_status'] == 1){
+                        $item['discount'] = round($item['single_amount'] * 0.9, 2);
+                    }
+                }
+                
+                
                 if($item['daily_bonus_ratio'] > 0){
                     $order = OrderDailyBonus::where('user_id', $user_id)->where('project_id', $item['id'])->count();
                 }else{

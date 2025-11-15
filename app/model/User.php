@@ -518,6 +518,11 @@ class User extends Model
             }
             
             $level[$i] = $up_user['id'];
+
+            if ($i >= 5) {
+                break;
+            }
+
             $current_user = $up_user;
             $i++;
         }

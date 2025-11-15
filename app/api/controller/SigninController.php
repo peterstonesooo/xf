@@ -56,6 +56,17 @@ class SigninController extends AuthController
             $signin_15_jifen = dbconfig('signin_15_jifen');
             $asignin_30_amount = dbconfig('signin_30_amount');
             $signin_30_jifen = dbconfig('signin_30_jifen');
+            $vote_tickets = 1;
+            //vip签到奖励翻倍
+            if($user['vip_status'] == 1){
+                $signin_1_amount = $signin_1_amount*2;
+                $signin_1_jifen = $signin_1_jifen*2;
+                $signin_15_amount = $signin_15_amount*2;
+                $signin_15_jifen = $signin_15_jifen*2;
+                $asignin_30_amount = $asignin_30_amount*2;
+                $signin_30_jifen = $signin_30_jifen*2;
+                $vote_tickets = 2;
+            }
             $date['return_amount'] = $signin_1_amount;
             $date['return_jifen'] = $signin_1_jifen;
             $date['continue_days'] = 1;
@@ -109,7 +120,7 @@ class SigninController extends AuthController
                 User::changeInc($user['id'], $signin_1_amount, 'balance', 17 ,$signin['id'] , 4,'签到民生补贴');
                 User::changeInc($user['id'], $signin_1_jifen, 'integral', 17 ,$signin['id'] , 6,'签到积分');
                 //投票奖励
-                User::changeInc($user['id'],1,'vote_tickets',17,$signin['id'],15,'签到投票奖励');
+                User::changeInc($user['id'],$vote_tickets,'vote_tickets',17,$signin['id'],15,'签到投票奖励');
                 $date['continue_days']  = $continue_days;
                 //User::changeInc($user['id'],100,'yixiaoduizijin',17,$signin['id'],7);
           //  }

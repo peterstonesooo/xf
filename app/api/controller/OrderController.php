@@ -248,6 +248,9 @@ class OrderController extends AuthController
                 $discount = $discountArr['get_discount'];
             }else{
                 $discount = 1;
+                if($user['vip_status'] == 1 && in_array($project['project_group_id'], [7,8,9,10,11])){
+                    $discount = 0.9;
+                }
             }
             $unit_amount = round($project['single_amount'] * $discount, 2);
             $pay_amount = round($unit_amount * $numbers, 2);
@@ -650,6 +653,9 @@ class OrderController extends AuthController
                 $discount = $discountArr['get_discount'];
             }else{
                 $discount = 1;
+                if($user['vip_status'] == 1 && in_array($project['project_group_id'], [7,8,9,10,11])){
+                    $discount = 0.9;
+                }
             }
             $unit_amount = round($project['single_amount'] * $discount, 2);
             $pay_amount = round($unit_amount * $numbers, 2);

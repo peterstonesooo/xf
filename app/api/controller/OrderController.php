@@ -678,8 +678,9 @@ class OrderController extends AuthController
             $order = OrderDailyBonus::create($project);
 
             if ($req['pay_method']==1) {
+                $remark = $project['project_name'];
                 // 扣余额
-                User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$project['project_name'],0,1);
+                User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$remark,0,1);
                 //抽奖机会加一
                 User::where('id',$user['id'])->inc('order_lottery_tickets',$numbers)->update();
                 // User::changeInc($user['id'], $project['gongfu_amount'], 'butie',52,$order['id'],3,$project['project_name'].'共富金');
@@ -708,13 +709,13 @@ class OrderController extends AuthController
                 
                 if($project['project_group_id'] == 13){
                     // 同心福
-                    User::changeInc($user['id'],$project['minsheng_amount'] * $numbers,'balance',3,$order['id'],4,'民生补贴',0,1);
+                    User::changeInc($user['id'],$project['minsheng_amount'] * $numbers,'balance',3,$order['id'],4,$remark,0,1);
                 }
                 if($project['gongfu_right_now'] > 0){
-                    User::changeInc($user['id'], $project['gongfu_right_now'] * $numbers, 'gongfu_wallet',52,$order['id'],16,'共富专项金',0,1);
+                    User::changeInc($user['id'], $project['gongfu_right_now'] * $numbers, 'gongfu_wallet',52,$order['id'],16,$remark,0,1);
                 }
                 if($project['zhenxing_right_now'] > 0){
-                    User::changeInc($user['id'], $project['zhenxing_right_now'] * $numbers, 'zhenxing_wallet',52,$order['id'],14,'振兴专项金',0,1);
+                    User::changeInc($user['id'], $project['zhenxing_right_now'] * $numbers, 'zhenxing_wallet',52,$order['id'],14,$remark,0,1);
                 }
                 // 累计总收益和赠送数字人民币  到期结算
                 // 订单支付完成

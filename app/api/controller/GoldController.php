@@ -22,11 +22,14 @@ class GoldController extends AuthController
     {
         try {
             $req = $this->validate(request(), [
-                'type' => 'require|in:1,2,3,4,5',
+                'type' => 'number',
             ]);
             
             $user = $this->user;
-            $type = intval($req['type']);
+            $type = intval($req['type'] ?? 1);
+            if(!in_array($type, [1,2,3,4,5])){
+                return out(null, 400, '参数错误');
+            }
             
             // 根据类型确定查询参数
             $params = $this->getQueryParams($type);

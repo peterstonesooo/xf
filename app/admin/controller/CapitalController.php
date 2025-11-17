@@ -74,6 +74,8 @@ class CapitalController extends AuthController
         if ($req['type'] == 1) {
             $builder->leftjoin('payment p', 'p.capital_id = c.id');
         }
+        // 关联用户表以便查询VIP状态
+        $builder->leftjoin('user u', 'u.id = c.user_id');
         if (isset($req['capital_id']) && $req['capital_id'] !== '') {
             $builder->where('c.id', $req['capital_id']);
         }
@@ -113,6 +115,11 @@ class CapitalController extends AuthController
 
         if(isset($req['log_type']) && $req['log_type'] !== ''){
             $builder->where('c.log_type', $req['log_type']);
+        }
+
+        // VIP搜索
+        if (isset($req['vip_status']) && $req['vip_status'] !== '') {
+            $builder->where('u.vip_status', $req['vip_status']);
         }
 
         $builder1 = clone $builder;
@@ -180,7 +187,7 @@ class CapitalController extends AuthController
             }
         }
 
-        $data = $builder->paginate(['query' => $req]);
+        $data = $builder->with(['user', 'adminUser'])->paginate(['query' => $req]);
 
         return $data;
     }

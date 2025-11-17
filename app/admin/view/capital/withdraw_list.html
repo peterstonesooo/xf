@@ -21,6 +21,12 @@
             
         </select>
 
+        <select name="vip_status" class="form-control">
+            <option value="">是否VIP</option>
+            <option value="1" <?php if(isset($req['vip_status']) && $req['vip_status'] == '1') {?> selected <?php } ?>>是</option>
+            <option value="0" <?php if(isset($req['vip_status']) && $req['vip_status'] == '0') {?> selected <?php } ?>>否</option>
+        </select>
+
         <input placeholder="开始时间" autocomplete="off" value="{$req['start_date']??''}" name="start_date" class="form-control layer-date" id="start">
         ～
         <input placeholder="结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
@@ -52,6 +58,7 @@
                             <?php } ?>
                             <th>ID</th>
                             <th>用户</th>
+                            <th>是否VIP</th>
                             <th>单号</th>
                             <th>状态</th>
                             <th>类别</th>
@@ -73,6 +80,11 @@
                                 <?php } ?>
                                 <td>{$v['id']}</td>
                                 <td>{$v['user']['realname'] ?? ''}<?php if (session('is_agent') == 0) { ?>（{$v['user']['phone'] ?? ''}）<?php } ?></td>
+                                <td><?php if (!empty($v['user']['vip_status']) && $v['user']['vip_status'] == 1) { ?>
+                                    <span style="color: #ff6600; font-weight: bold;">是</span>
+                                <?php } else { ?>
+                                    <span style="color: #999999;">否</span>
+                                <?php } ?></td>
                                 <td>{$v['capital_sn']}</td>
                                 <td>{$v['withdraw_status_text']}</td>
                                 <td>
@@ -123,6 +135,7 @@
                             <?php if (!empty($req['status']) && in_array($req['status'], [1, 4])) { ?>
                             <td></td>
                             <?php } ?>
+                            <td></td>
                             <td></td>
                             <td></td>
                             <td></td>

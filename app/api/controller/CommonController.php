@@ -2344,7 +2344,7 @@ class CommonController extends BaseController
     {
         $req = request()->post();
         $this->validate($req, [
-            'type|类型' => 'number|require'
+            'type|类型' => 'require|number'
         ]);
         //$user = User::getUserByToken();
         

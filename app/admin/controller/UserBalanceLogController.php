@@ -101,7 +101,7 @@ class UserBalanceLogController extends AuthController
 
     private function logList($req)
     {
-        $builder = UserBalanceLog::order('id', 'desc');
+        $builder = UserBalanceLog::with(['user', 'adminUser'])->order('id', 'desc');
         $builder->where('type', '<>', 24);
         $builder->where('type', '<>', 25);
         if (isset($req['user_balance_log_id']) && $req['user_balance_log_id'] !== '') {

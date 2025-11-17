@@ -38,6 +38,7 @@
                         <tr>
                             <th>ID</th>
                             <th>会员</th>
+                            <th>姓名</th>
                             <th>类型</th>
                             <th>变化前的余额</th>
                             <th>变动金额</th>
@@ -51,6 +52,7 @@
                             <tr>
                                 <td>{$v['id']}</td>
                                 <td>{$v['user']['phone']}</td>
+                                <td>{$v['user']['realname']??''}</td>
                                 <td>{$v['type_text']}</td>
                                 <td>{$v['before_balance']}</td>
                                 <td>{$v['change_balance']}</td>

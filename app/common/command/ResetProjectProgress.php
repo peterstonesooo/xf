@@ -10,7 +10,6 @@ use app\model\UserBalanceLog;
 use think\console\Command;
 use think\console\Input;
 use think\console\Output;
-use think\facade\Db;
 
 class ResetProjectProgress extends Command
 {
@@ -65,52 +64,23 @@ class ResetProjectProgress extends Command
 
         // VIP用户赠送抽奖券
         $today = date('Y-m-d');
-        $todayStart = $today . ' 00:00:00';
-        $todayEnd = $today . ' 23:59:59';
-        
         User::where([
             ['vip_status', '=', 1],
-        ])->chunk(500, function($users) use (&$sentCount, $todayStart, $todayEnd) {
+        ])->chunk(500, function($users) use (&$sentCount, $today) {
             foreach ($users as $user) {
-                // 先快速检查，避免不必要的数据库操作
-                $logCount = UserBalanceLog::where('user_id', $user['id'])
-                    ->where('log_type', 127)
+                // 检查今天是否已经赠送过
+                $log = UserBalanceLog::where('user_id', $user['id'])
+                    ->where('log_type', 9)
                     ->where('remark', 'vip用户赠送抽奖卷')
-                    ->where('created_at', '>=', $todayStart)
-                    ->where('created_at', '<=', $todayEnd)
-                    ->count();
-                
-                if ($logCount > 0) {
+                    ->where('created_at', '>=', $today . ' 00:00:00')
+                    ->where('created_at', '<=', $today . ' 23:59:59')
+                    ->find();
+                if ($log) {
                     continue; // 今天已赠送，跳过
                 }
-                
-                // 使用事务和锁机制防止并发重复赠送
-                Db::startTrans();
-                try {
-                    // 在事务内使用锁查询，确保原子性
-                    $log = UserBalanceLog::where('user_id', $user['id'])
-                        ->where('log_type', 127)
-                        ->where('remark', 'vip用户赠送抽奖卷')
-                        ->where('created_at', '>=', $todayStart)
-                        ->where('created_at', '<=', $todayEnd)
-                        ->lock(true)  // SELECT ... FOR UPDATE，加行锁
-                        ->find();
-                    
-                    if ($log) {
-                        Db::rollback();
-                        continue; // 今天已赠送，跳过
-                    }
-                    
-                    // 赠送抽奖券
-                    // 注意：changeInc内部也有事务，但ThinkPHP会合并到外层事务中
-                    User::changeInc($user['id'], 1, 'lottery_tickets', 127, $user['id'], 9, 'vip用户赠送抽奖卷', 0, 1);
-                    Db::commit();
-                    $sentCount++;
-                } catch (\Exception $e) {
-                    Db::rollback();
-                    // 如果出错（比如锁超时、重复等），跳过该用户继续处理下一个
-                    continue;
-                }
+                // 赠送抽奖券
+                User::changeInc($user['id'], 1, 'lottery_tickets', 127, $user['id'], 9, 'vip用户赠送抽奖卷', 0, 1);
+                $sentCount++;
             }
         });
 

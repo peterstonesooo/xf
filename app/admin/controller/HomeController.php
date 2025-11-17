@@ -14,6 +14,7 @@ use app\model\OrderDailyBonus;
 use app\model\Project;
 use app\model\HappinessEquityActivation;
 use app\model\UserActive;
+use app\model\VipLog;
 
 class HomeController extends AuthController
 {
@@ -159,27 +160,27 @@ class HomeController extends AuthController
         //     $today_projescs = Project::where('status', 1)->column('id');
         // }
         
-        // 统计捐款数据
+        // 统计VIP开通数据
         $today_start = strtotime(date('Y-m-d 00:00:00'));
         $today_end = strtotime(date('Y-m-d 23:59:59'));
         $yesterday_start = strtotime($yesterday);
         $yesterday_end_ts = strtotime($yesterday_end);
 
-        $donationQuery = OrderTongxing::where('status', '>', 1)
-        ->where('pay_time', '>', 0)->where('created_at', '>=', '2025-11-08 00:00:00');
+        $vipQuery = VipLog::where('status', 1)
+            ->where('pay_time', '>', 0);
 
-        $arr['title'] = '捐款总人数';
-        $arr['value'] = (clone $donationQuery)->group('user_id')->count();
+        $arr['title'] = '开通总人数';
+        $arr['value'] = (clone $vipQuery)->group('user_id')->count();
 
-        $arr['title1'] = '今日捐款人数';
-        $arr['value1'] = (clone $donationQuery)
+        $arr['title1'] = '今日开通人数';
+        $arr['value1'] = (clone $vipQuery)
             ->where('pay_time', '>=', $today_start)
             ->where('pay_time', '<=', $today_end)
             ->group('user_id')
             ->count();
 
-        $arr['title2'] = '昨日捐款人数';
-        $arr['value2'] = (clone $donationQuery)
+        $arr['title2'] = '昨日开通人数';
+        $arr['value2'] = (clone $vipQuery)
                 ->where('pay_time', '>=', $yesterday_start)
                 ->where('pay_time', '<=', $yesterday_end_ts)
                 ->group('user_id')

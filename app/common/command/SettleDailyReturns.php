@@ -71,7 +71,9 @@ class SettleDailyReturns extends Command
                     
                        //反补
                         $user = User::where('id',$order['user_id'])->field('id,up_user_id,realname')->find();
-                        $relation = UserRelation::where('sub_user_id', $order['user_id'])->select();
+                        $relation = UserRelation::where('sub_user_id', $order['user_id'])
+                        ->where('level','in', [1,2,3])
+                        ->select();
                         
                         
                         foreach ($relation as $v) {

@@ -363,7 +363,8 @@ class Project extends Model
      * 完成规则：
      * - 每个产品组包含普通项目（daily_bonus_ratio=0）和日返项目（daily_bonus_ratio>0）
      * - 用户必须购买该组的所有项目才算完成一次
-     * - 如果用户购买了该组所有项目各2次，则完成次数为2次
+     * - 根据buy_num计算：一个订单如果buy_num=3，则相当于完成了3次
+     * - 如果用户购买了该组所有项目各2份（buy_num总和为2），则完成次数为2次
      */
     public static function getUserGroupCompletionCount($userId)
     {
@@ -405,30 +406,30 @@ class Project extends Model
             // 检查普通项目的完成次数
             if (!empty($normalProjects)) {
                 foreach ($normalProjects as $projectId) {
-                    // 统计用户购买该项目的次数（status >= 2 表示已支付）
+                    // 统计用户购买该项目的数量总和（根据buy_num计算，一个订单可能购买多份）
                     $purchaseCount = Order::where('user_id', $userId)
                         ->where('project_id', $projectId)
                         ->where('created_at', '>=', '2025-10-27 00:00:00')
                         ->where('status', '>=', 2)
-                        ->count();
+                        ->sum('buy_num');
                     
                     // 取最小值（木桶效应：完成次数由购买最少的项目决定）
-                    $minCompletionCount = min($minCompletionCount, $purchaseCount);
+                    $minCompletionCount = min($minCompletionCount, (int)$purchaseCount);
                 }
             }
             
             // 检查日返项目的完成次数
             if (!empty($dailyProjects)) {
                 foreach ($dailyProjects as $projectId) {
-                    // 统计用户购买该项目的次数（status >= 2 表示已支付）
+                    // 统计用户购买该项目的数量总和（根据buy_num计算，一个订单可能购买多份）
                     $purchaseCount = OrderDailyBonus::where('user_id', $userId)
                         ->where('project_id', $projectId)
                         ->where('created_at', '>=', '2025-10-27 00:00:00')
                         ->where('status', '>=', 2)
-                        ->count();
+                        ->sum('buy_num');
                     
                     // 取最小值
-                    $minCompletionCount = min($minCompletionCount, $purchaseCount);
+                    $minCompletionCount = min($minCompletionCount, (int)$purchaseCount);
                 }
             }
             

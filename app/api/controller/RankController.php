@@ -83,7 +83,11 @@ class RankController extends AuthController
             user::upLevel($user_id);
 
             //获取团队人数，实名人数
-            $zong_total = UserRelation::alias('ur')->leftJoin('mp_user u','ur.sub_user_id=u.id')->where('ur.user_id', $user_id)->where('u.shiming_status',1)->count(); //实名团队人
+            $zong_total = UserRelation::alias('ur')->leftJoin('mp_user u','ur.sub_user_id=u.id')
+            ->where('ur.user_id', $user_id)
+            ->where('u.shiming_status',1)
+            ->where('ur.level','in', [1,2,3])
+            ->count(); //实名团队人
 
 
             Db::commit();

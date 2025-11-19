@@ -89,7 +89,7 @@ class ProjectController extends AuthController
                     $item['discount'] = round($item['single_amount'] * $discount, 2);
                 }else{
                     $item['discount'] = $item['single_amount'];
-                    if($user['vip_status'] == 1){
+                    if($user['vip_status'] == 1 && in_array($req['project_group_id'], [7,8,9,10,11])){
                         $item['discount'] = round($item['single_amount'] * 0.9, 2);
                     }
                 }

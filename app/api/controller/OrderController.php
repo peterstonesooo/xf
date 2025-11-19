@@ -1737,7 +1737,7 @@ class OrderController extends AuthController
             ->where('o.user_id', $user['id'])
             ->leftJoin('mp_project p', 'p.id = o.project_id')
             ->where('o.status', '>', 1)
-            ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,o.pay_method,p.project_group_id,p.daily_bonus_ratio,p.huimin_amount,p.gongfu_amount,p.period,o.project_id')
+            ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.price,o.pay_time,o.status,o.created_at,o.pay_method,p.project_group_id,p.daily_bonus_ratio,p.huimin_amount,p.gongfu_amount,p.period,o.project_id')
             ->buildSql();
 
         // 体验订单查询
@@ -1755,7 +1755,7 @@ class OrderController extends AuthController
             ->where('o.user_id', $user['id'])
             ->leftJoin('mp_project p', 'p.id = o.project_id')
             ->where('o.status', '>', 1)
-            ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,o.pay_method,p.project_group_id,p.daily_bonus_ratio,p.huimin_amount,p.gongfu_amount,p.period,o.project_id')
+            ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.price,o.pay_time,o.status,o.created_at,o.pay_method,p.project_group_id,p.daily_bonus_ratio,p.huimin_amount,p.gongfu_amount,p.period,o.project_id')
             ->buildSql();
 
         // 将整个 UNION 查询用括号包裹，并指定一个表别名
@@ -1776,6 +1776,7 @@ class OrderController extends AuthController
                 $item['daily_huimin_amount'] = round($item['huimin_amount']/$item['period'], 2);
                 $item['daily_gongfu_amount'] = round($item['gongfu_amount']/$item['period'], 2);
             }   
+            $item['single_amount'] = $item['price'];
             return $item;
         }); 
 

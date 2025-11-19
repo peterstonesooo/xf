@@ -1776,7 +1776,6 @@ class OrderController extends AuthController
                 $item['daily_huimin_amount'] = round($item['huimin_amount']/$item['period'], 2);
                 $item['daily_gongfu_amount'] = round($item['gongfu_amount']/$item['period'], 2);
             }   
-            $item['single_amount'] = $item['price'];
             return $item;
         }); 
 

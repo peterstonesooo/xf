@@ -93,7 +93,9 @@ class ProjectController extends AuthController
                         $item['discount'] = round($item['single_amount'] * 0.9, 2);
                     }
                 }
-                
+                if($req['project_group_id'] ==13){
+                    $item['discount'] = intval($item['single_amount']);
+                }
                 
                 if($item['daily_bonus_ratio'] > 0){
                     $order = OrderDailyBonus::where('user_id', $user_id)->where('project_id', $item['id'])->count();

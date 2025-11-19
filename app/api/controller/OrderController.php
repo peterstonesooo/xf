@@ -1746,7 +1746,7 @@ class OrderController extends AuthController
             ->where('o.user_id', $user['id'])
             ->leftJoin('mp_project p', 'p.id = o.project_id')
             ->where('o.status', '>', 1)
-            ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.pay_time,o.status,o.created_at,o.pay_method,p.project_group_id,p.daily_bonus_ratio,p.huimin_amount,p.gongfu_amount,p.period,o.project_id')
+            ->field('o.id,o.order_sn,o.buy_num,o.project_name,o.single_amount,o.price,o.pay_time,o.status,o.created_at,o.pay_method,p.project_group_id,p.daily_bonus_ratio,p.huimin_amount,p.gongfu_amount,p.period,o.project_id')
             ->buildSql();
 
         // 每日返利订单查询

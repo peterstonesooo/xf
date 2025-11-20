@@ -267,13 +267,13 @@ class OrderController extends AuthController
                 $paymentConf = PaymentConfig::userCanPayChannel($req['payment_config_id'], $type, $pay_amount);
             }
 
-            if (isset(config('map.order')['pay_method_map'][$req['pay_method']]) === false) {
-                return out(null, 10005, '支付渠道不存在');
-            }
+            // if (isset(config('map.order')['pay_method_map'][$req['pay_method']]) === false) {
+            //     return out(null, 10005, '支付渠道不存在');
+            // }
 
-            if (empty($req['pay_method'])) {
-                return out(null, 10005, '支付渠道不存在');
-            }
+            // if (empty($req['pay_method'])) {
+            //     return out(null, 10005, '支付渠道不存在');
+            // }
 
             $order_sn = 'SJGC'.build_order_sn($user['id']);
 

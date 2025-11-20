@@ -66,7 +66,7 @@
                             <th>操作</th>
                         </tr>
                         <?php foreach ($data as $k => $v) { ?>
-                            <tr>
+                            <tr <?php if (isset($v['return_type']) && $v['return_type'] == 1) { echo 'style="background-color: #d6e9ff;"'; } ?>>
                                 <td>{$v['id']}</td>
                                 <td>{$groups[$v['project_group_id']]}</td>
                                 <td><img src="{$v['cover_img']}" onclick="seePhoto('{$v['cover_img']}')" style="max-width: 80px;"></td>

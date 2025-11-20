@@ -160,8 +160,13 @@
                                 <!-- <td>{$v['sort']}</td> -->
                                 <!-- <td>{$v['created_at']}</td> -->
                                 <td>
+                                    <?php 
+                                    $editUrl = (isset($v['return_type']) && $v['return_type'] == 1) 
+                                        ? url('admin/Project/showYudingProject', ['id' => $v['id']])
+                                        : url('admin/Project/showProject', ['id' => $v['id']]);
+                                    ?>
                                     <a {:auth_show_judge('Project/editProject')} class="btn btn-flat btn-info btn-xs"
-                                    href="{:url('admin/Project/showProject', ['id' => $v['id']])}"><i
+                                    href="{$editUrl}"><i
                                             class="fa fa-edit"></i> 编辑</a>
                                     <a {:auth_show_judge('Project/delProject')} class="btn btn-flat btn-danger btn-xs"
                                     href="javascript:;" onclick="delProject({$v['id']})"><i class="fa fa-trash-o"></i>

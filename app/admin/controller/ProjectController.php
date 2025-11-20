@@ -144,6 +144,10 @@ class ProjectController extends AuthController
         $data = [];
         if (!empty($req['id'])) {
             $data = Project::where('id', $req['id'])->find();
+            // 如果项目存在且 return_type 为 1，重定向到预定项目编辑页面
+            if (!empty($data) && isset($data['return_type']) && $data['return_type'] == 1) {
+                return redirect(url('admin/Project/showYudingProject', ['id' => $req['id']]));
+            }
         }
         //赠送项目
         $give = Project::select();
@@ -153,6 +157,24 @@ class ProjectController extends AuthController
         $groups = config('map.project.group');
         $this->assign('groups',$groups);
         $this->assign('give',$give);
+        $this->assign('data', $data);
+
+        return $this->fetch();
+    }
+
+    public function showYudingProject()
+    {
+        $req = request()->param();
+        $data = [];
+        if (!empty($req['id'])) {
+            $data = Project::where('id', $req['id'])->find();
+            // 如果项目存在但 return_type 不为 1，重定向到普通项目编辑页面
+            if (!empty($data) && (!isset($data['return_type']) || $data['return_type'] != 1)) {
+                return redirect(url('admin/Project/showProject', ['id' => $req['id']]));
+            }
+        }
+        $groups = config('map.project.group');
+        $this->assign('groups',$groups);
         $this->assign('data', $data);
 
         return $this->fetch();
@@ -171,8 +193,8 @@ class ProjectController extends AuthController
             // 'dividend_cycle|分红周期' => 'max:32',
             'status|状态' => 'require|integer',
             'period|周期' => 'number',
-            'is_recommend|是否推荐' => 'require|integer',
-            'support_pay_methods|支付方式' => 'require|max:100',
+            'is_recommend|是否推荐' => 'integer',
+            'support_pay_methods|支付方式' => 'max:100',
             'sort|排序号' => 'integer',
             'sum_amount|总补贴金额' => 'float',
             'gongfu_amount|共富金' => 'float',
@@ -182,6 +204,7 @@ class ProjectController extends AuthController
             'zhenxing_wallet|振兴钱包' => 'float',
             'zhenxing_right_now|振兴金-立即发放' => 'float',
             'puhui|普惠金' => 'float',
+            'puhui_right_now|普惠金-立即发放' => 'float',
             'purchase_limit_per_user|每人限购数量' => 'integer|>=:0',
             'rebate_rate|返佣比例' => 'float',
             'dividend_cycle|返现次数' => 'max:32',
@@ -206,8 +229,12 @@ class ProjectController extends AuthController
         }
         Cache::set('project_addProject', 1, 5);
         $req['intro'] = request()->param('intro', '');
-        $methods = explode(',', $req['support_pay_methods']);
-        $req['support_pay_methods'] = json_encode($methods);
+        if (!empty($req['support_pay_methods'])) {
+            $methods = explode(',', $req['support_pay_methods']);
+            $req['support_pay_methods'] = json_encode($methods);
+        } else {
+            $req['support_pay_methods'] = json_encode([]);
+        }
         if(empty($req['sale_time'])) {
             $req['sale_time'] = null;
         }
@@ -237,6 +264,59 @@ class ProjectController extends AuthController
         return out(['id' => $project->id]);
     }
 
+    public function addYudingProject()
+    {
+        $req = $this->validate(request(), [
+            'project_group_id|项目分组ID' => 'require|integer',
+            'name|项目名称' => 'require|max:100',
+            'single_amount|申购金额' => 'float',
+            'yuding_amount|补缴金额' => 'float',
+            'status|状态' => 'require|integer',
+            'sort|排序号' => 'integer',
+            'sum_amount|总收益金额' => 'float',
+            'gongfu_amount|共富金' => 'float',
+            'gongfu_right_now|共富金-立即发放' => 'float',
+            'minsheng_amount|民生金' => 'float',
+            'minsheng_right_now|民生金-立即发放' => 'float',
+            'zhenxing_wallet|振兴钱包' => 'float',
+            'zhenxing_right_now|振兴金-立即发放' => 'float',
+            'puhui|普惠金' => 'float',
+            'puhui_right_now|普惠金-立即发放' => 'float',
+            'purchase_limit_per_user|每人限购数量' => 'integer|>=:0',
+            'total_quota|周一至周五名额' => 'max:32',
+            'remaining_quota|周末名额' => 'max:32',
+            'total_stock|总份额' => 'integer|>=:0',
+            'remaining_stock|剩余份额' => 'integer|>=:0',
+            'open_date|销售开始时间' => 'max:32',
+            'yuding_time|缴付开始时间' => 'require|max:32',
+            'end_date|销售结束时间' => 'max:32',
+            'class|项目期数' => 'integer|>=:1',
+        ]);
+        if(Cache::get('project_addYudingProject')){
+            return out(null, 10001, '操作过于频繁，请稍后再试');
+        }
+        Cache::set('project_addYudingProject', 1, 5);
+        
+        if(empty($req['open_date'])) {
+            $req['open_date'] = '';
+        }
+        if(empty($req['end_date'])) {
+            $req['end_date'] = '';
+        }
+        if(empty($req['class']) || $req['class'] < 1){
+            $req['class'] = 1;
+        }
+        
+        // 设置 return_type 默认为 1
+        $req['return_type'] = 1;
+        
+        $req['cover_img'] = upload_file('cover_img');
+        $req['details_img'] = '';
+        $project = Project::create($req);
+
+        return out(['id' => $project->id]);
+    }
+
     public function editProject()
     {
         $req = $this->validate(request(), [
@@ -254,8 +334,8 @@ class ProjectController extends AuthController
             'dividend_cycle|返现次数' => 'max:32',
             'period|周期' => 'number',
             // 'single_gift_digital_yuan|单份赠送国家津贴' => 'integer',
-            'is_recommend|是否推荐' => 'require|integer',
-            'support_pay_methods|支持的支付方式' => 'require|max:100',
+            'is_recommend|是否推荐' => 'integer',
+            'support_pay_methods|支持的支付方式' => 'max:100',
             'sort|排序号' => 'integer',
             'sum_amount|总补贴金额' => 'float',
             'gongfu_amount|共富金' => 'float',
@@ -265,6 +345,7 @@ class ProjectController extends AuthController
             'zhenxing_wallet|振兴钱包' => 'float',
             'zhenxing_right_now|振兴金-立即发放' => 'float',
             'puhui|普惠金' => 'float',
+            'puhui_right_now|普惠金-立即发放' => 'float',
             'purchase_limit_per_user|每人限购数量' => 'integer|>=:0',
             'rebate_rate|返佣比例' => 'float',
             // 'virtually_progress|虚拟进度' => 'integer',
@@ -282,8 +363,12 @@ class ProjectController extends AuthController
             'class|项目期数' => 'integer|>=:1',
         ]);
         $req['intro'] = request()->param('intro', '');
-        $methods = explode(',', $req['support_pay_methods']);
-        $req['support_pay_methods'] = json_encode($methods);
+        if (!empty($req['support_pay_methods'])) {
+            $methods = explode(',', $req['support_pay_methods']);
+            $req['support_pay_methods'] = json_encode($methods);
+        } else {
+            $req['support_pay_methods'] = json_encode([]);
+        }
 
         if(empty($req['sale_time'])) {
             $req['sale_time'] = null;
@@ -313,6 +398,57 @@ class ProjectController extends AuthController
         //     $req['details_img'] = $img;
         // }
         Project::where('id', $req['id'])->update($req);
+
+        return out(['id' => $req['id']]);
+    }
+
+    public function editYudingProject()
+    {
+        $req = $this->validate(request(), [
+            'id' => 'require|number',
+            'project_group_id|项目分组ID' => 'require|integer',
+            'name|项目名称' => 'require|max:100',
+            'single_amount|申购金额' => 'float',
+            'yuding_amount|补缴金额' => 'float',
+            'status|状态' => 'require|integer',
+            'sort|排序号' => 'integer',
+            'sum_amount|总收益金额' => 'float',
+            'gongfu_amount|共富金' => 'float',
+            'gongfu_right_now|共富金-立即发放' => 'float',
+            'minsheng_amount|民生金' => 'float',
+            'minsheng_right_now|民生金-立即发放' => 'float',
+            'zhenxing_wallet|振兴钱包' => 'float',
+            'zhenxing_right_now|振兴金-立即发放' => 'float',
+            'puhui|普惠金' => 'float',
+            'puhui_right_now|普惠金-立即发放' => 'float',
+            'purchase_limit_per_user|每人限购数量' => 'integer|>=:0',
+            'total_quota|周一至周五名额' => 'max:32',
+            'remaining_quota|周末名额' => 'max:32',
+            'total_stock|总份额' => 'integer|>=:0',
+            'remaining_stock|剩余份额' => 'integer|>=:0',
+            'open_date|销售开始时间' => 'max:32',
+            'yuding_time|缴付开始时间' => 'require|max:32',
+            'end_date|销售结束时间' => 'max:32',
+            'class|项目期数' => 'integer|>=:1',
+        ]);
+
+        if(empty($req['open_date'])) {
+            $req['open_date'] = '';
+        }
+        if(empty($req['end_date'])) {
+            $req['end_date'] = '';
+        }
+        if(empty($req['class']) || $req['class'] < 1){
+            $req['class'] = 1;
+        }
+        
+        // 确保 return_type 为 1
+        $req['return_type'] = 1;
+        
+        if ($img = upload_file('cover_img', false,false)) {
+            $req['cover_img'] = $img;
+        }
+        Project::where('id', $req['id'])->where('return_type', 1)->update($req);
 
         return out(['id' => $req['id']]);
     }

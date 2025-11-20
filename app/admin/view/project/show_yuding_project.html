@@ -1,8 +1,6 @@
 <div class="search">
     <form class="form-inline">
         <a class="btn btn-flat btn-primary m_10_l_0" href="{:url('admin/Project/projectList')}">显示全部</a>
-        <a class="btn btn-flat btn-info m_10_l_0" href="{:url('admin/Project/showYudingProject')}"><i
-                    class="fa fa-calendar m-r-10"></i>预定模式</a>
         <a class="btn btn-flat btn-success m_10 f_r" onclick="javascript:history.back(-1)"><i
                     class="fa fa-undo m-r-10"></i>返 回</a>
     </form>
@@ -14,6 +12,7 @@
             <?php if (!empty($data)) { ?>
                 <input type="hidden" class="form-control" value="{$data['id']}" name="id">
             <?php } ?>
+            <input type="hidden" name="return_type" value="1">
             <div class="box box-body">
                 <div class="row dd_input_group">
                     <div class="form-group">
@@ -64,59 +63,23 @@
                 </div>
                 <div class="row dd_input_group">
                     <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">是否每日返利</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <select name="is_daily_bonus" class="form-control" id="is_daily_bonus">
-                                <option value="1" <?php if(isset(
-                                    $data['daily_bonus_ratio']) && $data['daily_bonus_ratio'] > 0) echo 'selected'; ?>>是</option>
-                                <option value="0" <?php if(!isset($data['daily_bonus_ratio']) || $data['daily_bonus_ratio']==0) echo 'selected'; ?>>否</option>
-                            </select>
-                        </div>
-                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
-                    </div>
-                </div>
-                <div class="row dd_input_group" id="daily_bonus_ratio_group" style="display: none;">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">每日收益率</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="daily_bonus_ratio" class="form-control" placeholder="请输入每日收益率(%)"
-                                   value="{$data['daily_bonus_ratio']??''}">
-                        </div>
-                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
-                    </div>
-                </div>
-                <div class="row dd_input_group">
-                    <div class="form-group">
                         <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">申购金额</label>
                         <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
                             <input type="text" name="single_amount" class="form-control" placeholder="请输入申购金额"
                                    value="{$data['single_amount']??''}">
                         </div>
-                        <!-- <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div> -->
                     </div>
                 </div>
                 <div class="row dd_input_group">
                     <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">申购周期【返现周期】</label>
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">补缴金额</label>
                         <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="period" class="form-control" placeholder="申购周期"
-                                   value="{$data['period']??''}">
+                            <input type="text" name="yuding_amount" class="form-control" placeholder="请输入补缴金额"
+                                   value="{$data['yuding_amount']??''}">
                         </div>
-                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">每日返现表示的总返现次数，非每日返现表示的是周期。</div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">元</div>
                     </div>
                 </div>
-                <div class="row dd_input_group" id="dividend_cycle_group">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">返现次数</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="dividend_cycle" class="form-control" placeholder="返现次数"
-                                   value="{$data['dividend_cycle']??''}">
-                        </div>
-                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">非每日返现有用：0表示返现一次。</div>
-                    </div>
-                </div>
-
-
                 <div class="row dd_input_group">
                     <div class="form-group">
                         <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">总收益金额</label>
@@ -215,58 +178,6 @@
                         <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">0=不限制</div>
                     </div>
                 </div>
-                <div class="row dd_input_group" id="rebate_rate_group">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">返佣比例</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="rebate_rate" class="form-control" placeholder="请输入返佣比例(%)"
-                                   value="{$data['rebate_rate']??''}">
-                        </div>
-                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
-                    </div>
-                </div>
-                
-                <!-- 周期返利配置 -->
-                <div class="row dd_input_group" id="huimin_days_return_group" style="display: none;">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">周期返利</label>
-                        <div class="col-xs-7 col-sm-10 col-md-10 col-lg-10">
-                            <div id="huimin_days_container">
-                                {if isset($data['huimin_days_return']) && !empty($data['huimin_days_return'])}
-                                    {foreach $data['huimin_days_return'] as $index => $item}
-                                        <div class="day-amount-row" style="margin-bottom: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 5px; background-color: #f9f9f9;">
-                                            <div style="margin-bottom: 15px;">
-                                                <label style="font-weight: bold; margin-right: 10px;">天数:</label>
-                                                <input type="number" min="1" name="huimin_days_return[days_{$index}]" class="form-control" style="width: 120px; display: inline-block; margin-right: 15px;" placeholder="天数" value="{$item.day}">
-                                            <button type="button" class="btn btn-danger btn-xs" onclick="removeDayAmount(this)">删除</button>
-                                            </div>
-                                            <div style="display: flex; gap: 15px;">
-                                                <div style="flex: 1;">
-                                                    <label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">振兴钱包</label>
-                                                    <input type="number" step="0.01" name="huimin_days_return[zhenxing_wallet_{$index}]" class="form-control" placeholder="请输入金额" value="{$item.zhenxing_wallet|default=''}">
-                                                </div>
-                                                <div style="flex: 1;">
-                                                    <label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">普惠金</label>
-                                                    <input type="number" step="0.01" name="huimin_days_return[puhui_{$index}]" class="form-control" placeholder="请输入金额" value="{$item.puhui|default=''}">
-                                                </div>
-                                                <div style="flex: 1;">
-                                                    <label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">共富金</label>
-                                                    <input type="number" step="0.01" name="huimin_days_return[gongfu_amount_{$index}]" class="form-control" placeholder="请输入金额" value="{$item.gongfu_amount|default=''}">
-                                                </div>
-                                                <div style="flex: 1;">
-                                                    <label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">民生金</label>
-                                                    <input type="number" step="0.01" name="huimin_days_return[minsheng_amount_{$index}]" class="form-control" placeholder="请输入金额" value="{$item.minsheng_amount|default=''}">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {/foreach}
-                                {/if}
-                            </div>
-                            <button type="button" class="btn btn-success btn-xs" onclick="addHuiminDay()">添加返利天数</button>
-                        </div>
-                    </div>
-                </div>
-                
                 <div class="row dd_input_group">
                     <div class="form-group">
                         <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">销售状态</label>
@@ -320,37 +231,6 @@
                         <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">份</div>
                     </div>
                 </div>
-                <!--
-                <div class="row dd_input_group">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">发行开始日</label>
-                        <div class="left-box" style="margin-right: 20px;">
-                            <div class="max-box">
-                                <input id="open_date" type="text" name="open_date"  value="{$data['open_date']??''}"/>
-                            </div>
-                        </div>  
-                    </div>
-                </div>
-                <div class="row dd_input_group">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">到期日</label>
-                        <div class="left-box" style="margin-right: 20px;">
-                            <div class="max-box">
-                                <input id="end_date" type="text" name="end_date"  value="{$data['end_date']??''}"/>
-                            </div>
-                        </div>  
-                    </div>
-                </div>
-                <div class="row dd_input_group">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">年收益</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="year_income" class="form-control" placeholder="年收益"
-                                   value="{$data['year_income']??''}">
-                        </div>
-                         <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
-                    </div>
-                </div>-->
                 <div class="row dd_input_group">
                     <div class="form-group">
                         <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">销售开始时间</label>
@@ -361,6 +241,19 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+                <div class="row dd_input_group">
+                    <div class="form-group">
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">缴付开始时间</label>
+                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
+                            <div class="left-box" style="margin-right: 20px;">
+                                <div class="max-box">
+                                    <input id="yuding_time" type="text" name="yuding_time" placeholder="请选择缴付开始时间" value="{$data['yuding_time']??''}"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">*</div>
                     </div>
                 </div>
                 <div class="row dd_input_group">
@@ -384,15 +277,6 @@
                         </div>
                     </div>
                 </div>
-<!--                 <div class="row dd_input_group">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">奖励倍数</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="bonus_multiple" class="form-control" placeholder="请输入奖励倍数，不能小于0"
-                                   value="{$data['bonus_multiple']??''}">
-                        </div>
-                    </div>
-                </div> -->
                 <div class="row dd_input_group">
                     <div class="form-group">
                         <div class="col-xs-12 col-sm-8 col-md-6 col-lg-5 text-center">
@@ -408,6 +292,8 @@
     </div>
 </div>
 
+<link rel="stylesheet" href="__ADMIN__/bower_components/select2/dist/css/select2.min.css">
+<script src="__ADMIN__/bower_components/select2/dist/js/select2.min.js"></script>
 <link href="__ADMIN__/jquery-ui-1.12.1/jquery-ui.css" rel="stylesheet">
 <link href="__ADMIN__/jQuery-Timepicker-Addon/jquery-ui-timepicker-addon.css" rel="stylesheet" type="text/css"/>
 
@@ -419,7 +305,9 @@
         //日期
         var dayNamesMin = ["日", "一", "二", "三", "四", "五", "六"];
         var monthNamesShort = ["01月", "02月", "03月", "04月", "05月", "06月", "07月", "08月", "09月", "10月", "11月", "12月"];
-        $("#time").datetimepicker({
+        
+        // 销售开始时间选择器
+        $("#open_date").datetimepicker({
             controlType: "select",
             dayNamesMin: dayNamesMin,
             monthNamesShort: monthNamesShort,
@@ -431,8 +319,8 @@
             timeFormat: "HH:mm:ss"
         });
         
-        // 销售开始时间选择器
-        $("#open_date").datetimepicker({
+        // 缴付开始时间选择器
+        $("#yuding_time").datetimepicker({
             controlType: "select",
             dayNamesMin: dayNamesMin,
             monthNamesShort: monthNamesShort,
@@ -461,36 +349,8 @@
         $('a[href="' + url + '"]').parents('.menu-li').addClass('active');
         var headerText = $('a[href="' + url + '"]').children('span').text();
         var is_add = "<?php echo !empty($data) ? '0' : '1';?>";
-        var headerTitle = is_add == "1" ? headerText + '-添加' : headerText + '-编辑';
+        var headerTitle = is_add == "1" ? headerText + '-添加预定项目' : headerText + '-编辑预定项目';
         $('#content-header-title').text(headerTitle);
-
-        // 动态显示/隐藏字段功能
-        function toggleFields() {
-            var isDailyBonus = $('#is_daily_bonus').val();
-            if (isDailyBonus == '1') {
-                // 每日返利：显示每日收益率，隐藏返佣比例、返现次数和周期返利配置
-                $('#daily_bonus_ratio_group').show();
-                $('#rebate_rate_group').hide();
-                $('#dividend_cycle_group').hide();
-                $('#huimin_days_return_group').hide();
-            } else {
-                // 非每日返利：隐藏每日收益率，显示返佣比例、返现次数和周期返利配置
-                $('#daily_bonus_ratio_group').hide();
-                $('#rebate_rate_group').show();
-                $('#dividend_cycle_group').show();
-                $('#huimin_days_return_group').show();
-            }
-        }
-
-        // 初始化时执行一次
-        toggleFields();
-
-        // 监听选择变化
-        $('#is_daily_bonus').on('change', function() {
-            toggleFields();
-        });
-
-        // 每日收益率改为手动填写，移除自动计算功能
     });
 
     function selectFile(i)
@@ -516,7 +376,7 @@
         var isEdit = <?php echo !empty($data) ? 'true' : 'false'; ?>;
         
         $.ajax({
-            url: '<?php echo !empty($data) ? url("admin/Project/editProject") : url("admin/Project/addProject");?>',
+            url: '<?php echo !empty($data) ? url("admin/Project/editYudingProject") : url("admin/Project/addYudingProject");?>',
             type: 'POST',
             data: formData,
             async: false,
@@ -525,38 +385,9 @@
             processData: false,
             success: function (res) {
                 if (res.code == '200'){
-                    if (!isEdit) {
-                        // 只在新增时发送消息通知
-                        $.ajax({
-                            url: '<?php echo url("admin/Project/sendProjectNotice");?>',
-                            type: 'POST',
-                            data: {
-                                project_id: res.data.id,
-                                project_name: formData.get('name')
-                            },
-                            success: function(noticeRes) {
-                                if(noticeRes.code == '200') {
-                                    layer.msg('保存成功并已发送通知', {icon: 1, time: 2000}, function(){
-                                        window.location.href = document.referrer;
-                                    });
-                                } else {
-                                    layer.msg('保存成功但发送通知失败', {icon: 2, time: 2000}, function(){
-                                        window.location.href = document.referrer;
-                                    });
-                                }
-                            },
-                            error: function() {
-                                layer.msg('保存成功但发送通知失败', {icon: 2, time: 2000}, function(){
-                                    window.location.href = document.referrer;
-                                });
-                            }
-                        });
-                    } else {
-                        // 编辑时直接返回
-                        layer.msg('保存成功', {icon: 1, time: 2000}, function(){
-                            window.location.href = document.referrer;
-                        });
-                    }
+                    layer.msg('保存成功', {icon: 1, time: 2000}, function(){
+                        window.location.href = document.referrer;
+                    });
                 }
                 else {
                     layer.msg(res.msg, {icon: 5, time: 3000});
@@ -567,43 +398,5 @@
             }
         });
     }
-
-    // 添加返利天数
-    function addHuiminDay() {
-        var container = $('#huimin_days_container');
-        var timestamp = new Date().getTime();
-        var newRow = '<div class="day-amount-row" style="margin-bottom: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 5px; background-color: #f9f9f9;">' +
-            '<div style="margin-bottom: 15px;">' +
-                '<label style="font-weight: bold; margin-right: 10px;">天数:</label>' +
-                '<input type="number" min="1" name="huimin_days_return[days_' + timestamp + ']" class="form-control days-input" style="width: 120px; display: inline-block; margin-right: 15px;" placeholder="天数">' +
-            '<button type="button" class="btn btn-danger btn-xs" onclick="removeDayAmount(this)">删除</button>' +
-            '</div>' +
-            '<div style="display: flex; gap: 15px;">' +
-                '<div style="flex: 1;">' +
-                    '<label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">振兴钱包</label>' +
-                    '<input type="number" step="0.01" name="huimin_days_return[zhenxing_wallet_' + timestamp + ']" class="form-control" placeholder="请输入金额">' +
-                '</div>' +
-                '<div style="flex: 1;">' +
-                    '<label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">普惠金</label>' +
-                    '<input type="number" step="0.01" name="huimin_days_return[puhui_' + timestamp + ']" class="form-control" placeholder="请输入金额">' +
-                '</div>' +
-                '<div style="flex: 1;">' +
-                    '<label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">共富金</label>' +
-                    '<input type="number" step="0.01" name="huimin_days_return[gongfu_amount_' + timestamp + ']" class="form-control" placeholder="请输入金额">' +
-                '</div>' +
-                '<div style="flex: 1;">' +
-                    '<label style="font-size: 13px; margin-bottom: 5px; display: block; font-weight: 500;">民生金</label>' +
-                    '<input type="number" step="0.01" name="huimin_days_return[minsheng_amount_' + timestamp + ']" class="form-control" placeholder="请输入金额">' +
-                '</div>' +
-            '</div>' +
-            '</div>';
-        container.append(newRow);
-    }
-
-
-
-    // 删除日期金额行
-    function removeDayAmount(button) {
-        $(button).closest('.day-amount-row').remove();
-    }
 </script>
+

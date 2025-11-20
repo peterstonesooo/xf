@@ -146,7 +146,8 @@ class OrderController extends AuthController
                                     settlement_method,created_at,min_amount,max_amount,open_date,end_date,
                                     year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,class,
                                     minsheng_amount,huimin_days_return,purchase_limit_per_user,zhenxing_wallet,
-                                    puhui,yuding_amount,return_type,remaining_stock,yuding_time,gongfu_right_now,zhenxing_right_now,minsheng_right_now,gold_right_now')
+                                    puhui,yuding_amount,return_type,remaining_stock,yuding_time,gongfu_right_now,
+                                    zhenxing_right_now,minsheng_right_now,gold_right_now,puhui_right_now')
         ->where('id', $req['project_id'])
         ->lock(true)
         ->append(['all_total_buy_num'])
@@ -344,6 +345,12 @@ class OrderController extends AuthController
                         $remark = '公益民生金';
                     }
                     User::changeInc($user['id'], $project['minsheng_right_now'] * $numbers, 'balance',52,$order['id'],4,$remark,0,1);
+                }
+                if($project['puhui_right_now'] > 0){
+                    if($project['project_group_id'] == 13){
+                        $remark = '公益普惠金';
+                    }
+                    User::changeInc($user['id'], $project['puhui_right_now'] * $numbers, 'puhui',52,$order['id'],13,$remark,0,1);
                 }
                 if($project['gold_right_now'] > 0){
                     $rewardGold = $project['gold_right_now'] * $numbers;
@@ -561,7 +568,7 @@ class OrderController extends AuthController
         single_gift_equity,single_gift_digital_yuan,sham_buy_num,progress_switch,bonus_multiple,
         settlement_method,created_at,min_amount,max_amount,open_date,end_date,year_income,total_quota,
         remaining_quota,gongfu_amount,huimin_amount,class,minsheng_amount,purchase_limit_per_user,
-        zhenxing_wallet,puhui,yuding_amount,return_type,gongfu_right_now,zhenxing_right_now')
+        zhenxing_wallet,puhui,yuding_amount,return_type,gongfu_right_now,zhenxing_right_now,puhui_right_now')
         ->where('id', $req['project_id'])
         ->lock(true)
         ->append(['all_total_buy_num'])
@@ -711,10 +718,22 @@ class OrderController extends AuthController
                     User::changeInc($user['id'],$project['minsheng_amount'] * $numbers,'balance',3,$order['id'],4,$remark,0,1);
                 }
                 if($project['gongfu_right_now'] > 0){
+                    if($project['project_group_id'] == 13){
+                        $remark = '公益共富金';
+                    }
                     User::changeInc($user['id'], $project['gongfu_right_now'] * $numbers, 'gongfu_wallet',52,$order['id'],16,$remark,0,1);
                 }
                 if($project['zhenxing_right_now'] > 0){
+                    if($project['project_group_id'] == 13){
+                        $remark = '公益振兴金';
+                    }
                     User::changeInc($user['id'], $project['zhenxing_right_now'] * $numbers, 'zhenxing_wallet',52,$order['id'],14,$remark,0,1);
+                }
+                if($project['puhui_right_now'] > 0){
+                    if($project['project_group_id'] == 13){
+                        $remark = '公益普惠金';
+                    }
+                    User::changeInc($user['id'], $project['puhui_right_now'] * $numbers, 'puhui',52,$order['id'],13,$remark,0,1);
                 }
                 // 累计总收益和赠送数字人民币  到期结算
                 // 订单支付完成

@@ -50,7 +50,6 @@ class OrderController extends AuthController
             return out(null, 10001, '支付密码错误');
         }
 
-        $numbers = isset($req['numbers']) && (int)$req['numbers'] > 0 ? (int)$req['numbers'] : 1;
         $order = Order::where('id', $req['order_id'])
             ->where('status', 2)
             ->where('return_type', 1)
@@ -70,7 +69,7 @@ class OrderController extends AuthController
         if(time() > strtotime($project['end_date'])){
             return out(null, 10002, '缴付时间已过');
         }
-        $yuding_amount = $order['yuding_amount'];
+        $yuding_amount = $order['yuding_amount']*$order['buy_num'];
         if($yuding_amount > $user['topup_balance']){
             return out(null, 10003, '余额不足');
         }

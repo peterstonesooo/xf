@@ -69,12 +69,25 @@ class OrderController extends AuthController
         if(time() > strtotime($project['end_date'])){
             return out(null, 10002, '缴付时间已过');
         }
-        $yuding_amount = $order['yuding_amount']*$order['buy_num'];
+
+        //計算折扣
+        $discountArr = TeamGloryLog::where('user_id',$user['id'])->order('vip_level','desc')->find();
+        if($discountArr){
+            $discount = $discountArr['get_discount'];
+        }else{
+            $discount = 1;
+            if($user['vip_status'] == 1 && in_array($project['project_group_id'], [7,8,9,10,11])){
+                $discount = 0.9;
+            }
+        }
+
+        $yuding_amount = $order['yuding_amount']*$order['buy_num']*$discount;
         if($yuding_amount > $user['topup_balance']){
             return out(null, 10003, '余额不足');
         }
         Db::startTrans();
         try {
+        
             User::changeInc($user['id'],-$yuding_amount,'topup_balance',121,$order['id'],1,$order['project_name'],0,1);
             if($order['zhenxing_wallet'] > 0){
                 User::changeInc($user['id'],$order['zhenxing_wallet'],'zhenxing_wallet',52,$order['id'],14,$order['project_name'],0,1);
@@ -82,6 +95,30 @@ class OrderController extends AuthController
             if($order['puhui'] > 0){
                 User::changeInc($user['id'],$order['puhui'],'puhui',52,$order['id'],13,$order['project_name'],0,1);
             }
+
+            // 给上3级团队奖
+            $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3,4,5])->select();
+            $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio', 4 => 'fourth_team_reward_ratio', 5 => 'fifth_team_reward_ratio'];
+            foreach ($relation as $v) {
+                $reward = round(dbconfig($map[$v['level']])/100*$order['yuding_amount']*$order['buy_num']*$discount, 2);
+                if($reward > 0){
+                    if($v['level'] == 4 || $v['level'] == 5){
+                        $level_users = User::where('id', $v['user_id'])->field('id,realname,vip_status')->find();
+                        if($level_users['vip_status'] != 1){
+                            continue;
+                        }
+                    }
+                    User::changeInc($v['user_id'],$reward,'team_bonus_balance',8,$order['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
+                    RelationshipRewardLog::insert([
+                        'uid' => $v['user_id'],
+                        'reward' => $reward,
+                        'son' => $user['id'],
+                        'son_lay' => $v['level'],
+                        'created_at' => date('Y-m-d H:i:s')
+                    ]);
+                }
+            }
+
             $order['status'] = 4;
             $order->save();
             Db::commit();
@@ -303,29 +340,29 @@ class OrderController extends AuthController
                 //抽奖机会加一
                 User::where('id',$user['id'])->inc('order_lottery_tickets',$numbers)->update();
                 // 给上3级团队奖
-                if($project['return_type'] == 0){
-                    $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3,4,5])->select();
-                    $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio', 4 => 'fourth_team_reward_ratio', 5 => 'fifth_team_reward_ratio'];
-                    foreach ($relation as $v) {
-                        $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount']*$numbers, 2);
-                        if($reward > 0){
-                            if($v['level'] == 4 || $v['level'] == 5){
-                                $level_users = User::where('id', $v['user_id'])->field('id,realname,vip_status')->find();
-                                if($level_users['vip_status'] != 1){
-                                    continue;
-                                }
+                
+                $relation = UserRelation::where('sub_user_id', $user['id'])->where('level','in',[1,2,3,4,5])->select();
+                $map = [1 => 'first_team_reward_ratio', 2 => 'second_team_reward_ratio', 3 => 'third_team_reward_ratio', 4 => 'fourth_team_reward_ratio', 5 => 'fifth_team_reward_ratio'];
+                foreach ($relation as $v) {
+                    $reward = round(dbconfig($map[$v['level']])/100*$project['single_amount']*$numbers, 2);
+                    if($reward > 0){
+                        if($v['level'] == 4 || $v['level'] == 5){
+                            $level_users = User::where('id', $v['user_id'])->field('id,realname,vip_status')->find();
+                            if($level_users['vip_status'] != 1){
+                                continue;
                             }
-                            User::changeInc($v['user_id'],$reward,'team_bonus_balance',8,$order['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
-                            RelationshipRewardLog::insert([
-                                'uid' => $v['user_id'],
-                                'reward' => $reward,
-                                'son' => $user['id'],
-                                'son_lay' => $v['level'],
-                                'created_at' => date('Y-m-d H:i:s')
-                            ]);
                         }
+                        User::changeInc($v['user_id'],$reward,'team_bonus_balance',8,$order['id'],2,'团队奖励'.$v['level'].'级'.$user['realname'],0,2,'TD');
+                        RelationshipRewardLog::insert([
+                            'uid' => $v['user_id'],
+                            'reward' => $reward,
+                            'son' => $user['id'],
+                            'son_lay' => $v['level'],
+                            'created_at' => date('Y-m-d H:i:s')
+                        ]);
                     }
                 }
+                
                 
 
                 if($project['gongfu_right_now'] > 0){

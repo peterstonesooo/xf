@@ -26,12 +26,7 @@
                 </option>
             <?php } ?>
         </select>
-        <select name="class" class="form-control">
-            <option value="">搜索项目期数</option>
-            <?php for ($i = 1; $i <= 30; $i++) { ?>
-                <option value="<?php echo $i; ?>" <?php if (isset($req['class']) && $req['class'] == $i) { echo 'selected = "selected"'; } ?>><?php echo $i; ?>期</option>
-            <?php } ?>
-        </select>
+        <input type="number" value="{$req['class']??''}" name="class" placeholder="搜索项目期数" class="form-control" min="1">
         <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
         <a {:auth_show_judge('Project/addProject')} class="btn btn-flat btn-success m_10 f_r"
         href="{:url('admin/Project/showProject')}"><i class="fa fa-plus m-r-10"></i>添 加</a>

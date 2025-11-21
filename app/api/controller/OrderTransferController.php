@@ -5,6 +5,7 @@ namespace app\api\controller;
 use app\model\OrderTransfer;
 use app\model\User;
 use app\model\UserBalanceLog;
+use app\model\Project;
 use think\facade\Db;
 
 class OrderTransferController extends AuthController
@@ -32,6 +33,10 @@ class OrderTransferController extends AuthController
         }
         if (!empty($req['pay_password']) && $user['pay_password'] !== sha1(md5($req['pay_password']))) {
             return out(null, 10001, '支付密码错误');
+        }
+        // 检查是否完成购买开启中的所有的五福产品
+        if (!Project::checkAllOpenWufuCompleted($user['id'])) {
+            return out([], 1001, '需要完成购买开启中的所有的五福产品才能转入');
         }
         $orders = OrderTransfer::where('user_id', $user['id'])->where('status', 1)->where('type',1)->count();
         if ($orders > 0) {

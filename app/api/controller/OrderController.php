@@ -405,7 +405,7 @@ class OrderController extends AuthController
             }
 
             //判断完成情况根据配置发放相应黄金并记录日志
-            Project::checkUserGroupCompletionSendGold($user['id']);
+            // Project::checkUserGroupCompletionSendGold($user['id']);
 
             Db::commit();
         } catch (Exception $e) {
@@ -605,7 +605,7 @@ class OrderController extends AuthController
         single_gift_equity,single_gift_digital_yuan,sham_buy_num,progress_switch,bonus_multiple,
         settlement_method,created_at,min_amount,max_amount,open_date,end_date,year_income,total_quota,
         remaining_quota,gongfu_amount,huimin_amount,class,minsheng_amount,purchase_limit_per_user,
-        zhenxing_wallet,puhui,yuding_amount,return_type,gongfu_right_now,zhenxing_right_now,puhui_right_now')
+        zhenxing_wallet,puhui,yuding_amount,return_type,gongfu_right_now,zhenxing_right_now,puhui_right_now,gold_right_now')
         ->where('id', $req['project_id'])
         ->lock(true)
         ->append(['all_total_buy_num'])
@@ -772,12 +772,22 @@ class OrderController extends AuthController
                     }
                     User::changeInc($user['id'], $project['puhui_right_now'] * $numbers, 'puhui',52,$order['id'],13,$remark,0,1);
                 }
+                if($project['gold_right_now'] > 0){
+                    $rewardGold = $project['gold_right_now'] * $numbers;
+                    Project::rewardGold($user['id'], $rewardGold, $remark, [
+                        'related_id' => $order['id'],
+                        'gold_price' => 0,
+                        'gold_order_remark' => 'ORDER:' . $order['id'],
+                        'change_type' => 52,
+                        'change_order_prefix' => 'GOLD',
+                    ]);
+                }
                 // 累计总收益和赠送数字人民币  到期结算
                 // 订单支付完成
                 OrderDailyBonus::orderPayComplete($order['id'], $project, $user['id'], $pay_amount);
             }
             //判断完成情况根据配置发放相应黄金并记录日志
-            Project::checkUserGroupCompletionSendGold($user['id']);
+            // Project::checkUserGroupCompletionSendGold($user['id']);
 
             Db::commit();
         } catch (Exception $e) {

@@ -98,6 +98,8 @@ class UserController extends AuthController
         $user['register_rate'] = round($user['has_register'] / $user['total_register'] * 100, 2);
         $user['total_assets'] = bcadd(($user['topup_balance'] + $user['team_bonus_balance'] + $user['butie'] + $user['balance']), $user['digit_balance'], 2);
     
+        //计算可提现额度
+        $user['can_withdraw_balance'] = Project::getUserCanWithdrawBalance($user['id']);
         $user['phone'] = substr_replace($user['phone'],'****', 3, 4);
         $auth = Apply::where('user_id', $user['id'])->where('status', 1)->find();
         $user['auth'] = ($auth?1:0);

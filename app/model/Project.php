@@ -740,6 +740,71 @@ class Project extends Model
         
         return $kline ? floatval($kline->close_price) : 0;
     }
+    
+    /**
+     * 获取用户可提现余额
+     * 根据参与的五福产品组解锁提现额度
+     * 
+     * @param int $userId 用户ID
+     * @return float 可提现余额
+     */
+    public static function getUserCanWithdrawBalance($userId)
+    {
+        $user = User::where('id', $userId)->find();
+        
+        // 五福产品组解锁额度配置（单位：元）
+        $unlockAmounts = [
+            7 => 300000,  // 健康福：30万
+            8 => 800000,  // 智享福：80万
+            9 => 500000,  // 就业福：50万
+            10 => 1500000, // 兴农福：150万
+            11 => 2000000, // 惠享福：200万
+        ];
+        
+        // 计算解锁额度（每个组只能算一次）
+        $unlockBalance = 0;
+        $wufuGroupIds = [7, 8, 9, 10, 11];
+        
+        foreach ($wufuGroupIds as $groupId) {
+            $hasParticipated = false;
+            
+            // 检查mp_order表中的购买记录（申领或预定）
+            $orderPurchased = Order::alias('o')
+                ->join('project p', 'o.project_id = p.id')
+                ->where('o.user_id', $userId)
+                ->where('p.project_group_id', $groupId)
+                ->where('p.status', 1) // 产品状态为启用
+                // ->where('o.status', '>=', 2) // 订单状态已支付
+                ->find();
+                
+            if (!empty($orderPurchased)) {
+                $hasParticipated = true;
+            }
+            
+            // 如果在mp_order表中没找到，再检查mp_order_daily_bonus表
+            if (!$hasParticipated) {
+                $dailyBonusPurchased = OrderDailyBonus::alias('o')
+                    ->join('project p', 'o.project_id = p.id')
+                    ->where('o.user_id', $userId)
+                    ->where('p.project_group_id', $groupId)
+                    ->where('p.status', 1) // 产品状态为启用
+                    // ->where('o.status', '>=', 2) // 订单状态已支付
+                    ->find();
+                    
+                if (!empty($dailyBonusPurchased)) {
+                    $hasParticipated = true;
+                }
+            }
+            
+            // 如果参与了该组，加上对应的解锁额度
+            if ($hasParticipated && isset($unlockAmounts[$groupId])) {
+                $unlockBalance += $unlockAmounts[$groupId];
+            }
+        }
+        
+        // 可提现余额 = 总资产 - 锁定余额 + 解锁额度
+        return $unlockBalance;
+    }
 
 
 

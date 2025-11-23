@@ -354,75 +354,37 @@ class Project extends Model
     }
 
     /**
-     * 检查用户是否完成了至少一个开放的五福临门板块申领
+     * 检查用户是否购买了至少一个开启中的五福产品
      * @param int $userId 用户ID
-     * @return bool 是否已完成至少一个开放板块的申领
+     * @return bool 是否购买了至少一个开启中的五福产品
      */
     public static function checkAnyOpenWufuCompleted($userId)
     {
-        // 获取用户订单和日返订单
-        $orders = Order::where('user_id', $userId)
-                      ->where('status', 'in', [2, 4]) // 已支付或已完成状态
-                      ->select();
+        // 获取所有开启中的五福产品ID（project_group_id 在 [7,8,9,10,11] 范围内，status=1）
+        $openWufuProjectIds = self::where('project_group_id', 'in', [7, 8, 9, 10, 11])
+                                  ->where('status', 1)
+                                  ->column('id');
         
-        $dailyBonusOrders = OrderDailyBonus::where('user_id', $userId)
-                                          ->where('status', 'in', [2, 4]) // 已支付或已完成状态
-                                          ->select();
-
-        // 获取各项目组的项目ID
-        $projectGroups = [];
-        $openGroups = []; // 开放的项目组
-        
-        for ($i = 7; $i <= 11; $i++) {
-            // 获取普通项目（daily_bonus_ratio = 0）
-            $normalProjects = self::where('project_group_id', $i)
-                                ->where('status', 1)
-                                ->where('daily_bonus_ratio', '=', 0)
-                                ->column('id');
-            
-            // 获取日返项目（daily_bonus_ratio > 0）
-            $dailyProjects = self::where('project_group_id', $i)
-                               ->where('status', 1)
-                               ->where('daily_bonus_ratio', '>', 0)
-                               ->column('id');
-            
-            // 如果该组有开放的项目，则认为是开放的项目组
-            if (!empty($normalProjects) || !empty($dailyProjects)) {
-                $openGroups[] = $i;
-                $projectGroups[$i]['normal'] = $normalProjects;
-                $projectGroups[$i]['daily'] = $dailyProjects;
-            }
-        }
-
-        // 如果没有开放的项目组，返回true
-        if (empty($openGroups)) {
+        // 如果没有开启的五福产品，返回true（允许转入）
+        if (empty($openWufuProjectIds)) {
             return true;
         }
 
-        // 获取用户订单的项目ID
-        $orderProjectIds = $orders->column('project_id');
-        $dailyOrderProjectIds = $dailyBonusOrders->column('project_id');
-
-        // 检查用户是否完成了至少一个开放的项目组
-        foreach ($openGroups as $groupId) {
-            $projects = $projectGroups[$groupId];
-            
-            // 检查普通项目是否全部完成
-            $normalCompleted = !empty($projects['normal']) && 
-                              count(array_intersect($projects['normal'], $orderProjectIds)) == count($projects['normal']);
-            
-            // 检查日返项目是否全部完成
-            $dailyCompleted = !empty($projects['daily']) && 
-                             count(array_intersect($projects['daily'], $dailyOrderProjectIds)) == count($projects['daily']);
-            
-            // 如果该组项目全部完成，返回true
-            if ($normalCompleted && $dailyCompleted) {
-                return true;
-            }
+        // 检查用户是否购买了其中任意一个产品（普通订单）
+        $hasPurchased = Order::where('user_id', $userId)
+                            ->where('project_id', 'in', $openWufuProjectIds)
+                            ->where('status', 'in', [2, 4]) // 已支付或已完成状态
+                            ->count() > 0;
+        
+        // 如果普通订单中没有，再检查日返订单
+        if (!$hasPurchased) {
+            $hasPurchased = OrderDailyBonus::where('user_id', $userId)
+                                          ->where('project_id', 'in', $openWufuProjectIds)
+                                          ->where('status', 'in', [2, 4]) // 已支付或已完成状态
+                                          ->count() > 0;
         }
 
-        // 没有完成任何开放的项目组
-        return false;
+        return $hasPurchased;
     }
 
     /**

@@ -13,6 +13,7 @@ use app\model\UserBalanceLog;
 use think\facade\Cache;
 use think\facade\Db;
 use think\facade\Log;
+use app\model\Project;
 
 class InvestmentController extends AuthController
 {
@@ -105,6 +106,11 @@ class InvestmentController extends AuthController
             // 验证支付密码
             if (sha1(md5($req['pay_password'])) !== $this->user['pay_password']) {
                 return out(null, 400, '支付密码错误');
+            }
+
+            // 检查是否完成购买开启中的至少一个五福产品
+            if (!Project::checkAnyOpenWufuCompleted($this->user['id'])) {
+                return out([], 1001, '请优先完成任意五福窗口申领');
             }
 
             // 获取梯度信息

@@ -186,12 +186,6 @@ class ProjectController extends AuthController
                     $item['order_id'] = $order['id'];
                     $item['order_status'] = $order['status'];
                 }
-                if($item['total_stock'] > 0){
-                    $item['progress_rate'] = ($item['total_stock'] - $item['remaining_stock']) / $item['total_stock'] * 100;
-                }else{
-                    $item['progress_rate'] = 0;
-                }
-                $item['progress_rate'] = 100;
             }
             if($item['daily_bonus_ratio'] > 0){
                 if($item['period'] > 0){

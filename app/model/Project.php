@@ -354,6 +354,78 @@ class Project extends Model
     }
 
     /**
+     * 检查用户是否完成了至少一个开放的五福临门板块申领
+     * @param int $userId 用户ID
+     * @return bool 是否已完成至少一个开放板块的申领
+     */
+    public static function checkAnyOpenWufuCompleted($userId)
+    {
+        // 获取用户订单和日返订单
+        $orders = Order::where('user_id', $userId)
+                      ->where('status', 'in', [2, 4]) // 已支付或已完成状态
+                      ->select();
+        
+        $dailyBonusOrders = OrderDailyBonus::where('user_id', $userId)
+                                          ->where('status', 'in', [2, 4]) // 已支付或已完成状态
+                                          ->select();
+
+        // 获取各项目组的项目ID
+        $projectGroups = [];
+        $openGroups = []; // 开放的项目组
+        
+        for ($i = 7; $i <= 11; $i++) {
+            // 获取普通项目（daily_bonus_ratio = 0）
+            $normalProjects = self::where('project_group_id', $i)
+                                ->where('status', 1)
+                                ->where('daily_bonus_ratio', '=', 0)
+                                ->column('id');
+            
+            // 获取日返项目（daily_bonus_ratio > 0）
+            $dailyProjects = self::where('project_group_id', $i)
+                               ->where('status', 1)
+                               ->where('daily_bonus_ratio', '>', 0)
+                               ->column('id');
+            
+            // 如果该组有开放的项目，则认为是开放的项目组
+            if (!empty($normalProjects) || !empty($dailyProjects)) {
+                $openGroups[] = $i;
+                $projectGroups[$i]['normal'] = $normalProjects;
+                $projectGroups[$i]['daily'] = $dailyProjects;
+            }
+        }
+
+        // 如果没有开放的项目组，返回true
+        if (empty($openGroups)) {
+            return true;
+        }
+
+        // 获取用户订单的项目ID
+        $orderProjectIds = $orders->column('project_id');
+        $dailyOrderProjectIds = $dailyBonusOrders->column('project_id');
+
+        // 检查用户是否完成了至少一个开放的项目组
+        foreach ($openGroups as $groupId) {
+            $projects = $projectGroups[$groupId];
+            
+            // 检查普通项目是否全部完成
+            $normalCompleted = !empty($projects['normal']) && 
+                              count(array_intersect($projects['normal'], $orderProjectIds)) == count($projects['normal']);
+            
+            // 检查日返项目是否全部完成
+            $dailyCompleted = !empty($projects['daily']) && 
+                             count(array_intersect($projects['daily'], $dailyOrderProjectIds)) == count($projects['daily']);
+            
+            // 如果该组项目全部完成，返回true
+            if ($normalCompleted && $dailyCompleted) {
+                return true;
+            }
+        }
+
+        // 没有完成任何开放的项目组
+        return false;
+    }
+
+    /**
      * 获取用户完成产品组的次数统计
      * 返回每个产品组（7、8、9、10、11）用户完成的次数
      * 

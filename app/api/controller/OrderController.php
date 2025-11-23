@@ -88,7 +88,7 @@ class OrderController extends AuthController
         Db::startTrans();
         try {
         
-            User::changeInc($user['id'],-$yuding_amount,'topup_balance',121,$order['id'],1,$order['project_name'],0,1);
+            User::changeInc($user['id'],-$yuding_amount,'topup_balance',121,$order['id'],1,$order['project_name'].'（完成）',0,1);
             // if($order['zhenxing_wallet'] > 0){
             //     User::changeInc($user['id'],$order['zhenxing_wallet'],'zhenxing_wallet',52,$order['id'],14,$order['project_name'],0,1);
             // }

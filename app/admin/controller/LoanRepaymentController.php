@@ -126,7 +126,10 @@ class LoanRepaymentController extends AuthController
         
         $builder->order('overdue_days desc, due_date asc');
         
-        $data = $builder->paginate(['query' => $req])->each(function ($item, $key) {
+        $data = $builder->paginate([
+            'list_rows' => 20, // 每页显示20条
+            'query' => $req
+        ])->each(function ($item, $key) {
             $item->status_text = $item->getStatusTextAttr(null, $item->toArray());
             return $item;
         });

@@ -84,7 +84,10 @@ class LoanRepaymentController extends AuthController
         
         $builder->order('id desc');
         
-        $data = $builder->paginate(['query' => $req])->each(function ($item, $key) {
+        $data = $builder->paginate([
+            'list_rows' => 20, // 每页显示20条
+            'query' => $req
+        ])->each(function ($item, $key) {
             $item->repayment_type_text = $item->getRepaymentTypeTextAttr(null, $item->toArray());
             $item->repayment_method_text = $item->getRepaymentMethodTextAttr(null, $item->toArray());
             return $item;

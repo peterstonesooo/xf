@@ -198,6 +198,7 @@ class ProjectController extends AuthController
                     $item['daily_amount'] = 0;
                 }
             }
+            $item['yuding_amount'] = intval($item['yuding_amount']);
             $item['huimin_days_return'] = is_string($item['huimin_days_return']) ? json_decode($item['huimin_days_return'], true) : $item['huimin_days_return'];
             $item['sum_amount'] = intval($item['sum_amount'])+intval($item['minsheng_amount']);
             $item['monday'] = $monday;
@@ -1007,7 +1008,17 @@ class ProjectController extends AuthController
 
     //项目进度设置【每小时最小20个】
     public function projectProcess(){
-        $project = Project::where('project_group_id','in', [7,8,9,10,11])->where('status',1)->select();
+        $isOpenAll = dbconfig('open_all_projects');
+        $group_ids = [7,8,9,10,11];
+        if($isOpenAll != 1){
+            // 判断今天是星期几
+            $weekday = date('w');
+            $allowed_group_id = $weekday + 6; // 7,8,9,10,11 对应周一到周五
+            if( $allowed_group_id < 12 && $allowed_group_id > 6 ){
+                $group_ids = [$allowed_group_id];
+            }
+        }
+        $project = Project::where('project_group_id','in', $group_ids)->where('status',1)->select();
         foreach($project as $v){
             $start = strtotime($v['created_at']);
             if($start > time()){

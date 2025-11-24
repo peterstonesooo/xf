@@ -175,7 +175,7 @@ class ProjectController extends AuthController
             $item['order_id'] = 0;
             //进度按份额计算
             if($item['total_stock'] > 0){
-                $item['progress_rate'] = round(($item['total_stock'] - $item['remaining_stock']) / $item['total_stock'] * 100, 2);
+                $item['progress_rate'] = rtrim(rtrim(round(($item['total_stock'] - $item['remaining_stock']) / $item['total_stock'] * 100, 2), '0'), '.');
             }else{
                 $item['progress_rate'] = 0;
             }

@@ -121,6 +121,10 @@ class Butie extends Command
                                     if($puhui_amount > 0){
                                         User::changeInc($order['user_id'],$puhui_amount,'puhui',59,$order['id'],13, $remark);
                                     }
+                                    $team_bonus_balance =  $order['team_bonus_balance'] * $buyNum;
+                                    if($team_bonus_balance > 0){
+                                        User::changeInc($order['user_id'],$team_bonus_balance,'team_bonus_balance',59,$order['id'],2, $remark);
+                                    }
                                 }
                                 
                                

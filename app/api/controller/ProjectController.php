@@ -77,6 +77,7 @@ class ProjectController extends AuthController
         $weekday = date('w');
         $monday = date('Y-m-d 00:00:00', strtotime('monday this week'));    //周一
         $friday = date('Y-m-d 23:59:59', strtotime('friday this week'));    //周五
+        $today_invited_realname_count = Project::getTodayInvitedRealnameCount($user_id);
         foreach($data as $item){
             //用户是否已购买
             if($req['project_group_id'] == 12){
@@ -209,13 +210,13 @@ class ProjectController extends AuthController
             $item['monday'] = $monday;
             $item['friday'] = $friday;
             $item['huimin_amount'] = intval($item['huimin_amount']);
+            if($today_invited_realname_count >= 3){
+                $item['today_invited_realname_count'] = 3;
+            }else{
+                $item['today_invited_realname_count'] = $today_invited_realname_count;
+            }
         }
-        $today_invited_realname_count = Project::getTodayInvitedRealnameCount($user_id);
-        if($today_invited_realname_count >= 3){
-            $data['today_invited_realname_count'] = 3;
-        }else{
-            $data['today_invited_realname_count'] = $today_invited_realname_count;
-        }
+        
         return out($data);
     }
 

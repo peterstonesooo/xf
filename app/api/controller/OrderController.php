@@ -184,7 +184,7 @@ class OrderController extends AuthController
                                     year_income,total_quota,remaining_quota,gongfu_amount,huimin_amount,class,
                                     minsheng_amount,huimin_days_return,purchase_limit_per_user,zhenxing_wallet,
                                     puhui,yuding_amount,return_type,remaining_stock,yuding_time,gongfu_right_now,
-                                    zhenxing_right_now,minsheng_right_now,gold_right_now,puhui_right_now')
+                                    zhenxing_right_now,minsheng_right_now,gold_right_now,puhui_right_now,team_bonus_balance')
         ->where('id', $req['project_id'])
         ->lock(true)
         ->append(['all_total_buy_num'])
@@ -213,6 +213,12 @@ class OrderController extends AuthController
             return $this->placeOrder1($project);
         }
 
+        if($project['project_id'] == 171){
+            $today_invited_realname_count = Project::getTodayInvitedRealnameCount($user['id']);
+            if($today_invited_realname_count < 3){
+                return out(null, 10003, '您今日邀请的实名认证用户数不足3人，无法购买');
+            }
+        }
 
         $isOpenAll = dbconfig('open_all_projects');
         if(in_array($project['project_group_id'], [7,8,9,10,11]) && $isOpenAll != 1){
@@ -325,6 +331,7 @@ class OrderController extends AuthController
             $project['buy_amount'] = $pay_amount;
             $project['created_at'] = date('Y-m-d H:i:s');
             $project['huimin_days_return'] = $project['huimin_days_return'] ?? null;
+            $project['team_bonus_balance'] = $project['team_bonus_balance'] ?? 0;
 
             $order = Order::create($project);
 

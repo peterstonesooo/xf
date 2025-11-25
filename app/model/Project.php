@@ -840,6 +840,25 @@ class Project extends Model
         return $unlockBalance;
     }
 
-
+    /**
+     * 获取该用户当天邀请的实名认证用户数
+     * @param int $userId 用户ID
+     * @return int 当天邀请的实名认证用户数
+     */
+    public static function getTodayInvitedRealnameCount($userId)
+    {
+        if (empty($userId)) {
+            return 0;
+        }
+        
+        $todayStart = date('Y-m-d 00:00:00');
+        $todayEnd = date('Y-m-d 23:59:59');
+        
+        return User::where('up_user_id', $userId)
+            ->where('shiming_status', 1)
+            ->where('created_at', '>=', $todayStart)
+            ->where('created_at', '<=', $todayEnd)
+            ->count();
+    }
 
 }

@@ -128,81 +128,93 @@
                     </div>
                 </div>
                 <div class="row dd_input_group">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">共富金</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="gongfu_amount" class="form-control" placeholder="请输入共富金"
+                    <div class="col-xs-12 col-sm-6">
+                        <div class="form-group">
+                            <label class="control-label">共富金</label>
+                            <input type="text" name="gongfu_amount" class="form-control" style="width: 150px; display: inline-block;" placeholder="请输入共富金"
                                    value="{$data['gongfu_amount']??''}">
+                            <span style="margin-left: 5px;">元</span>
                         </div>
                     </div>
-                </div>
-                <div class="row dd_input_group">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">共富金-立即发放</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="gongfu_right_now" class="form-control" placeholder="请输入共富金立即发放金额"
+                    <div class="col-xs-12 col-sm-6">
+                        <div class="form-group">
+                            <label class="control-label">共富金-立即发放</label>
+                            <input type="text" name="gongfu_right_now" class="form-control" style="width: 150px; display: inline-block;" placeholder="请输入共富金立即发放金额"
                                    value="{$data['gongfu_right_now']??''}">
+                            <span style="margin-left: 5px;">元</span>
                         </div>
-                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">元</div>
                     </div>
                 </div>
                 <div class="row dd_input_group">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">民生金</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="minsheng_amount" class="form-control" placeholder="请输入民生金"
+                    <div class="col-xs-12 col-sm-6">
+                        <div class="form-group">
+                            <label class="control-label">民生金</label>
+                            <input type="text" name="minsheng_amount" class="form-control" style="width: 150px; display: inline-block;" placeholder="请输入民生金"
                                    value="{$data['minsheng_amount']??''}">
+                            <span style="margin-left: 5px;">元</span>
                         </div>
                     </div>
-                </div>
-                <div class="row dd_input_group">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">民生金-立即发放</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="minsheng_right_now" class="form-control" placeholder="请输入民生金立即发放金额"
+                    <div class="col-xs-12 col-sm-6">
+                        <div class="form-group">
+                            <label class="control-label">民生金-立即发放</label>
+                            <input type="text" name="minsheng_right_now" class="form-control" style="width: 150px; display: inline-block;" placeholder="请输入民生金立即发放金额"
                                    value="{$data['minsheng_right_now']??''}">
+                            <span style="margin-left: 5px;">元</span>
                         </div>
-                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">元</div>
                     </div>
                 </div>
                 <div class="row dd_input_group">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">振兴钱包</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="zhenxing_wallet" class="form-control" placeholder="请输入振兴钱包奖励金额"
+                    <div class="col-xs-12 col-sm-6">
+                        <div class="form-group">
+                            <label class="control-label">振兴钱包</label>
+                            <input type="text" name="zhenxing_wallet" class="form-control" style="width: 150px; display: inline-block;" placeholder="请输入振兴钱包奖励金额"
                                    value="{$data['zhenxing_wallet']??''}">
+                            <span style="margin-left: 5px;">元</span>
                         </div>
-                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">元</div>
                     </div>
-                </div>
-                <div class="row dd_input_group">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">振兴金-立即发放</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="zhenxing_right_now" class="form-control" placeholder="请输入振兴金立即发放金额"
+                    <div class="col-xs-12 col-sm-6">
+                        <div class="form-group">
+                            <label class="control-label">振兴金-立即发放</label>
+                            <input type="text" name="zhenxing_right_now" class="form-control" style="width: 150px; display: inline-block;" placeholder="请输入振兴金立即发放金额"
                                    value="{$data['zhenxing_right_now']??''}">
+                            <span style="margin-left: 5px;">元</span>
                         </div>
-                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">元</div>
                     </div>
                 </div>
                 <div class="row dd_input_group">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">普惠金</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="puhui" class="form-control" placeholder="请输入普惠金奖励金额"
+                    <div class="col-xs-12 col-sm-6">
+                        <div class="form-group">
+                            <label class="control-label">普惠金</label>
+                            <input type="text" name="puhui" class="form-control" style="width: 150px; display: inline-block;" placeholder="请输入普惠金奖励金额"
                                    value="{$data['puhui']??''}">
+                            <span style="margin-left: 5px;">元</span>
                         </div>
-                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">元</div>
+                    </div>
+                    <div class="col-xs-12 col-sm-6">
+                        <div class="form-group">
+                            <label class="control-label">普惠金-立即发放</label>
+                            <input type="text" name="puhui_right_now" class="form-control" style="width: 150px; display: inline-block;" placeholder="请输入普惠金立即发放金额"
+                                   value="{$data['puhui_right_now']??''}">
+                            <span style="margin-left: 5px;">元</span>
+                        </div>
                     </div>
                 </div>
                 <div class="row dd_input_group">
-                    <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">普惠金-立即发放</label>
-                        <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
-                            <input type="text" name="puhui_right_now" class="form-control" placeholder="请输入普惠金立即发放金额"
-                                   value="{$data['puhui_right_now']??''}">
+                    <div class="col-xs-12 col-sm-6">
+                        <div class="form-group">
+                            <label class="control-label">荣誉金</label>
+                            <input type="text" name="team_bonus_balance" class="form-control" style="width: 150px; display: inline-block;" placeholder="请输入荣誉金"
+                                   value="{$data['team_bonus_balance']??''}">
+                            <span style="margin-left: 5px;">元</span>
                         </div>
-                        <div class="col-xs-1 col-sm-4 col-md-6 col-lg-6 dd_ts">元</div>
+                    </div>
+                    <div class="col-xs-12 col-sm-6">
+                        <div class="form-group">
+                            <label class="control-label">荣誉金-立即发放</label>
+                            <input type="text" name="team_bonus_balance_right_now" class="form-control" style="width: 150px; display: inline-block;" placeholder="请输入荣誉金立即发放金额"
+                                   value="{$data['team_bonus_balance_right_now']??''}">
+                            <span style="margin-left: 5px;">元</span>
+                        </div>
                     </div>
                 </div>
                 <div class="row dd_input_group">

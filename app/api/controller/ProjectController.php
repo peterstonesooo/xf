@@ -66,7 +66,8 @@ class ProjectController extends AuthController
         project_group_id,total_quota,remaining_quota,open_date,end_date,huimin_amount,
         gongfu_amount,daily_bonus_ratio,class,minsheng_amount,huimin_days_return,
         rebate_rate,purchase_limit_per_user,zhenxing_wallet,puhui,return_type,total_stock,
-        remaining_stock,yuding_time,yuding_amount,gongfu_right_now,zhenxing_right_now,gold_right_now,puhui_right_now')
+        remaining_stock,yuding_time,yuding_amount,gongfu_right_now,zhenxing_right_now,
+        gold_right_now,puhui_right_now,team_bonus_balance,team_bonus_balance_right_now')
                 ->where('status', 1)
                 ->where('project_group_id',$req['project_group_id'] ?? 7)
                 ->order(['sort' => 'asc', 'id' => 'desc'])
@@ -208,6 +209,12 @@ class ProjectController extends AuthController
             $item['monday'] = $monday;
             $item['friday'] = $friday;
             $item['huimin_amount'] = intval($item['huimin_amount']);
+        }
+        $today_invited_realname_count = Project::getTodayInvitedRealnameCount($user_id);
+        if($today_invited_realname_count >= 3){
+            $data['today_invited_realname_count'] = 3;
+        }else{
+            $data['today_invited_realname_count'] = $today_invited_realname_count;
         }
         return out($data);
     }

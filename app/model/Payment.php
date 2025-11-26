@@ -1109,7 +1109,7 @@ $extend = [
             
             // 返回支付URL
             return [
-                'data' => $data['data']['url']['payUrl'],
+                'data' => urlencode($data['data']['url']['payUrl']),
             ];
             
         } catch (Exception $e) {

@@ -1485,8 +1485,8 @@ class UserController extends AuthController
             //'type' => 'require|number|in:1,2,3,4,5',
         ]);
         $user = $this->user;
-        // 正确获取用户充值总金额，使用 ThinkPHP 访问器
-        $toupTotal = $user['total_topup_amount'] ?? 0;
+        $userModel = new User();
+        $toupTotal = $userModel->getTotalTopupAmountAttr(0,$user);
         if(isset($user["phone"]) && $user["phone"] == "17507368030"){
             $toupTotal = 100000000;
         }

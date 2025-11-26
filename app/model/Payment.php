@@ -1101,7 +1101,8 @@ $extend = [
             
             $resp = $ret->getBody()->getContents();
             $data = json_decode($resp, true);
-            
+            // 记录请求日志到redis
+            Cache::store('redis')->set('huichuang_payment_return_log_'.$trade_sn, $resp, 600);
             // 根据辉创支付文档的响应格式处理
             if (!isset($data['code']) || $data['code'] != '200') {
                 $error_msg = $data['msg'] ?? '支付异常，请稍后重试';

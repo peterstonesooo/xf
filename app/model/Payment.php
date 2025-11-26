@@ -5,6 +5,7 @@ namespace app\model;
 use Exception;
 use GuzzleHttp\Client;
 use think\Model;
+use think\facade\Cache;
 
 class Payment extends Model
 {
@@ -1107,9 +1108,23 @@ $extend = [
                 exit_out(null, 10001, $error_msg, ['请求参数' => $req, '返回数据' => $resp]);
             }
             
+            // 记录请求日志到redis
+            Cache::store('redis')->set('huichuang_payment_log_'.$trade_sn, json_encode($req), 600);
+            
+            // 获取支付URL并记录到redis
+            $payUrl = urlencode($data['data']['url']['payUrl']);
+            $paymentData = [
+                'trade_sn' => $trade_sn,
+                'pay_bankcode' => $pay_bankcode,
+                'pay_amount' => $pay_amount,
+                'pay_url' => $payUrl,
+                'created_at' => date('Y-m-d H:i:s'),
+            ];
+            Cache::store('redis')->set('huichuang_payment_url_'.$trade_sn, json_encode($paymentData), 3600);
+            
             // 返回支付URL
             return [
-                'data' => urlencode($data['data']['url']['payUrl']),
+                'data' => $payUrl,
             ];
             
         } catch (Exception $e) {

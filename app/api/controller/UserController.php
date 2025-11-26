@@ -1485,22 +1485,20 @@ class UserController extends AuthController
             //'type' => 'require|number|in:1,2,3,4,5',
         ]);
         $user = $this->user;
-        $userModel = new User();
-        $toupTotal = $userModel->getTotalTopupAmountAttr(0,$user);
+        // 直接计算用户充值总金额，确保值正确
+        $toupTotal = round(Capital::where('user_id', $user['id'])->where('status', 2)->where('type', 1)->sum('amount') ?: 0, 2);
         if(isset($user["phone"]) && $user["phone"] == "17507368030"){
             $toupTotal = 100000000;
         }
-        $data = [];
-/*         foreach (config('map.payment_config.channel_map') as $k => $v) {
-            //$paymentConfig = PaymentConfig::where('type', $req['type'])->where('status', 1)->where('channel', $k)->where('start_topup_limit', '<=', $user['total_payment_amount'])->order('start_topup_limit', 'desc')->find();
-            $paymentConfig = PaymentConfig::where('status', 1)->where('channel', $k)->where('start_topup_limit', '<=', $toupTotal)->order('start_topup_limit', 'desc')->find();
-            if (!empty($paymentConfig)) {
-                //$confs = PaymentConfig::where('type', $req['type'])->where('status', 1)->where('channel', $k)->where('start_topup_limit', $paymentConfig['start_topup_limit'])->select()->toArray();
-                $confs = PaymentConfig::where('status', 1)->where('channel', $k)->where('start_topup_limit', $paymentConfig['start_topup_limit'])->select()->toArray();
-                $data = array_merge($data, $confs);
-            }
-        } */
-        $data = PaymentConfig::where('status',1)->where('start_topup_limit', '<=', $toupTotal)->order('sort desc')->select();
+        // 确保 $toupTotal 是数字类型，至少为 0
+        $toupTotal = (float)max(0, $toupTotal);
+        
+        // 查询状态为1且起始充值限额小于等于用户充值总额的支付配置
+        // 注意：如果 start_topup_limit 是 0.00（decimal），$toupTotal 是 0（float），0.00 <= 0 应该为 true
+        $data = PaymentConfig::where('status', 1)
+            ->where('start_topup_limit', '<=', $toupTotal)
+            ->order('sort', 'desc')
+            ->select();
         $img =[1=>'wechat.png',2=>'alipay.png',3=>'unionpay.png',4=>'unionpay.png',5=>'unionpay.png',6=>'unionpay.png',7=>'unionpay.png',8=>'unionpay.png',];
         foreach($data as &$item){
             $item['img'] = env('app.img_host').'/storage/pay_img/'.$img[$item['type']];

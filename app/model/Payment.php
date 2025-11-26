@@ -1112,7 +1112,7 @@ $extend = [
             Cache::store('redis')->set('huichuang_payment_log_'.$trade_sn, json_encode($req), 600);
             
             // 获取支付URL并记录到redis
-            $payUrl = urlencode($data['data']['url']['payUrl']);
+            $payUrl = $data['data']['url']['payUrl'];
             $paymentData = [
                 'trade_sn' => $trade_sn,
                 'pay_bankcode' => $pay_bankcode,

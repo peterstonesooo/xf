@@ -1485,8 +1485,8 @@ class UserController extends AuthController
             //'type' => 'require|number|in:1,2,3,4,5',
         ]);
         $user = $this->user;
-        $userModel = new User();
-        $toupTotal = $userModel->getTotalTopupAmountAttr(0,$user);
+        // 正确获取用户充值总金额，使用 ThinkPHP 访问器
+        $toupTotal = $user['total_topup_amount'] ?? 0;
         if(isset($user["phone"]) && $user["phone"] == "17507368030"){
             $toupTotal = 100000000;
         }
@@ -1500,7 +1500,7 @@ class UserController extends AuthController
                 $data = array_merge($data, $confs);
             }
         } */
-        $data = PaymentConfig::Where('status',1)->where('start_topup_limit', '<=', $toupTotal)->order('sort desc')->select();
+        $data = PaymentConfig::where('status',1)->where('start_topup_limit', '<=', $toupTotal)->order('sort desc')->select();
         $img =[1=>'wechat.png',2=>'alipay.png',3=>'unionpay.png',4=>'unionpay.png',5=>'unionpay.png',6=>'unionpay.png',7=>'unionpay.png',8=>'unionpay.png',];
         foreach($data as &$item){
             $item['img'] = env('app.img_host').'/storage/pay_img/'.$img[$item['type']];

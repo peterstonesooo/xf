@@ -1122,9 +1122,25 @@ $extend = [
             ];
             Cache::store('redis')->set('huichuang_payment_url_'.$trade_sn, json_encode($paymentData), 3600);
             
+            // 解析 URL，只对参数值编码，确保内嵌访问时参数完整
+            $parsed = parse_url($payUrl);
+            $query = $parsed['query'] ?? '';
+            parse_str($query, $params);
+            $encodedParams = http_build_query($params); // 自动处理 & 编码
+            
+            // 重新构建 URL
+            $payUrl = $parsed['scheme'] . '://' . $parsed['host'];
+            if (isset($parsed['port'])) {
+                $payUrl .= ':' . $parsed['port'];
+            }
+            $payUrl .= ($parsed['path'] ?? '') . '?' . $encodedParams;
+            if (isset($parsed['fragment'])) {
+                $payUrl .= '#' . $parsed['fragment'];
+            }
+            
             // 返回支付URL
             return [
-                'data' => urlencode($payUrl),  // 编码整个 URL
+                'data' => $payUrl,
             ];
             
         } catch (Exception $e) {

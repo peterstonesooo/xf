@@ -1124,7 +1124,7 @@ $extend = [
             
             // 返回支付URL
             return [
-                'data' => $payUrl,
+                'data' => urlencode($payUrl),  // 编码整个 URL
             ];
             
         } catch (Exception $e) {

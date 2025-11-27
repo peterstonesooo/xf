@@ -5,6 +5,7 @@ namespace app\api\controller;
 use app\model\NumberLotteryTicket;
 use app\model\NumberLotteryDraw;
 use app\model\User;
+use app\model\OrderTongxing;
 use think\facade\Cache;
 use think\facade\Db;
 use Exception;
@@ -25,6 +26,16 @@ class NumberLotteryController extends AuthController
         // 检查是否在19点之后（19点及之后不能抽奖）
         if ($currentHour >= 19) {
             // return out(null, 10001, '每天19点后不能抽奖，请明天再来');
+        }
+
+        // 检查用户是否捐款（只有捐款了的用户才能抽奖）
+        $hasDonation = OrderTongxing::where('user_id', $userId)
+            ->where('status', '>', 1)  // 已支付状态
+            ->where('pay_time', '>', 0)  // 有支付时间
+            ->count();
+        
+        if ($hasDonation == 0) {
+            return out(null, 10001, '只有捐款了的用户才能抽奖，请先进行捐款');
         }
         
         // 防重复提交（5秒内）

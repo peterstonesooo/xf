@@ -1,0 +1,244 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['winning_number']??''}" name="winning_number" placeholder="搜索中奖号码" class="form-control">
+        <input placeholder="开奖日期" autocomplete="off" value="{$req['draw_date']??''}" name="draw_date" class="form-control layer-date" id="draw_date">
+        <select name="status" class="form-control">
+            <option value="">开奖状态</option>
+            <option <?php if (isset($req['status']) && $req['status'] !== '' && $req['status'] == 0) {
+                echo 'selected = "selected"';
+            } ?> value="0">未开奖
+            </option>
+            <option <?php if (isset($req['status']) && $req['status'] !== '' && $req['status'] == 1) {
+                echo 'selected = "selected"';
+            } ?> value="1">已开奖
+            </option>
+            <option <?php if (isset($req['status']) && $req['status'] !== '' && $req['status'] == 2) {
+                echo 'selected = "selected"';
+            } ?> value="2">已作废
+            </option>
+        </select>
+        <input placeholder="开始日期" autocomplete="off" value="{$req['start_date']??''}" name="start_date" class="form-control layer-date" id="start">
+        ～
+        <input placeholder="结束日期" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <a href="{:url('admin/User/numberLotteryList')}" class="btn btn-flat btn-info m_10">返回抽奖记录</a>
+        <button type="button" class="btn btn-flat btn-success m_10" onclick="showSetWinningNumberModal()">设置今日中奖号码</button>
+        <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;共 {$count} 条记录</span>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>开奖日期</th>
+                            <th>中奖号码</th>
+                            <th>多等级中奖号码</th>
+                            <th>开奖时间</th>
+                            <th>状态</th>
+                            <th>总抽奖次数</th>
+                            <th>参与用户数</th>
+                            <th>中奖人数</th>
+                            <th>备注</th>
+                            <th>操作员ID</th>
+                            <th>创建时间</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>
+                                    <strong style="font-size: 14px;">{$v['draw_date']}</strong>
+                                </td>
+                                <td>
+                                    <strong style="font-size: 16px; color: #f39c12;">{$v['winning_number']}</strong>
+                                </td>
+                                <td>
+                                    <?php if (!empty($v['winning_numbers_array']) && is_array($v['winning_numbers_array'])) { ?>
+                                        <?php foreach ($v['winning_numbers_array'] as $level => $number) { ?>
+                                            <div>
+                                                <span class="label label-warning">{$level}</span>：
+                                                <strong style="color: #f39c12;">{$number}</strong>
+                                            </div>
+                                        <?php } ?>
+                                    <?php } else { ?>
+                                        <span class="text-muted">-</span>
+                                    <?php } ?>
+                                </td>
+                                <td>{$v['draw_time']}</td>
+                                <td>
+                                    <?php if ($v['status'] == 0) { ?>
+                                        <span class="label label-default">未开奖</span>
+                                    <?php } elseif ($v['status'] == 1) { ?>
+                                        <span class="label label-success">已开奖</span>
+                                    <?php } else { ?>
+                                        <span class="label label-danger">已作废</span>
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <span class="label label-info">{$v['total_tickets']}</span>
+                                </td>
+                                <td>
+                                    <span class="label label-primary">{$v['total_users']}</span>
+                                </td>
+                                <td>
+                                    <span class="label label-success">{$v['win_count']}</span>
+                                </td>
+                                <td>
+                                    <?php if (!empty($v['remark'])) { ?>
+                                        {$v['remark']}
+                                    <?php } else { ?>
+                                        <span class="text-muted">-</span>
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <?php if (!empty($v['operator_id'])) { ?>
+                                        {$v['operator_id']}
+                                    <?php } else { ?>
+                                        <span class="text-muted">-</span>
+                                    <?php } ?>
+                                </td>
+                                <td>{$v['created_at']}</td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        //日期选择器
+        var draw_date = {
+            elem: '#draw_date',
+            format: 'yyyy-MM-dd',
+        };
+        var start = {
+            elem: '#start',
+            format: 'yyyy-MM-dd',
+        };
+        var end = {
+            elem: '#end',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(draw_date);
+        laydate.render(start);
+        laydate.render(end);
+    });
+
+    // 显示设置中奖号码弹窗
+    function showSetWinningNumberModal() {
+        $('#setWinningNumberModal').modal('show');
+        // 清空表单
+        $('#winning_number').val('');
+        $('#winning_numbers_json').val('');
+        $('#remark').val('');
+    }
+
+    // 提交设置中奖号码
+    function submitSetWinningNumber() {
+        var winningNumber = $('#winning_number').val().trim();
+        var winningNumbersJson = $('#winning_numbers_json').val().trim();
+        var remark = $('#remark').val().trim();
+
+        // 验证中奖号码（6位数字）
+        if (!winningNumber) {
+            layer.msg('请输入中奖号码', {icon: 2, time: 2000});
+            return;
+        }
+        if (!/^\d{6}$/.test(winningNumber)) {
+            layer.msg('中奖号码必须是6位数字', {icon: 2, time: 2000});
+            return;
+        }
+
+        // 验证多等级中奖号码JSON格式（如果填写了）
+        var winningNumbers = {};
+        if (winningNumbersJson) {
+            try {
+                winningNumbers = JSON.parse(winningNumbersJson);
+                if (typeof winningNumbers !== 'object' || Array.isArray(winningNumbers)) {
+                    throw new Error('格式错误');
+                }
+            } catch (e) {
+                layer.msg('多等级中奖号码JSON格式错误，请检查', {icon: 2, time: 2000});
+                return;
+            }
+        }
+
+        // 确认提示
+        layer.confirm('确定要设置今日中奖号码吗？设置后将自动更新所有匹配的抽奖记录。', {
+            icon: 3,
+            title: '确认设置'
+        }, function(index) {
+            layer.close(index);
+            
+            // 提交数据
+            $.post('{:url("admin/User/setTodayWinningNumber")}', {
+                winning_number: winningNumber,
+                winning_numbers: winningNumbersJson || '',
+                remark: remark
+            }, function(res) {
+                if (res.code == 200) {
+                    layer.msg('设置成功', {icon: 1, time: 2000}, function() {
+                        $('#setWinningNumberModal').modal('hide');
+                        window.location.reload();
+                    });
+                } else {
+                    layer.msg(res.msg, {icon: 2, time: 2000});
+                }
+            });
+        });
+    }
+</script>
+
+<!-- 设置中奖号码弹窗 -->
+<div class="modal fade" id="setWinningNumberModal" tabindex="-1" role="dialog" aria-labelledby="setWinningNumberModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="setWinningNumberModalLabel">设置今日中奖号码</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="winning_number">中奖号码 <span style="color: red;">*</span></label>
+                    <input type="text" class="form-control" id="winning_number" placeholder="请输入6位数字，如：123456" maxlength="6">
+                    <small class="help-block">必须是6位数字</small>
+                </div>
+                <div class="form-group">
+                    <label for="winning_numbers_json">多等级中奖号码（可选）</label>
+                    <textarea class="form-control" id="winning_numbers_json" rows="4" placeholder='JSON格式，如：{"一等奖":"123456","二等奖":"123457","三等奖":"123458"}'></textarea>
+                    <small class="help-block">JSON格式，支持多个等级的中奖号码</small>
+                </div>
+                <div class="form-group">
+                    <label for="remark">备注</label>
+                    <input type="text" class="form-control" id="remark" placeholder="可选，填写备注信息">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="submitSetWinningNumber()">确定设置</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    th{
+        font-size: 14px;
+    }
+    .table td {
+        vertical-align: middle;
+    }
+</style>
+

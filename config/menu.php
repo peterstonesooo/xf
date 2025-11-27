@@ -226,6 +226,11 @@ return array(
                             'icon' => 'fa-vote-yea',
                             'url' => 'admin/Vote/voteList',
                         ),
+                    '抽奖管理' =>
+                        array(
+                            'icon' => 'fa-ticket-alt',
+                            'url' => 'admin/User/numberLotteryList',
+                        ),
                     // '生育卡' =>
                     // array(
                     //     'icon' => 'fa-circle-o',

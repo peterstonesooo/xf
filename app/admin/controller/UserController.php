@@ -29,6 +29,8 @@ use app\model\UserRelation;
 use app\model\GiftRecord;
 use app\model\UserProjectGroup;
 use app\model\HappinessEquityActivation;
+use app\model\NumberLotteryTicket;
+use app\model\NumberLotteryDraw;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Exception;
 use think\db\Fetch;
@@ -2438,6 +2440,165 @@ class UserController extends AuthController
             return out($data, 200, '获取成功');
         } catch (Exception $e) {
             return out(null, 10001, '获取失败：' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 数字抽奖管理 - 显示抽奖记录列表
+     */
+    public function numberLotteryList()
+    {
+        $req = request()->param();
+
+        $builder = NumberLotteryTicket::with(['user'])->order('id', 'desc');
+        
+        // 搜索条件
+        if (isset($req['user_id']) && $req['user_id'] !== '') {
+            $builder->where('user_id', $req['user_id']);
+        }
+        if (isset($req['ticket_number']) && $req['ticket_number'] !== '') {
+            $builder->where('ticket_number', 'like', '%' . $req['ticket_number'] . '%');
+        }
+        if (isset($req['lottery_date']) && $req['lottery_date'] !== '') {
+            $builder->where('lottery_date', $req['lottery_date']);
+        }
+        if (isset($req['is_win']) && $req['is_win'] !== '') {
+            $builder->where('is_win', $req['is_win']);
+        }
+        if (isset($req['phone']) && $req['phone'] !== '') {
+            $builder->whereHas('user', function($query) use ($req) {
+                $query->where('phone', 'like', '%' . $req['phone'] . '%');
+            });
+        }
+        if (!empty($req['start_date'])) {
+            $builder->where('created_at', '>=', $req['start_date'] . ' 00:00:00');
+        }
+        if (!empty($req['end_date'])) {
+            $builder->where('created_at', '<=', $req['end_date'] . ' 23:59:59');
+        }
+
+        // 设置每页显示数量
+        $limit = isset($req['limit']) ? intval($req['limit']) : 20;
+        $data = $builder->paginate($limit);
+
+        // 获取当前页所有记录的号码和日期组合
+        $numberDatePairs = [];
+        foreach ($data as $item) {
+            $key = $item['ticket_number'] . '_' . $item['lottery_date'];
+            if (!isset($numberDatePairs[$key])) {
+                $numberDatePairs[$key] = [
+                    'ticket_number' => $item['ticket_number'],
+                    'lottery_date' => $item['lottery_date']
+                ];
+            }
+        }
+        
+        // 统计每个号码在本期的抽奖人数（同一日期内，本期指同一lottery_date）
+        $numberStats = [];
+        if (!empty($numberDatePairs)) {
+            foreach ($numberDatePairs as $key => $pair) {
+                // 统计同一日期内相同号码的抽奖人数
+                $count = NumberLotteryTicket::where('ticket_number', $pair['ticket_number'])
+                    ->where('lottery_date', $pair['lottery_date'])
+                    ->count();
+                $numberStats[$key] = $count;
+            }
+        }
+
+        // 将统计信息附加到数据中
+        foreach ($data as &$item) {
+            $key = $item['ticket_number'] . '_' . $item['lottery_date'];
+            $item['same_number_count'] = isset($numberStats[$key]) ? $numberStats[$key] : 1;
+        }
+
+        $this->assign('req', $req);
+        $this->assign('data', $data);
+        $this->assign('count', NumberLotteryTicket::count());
+
+        return $this->fetch();
+    }
+
+    /**
+     * 数字抽奖开奖记录列表
+     */
+    public function numberLotteryDrawList()
+    {
+        $req = request()->param();
+
+        $builder = NumberLotteryDraw::order('draw_date', 'desc');
+        
+        // 搜索条件
+        if (isset($req['draw_date']) && $req['draw_date'] !== '') {
+            $builder->where('draw_date', $req['draw_date']);
+        }
+        if (isset($req['status']) && $req['status'] !== '') {
+            $builder->where('status', $req['status']);
+        }
+        if (isset($req['winning_number']) && $req['winning_number'] !== '') {
+            $builder->where('winning_number', 'like', '%' . $req['winning_number'] . '%');
+        }
+        if (!empty($req['start_date'])) {
+            $builder->where('draw_date', '>=', $req['start_date']);
+        }
+        if (!empty($req['end_date'])) {
+            $builder->where('draw_date', '<=', $req['end_date']);
+        }
+
+        // 设置每页显示数量
+        $limit = isset($req['limit']) ? intval($req['limit']) : 20;
+        $data = $builder->paginate($limit);
+
+        // 格式化中奖号码JSON数据
+        foreach ($data as &$item) {
+            if (!empty($item['winning_numbers'])) {
+                $item['winning_numbers_array'] = json_decode($item['winning_numbers'], true) ?: [];
+            } else {
+                $item['winning_numbers_array'] = [];
+            }
+        }
+
+        $this->assign('req', $req);
+        $this->assign('data', $data);
+        $this->assign('count', NumberLotteryDraw::count());
+
+        return $this->fetch();
+    }
+
+    /**
+     * 设置今日中奖号码
+     */
+    public function setTodayWinningNumber()
+    {
+        $req = request()->post();
+        
+        // 验证参数
+        if (empty($req['winning_number'])) {
+            return out(null, 10001, '请输入中奖号码');
+        }
+        
+        $winningNumber = trim($req['winning_number']);
+        $winningNumbersJson = !empty($req['winning_numbers']) ? trim($req['winning_numbers']) : null;
+        $remark = !empty($req['remark']) ? trim($req['remark']) : null;
+        
+        // 获取操作员ID
+        $adminUser = session('admin_user');
+        $operatorId = $adminUser['id'] ?? 0;
+        
+        try {
+            // 调用模型方法设置开奖号码（不更新用户抽奖记录）
+            $result = NumberLotteryDraw::setWinningNumber(
+                $winningNumber,
+                $winningNumbersJson,
+                date('Y-m-d'), // 今天
+                $remark,
+                $operatorId,
+                false // 后台手动开奖不更新用户抽奖记录
+            );
+            
+            return out($result, 200, '设置成功，共找到 ' . $result['win_count'] . ' 个中奖记录');
+            
+        } catch (Exception $e) {
+            return out(null, 10001, '设置失败：' . $e->getMessage());
         }
     }
 }

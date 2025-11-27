@@ -67,6 +67,7 @@ return [
         'RujinPointsTaskBatch' => 'app\common\command\RujinPointsTaskBatch',
         'freezeInactiveUsers' => 'app\common\command\FreezeInactiveUsers',
         'project:reset-progress' => 'app\common\command\ResetProjectProgress',
+        'auto:number-lottery-draw' => 'app\common\command\AutoNumberLotteryDraw',
         'fix:user-relation' => 'app\common\command\FixUserRelation',
         
         // 黄金K线系统命令

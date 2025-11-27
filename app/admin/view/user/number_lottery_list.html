@@ -1,0 +1,139 @@
+<div class="search">
+    <form class="form-inline">
+        <input type="text" value="{$req['user_id']??''}" name="user_id" placeholder="搜索用户ID" class="form-control">
+        <input type="text" value="{$req['phone']??''}" name="phone" placeholder="搜索手机号" class="form-control">
+        <input type="text" value="{$req['ticket_number']??''}" name="ticket_number" placeholder="搜索抽奖号码" class="form-control">
+        <input placeholder="抽奖日期" autocomplete="off" value="{$req['lottery_date']??''}" name="lottery_date" class="form-control layer-date" id="lottery_date">
+        <select name="is_win" class="form-control">
+            <option value="">是否中奖</option>
+            <option <?php if (isset($req['is_win']) && $req['is_win'] !== '' && $req['is_win'] == 0) {
+                echo 'selected = "selected"';
+            } ?> value="0">未中奖
+            </option>
+            <option <?php if (isset($req['is_win']) && $req['is_win'] !== '' && $req['is_win'] == 1) {
+                echo 'selected = "selected"';
+            } ?> value="1">已中奖
+            </option>
+        </select>
+        <input placeholder="开始时间" autocomplete="off" value="{$req['start_date']??''}" name="start_date" class="form-control layer-date" id="start">
+        ～
+        <input placeholder="结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
+        <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <a href="{:url('admin/User/numberLotteryDrawList')}" class="btn btn-flat btn-success m_10">开奖记录</a>
+        <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;共 {$count} 条记录</span>
+    </form>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered table-hover table-striped">
+                        <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户信息</th>
+                            <th>抽奖号码</th>
+                            <th>本期同号码人数</th>
+                            <th>抽奖日期</th>
+                            <th>是否中奖</th>
+                            <th>中奖等级</th>
+                            <th>中奖奖品</th>
+                            <th>状态</th>
+                            <th>抽奖时间</th>
+                        </tr>
+                        <?php foreach ($data as $k => $v) { ?>
+                            <tr>
+                                <td>{$v['id']}</td>
+                                <td>
+                                    <?php if (!empty($v['user'])) { ?>
+                                        用户ID：{$v['user_id']}
+                                        <br>
+                                        手机号：{$v['user']['phone']??''}
+                                        <br>
+                                        姓名：{$v['user']['realname']??''}
+                                    <?php } else { ?>
+                                        用户ID：{$v['user_id']}
+                                        <br>
+                                        <span class="text-muted">用户不存在</span>
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <strong style="font-size: 16px; color: #3c8dbc;">{$v['ticket_number']}</strong>
+                                </td>
+                                <td>
+                                    <span class="label label-info" style="font-size: 14px;">
+                                        {$v['same_number_count']} 人
+                                    </span>
+                                </td>
+                                <td>{$v['lottery_date']}</td>
+                                <td>
+                                    <?php if ($v['is_win'] == 1) { ?>
+                                        <span class="label label-success">已中奖</span>
+                                    <?php } else { ?>
+                                        <span class="label label-default">未中奖</span>
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <?php if (!empty($v['win_level'])) { ?>
+                                        <span class="label label-warning">{$v['win_level']}</span>
+                                    <?php } else { ?>
+                                        <span class="text-muted">-</span>
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <?php if (!empty($v['win_prize'])) { ?>
+                                        {$v['win_prize']}
+                                    <?php } else { ?>
+                                        <span class="text-muted">-</span>
+                                    <?php } ?>
+                                </td>
+                                <td>
+                                    <?php if ($v['status'] == 1) { ?>
+                                        <span class="label label-success">有效</span>
+                                    <?php } else { ?>
+                                        <span class="label label-danger">无效</span>
+                                    <?php } ?>
+                                </td>
+                                <td>{$v['created_at']}</td>
+                            </tr>
+                        <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        //日期选择器
+        var lottery_date = {
+            elem: '#lottery_date',
+            format: 'yyyy-MM-dd',
+        };
+        var start = {
+            elem: '#start',
+            format: 'yyyy-MM-dd',
+        };
+        var end = {
+            elem: '#end',
+            format: 'yyyy-MM-dd',
+        };
+        laydate.render(lottery_date);
+        laydate.render(start);
+        laydate.render(end);
+    });
+</script>
+<style>
+    th{
+        font-size: 14px;
+    }
+    .table td {
+        vertical-align: middle;
+    }
+</style>
+

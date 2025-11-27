@@ -681,6 +681,9 @@ class UserController extends AuthController
         if ($user['shiming_status'] == 0) {
             return out(null, 10001, '请先完成实名认证');
         }
+        if($user['vip_status'] == 0){
+            return out(null, 10001, '请先开通VIP');
+        }
         if (empty($user['pay_password'])) {
             return out(null, 801, '请先设置支付密码');
         }

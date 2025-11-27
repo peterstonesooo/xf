@@ -43,7 +43,17 @@ class LoanRepaymentController extends AuthController
         
         $builder->order('due_date asc, id desc');
         
-        $data = $builder->paginate(['query' => $req])->each(function ($item, $key) {
+        // 获取当前URL路径（去除查询参数）
+        $currentPath = request()->baseUrl();
+        if (strpos($currentPath, '/admin/') === false) {
+            // 如果路径中没有 /admin/，手动添加
+            $currentPath = '/admin/LoanRepayment/planList.html';
+        }
+        
+        $data = $builder->paginate([
+            'query' => $req,
+            'path' => $currentPath
+        ])->each(function ($item, $key) {
             $item->status_text = $item->getStatusTextAttr(null, $item->toArray());
             return $item;
         });

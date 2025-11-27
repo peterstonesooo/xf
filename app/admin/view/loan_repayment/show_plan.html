@@ -1,0 +1,315 @@
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <h3 class="box-title">还款计划详情</h3>
+                <div class="box-tools">
+                    <a href="{:url('admin/LoanRepayment/planList')}" class="btn btn-flat btn-default btn-sm">返回列表</a>
+                </div>
+            </div>
+            <div class="box-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>基本信息</h4>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="150">计划ID</th>
+                                <td>{$data['id']}</td>
+                            </tr>
+                            <tr>
+                                <th>期数</th>
+                                <td>第{$data['period']}期</td>
+                            </tr>
+                            <tr>
+                                <th>到期日期</th>
+                                <td>{$data['due_date']}</td>
+                            </tr>
+                            <tr>
+                                <th>状态</th>
+                                <td>
+                                    <span class="label label-{if condition="$data['status'] eq 1"}warning{elseif condition="$data['status'] eq 2"}success{else/}danger{/if}">{$data['status_text']}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>创建时间</th>
+                                <td>{$data['created_at']}</td>
+                            </tr>
+                            <tr>
+                                <th>更新时间</th>
+                                <td>{$data['updated_at']}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h4>金额信息</h4>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="150">本金</th>
+                                <td>￥{$data['principal']}</td>
+                            </tr>
+                            <tr>
+                                <th>利息</th>
+                                <td>￥{$data['interest']}</td>
+                            </tr>
+                            <tr>
+                                <th>总金额</th>
+                                <td>￥{$data['total_amount']}</td>
+                            </tr>
+                            <tr>
+                                <th>已还金额</th>
+                                <td>￥{$data['paid_amount']}</td>
+                            </tr>
+                            <tr>
+                                <th>剩余金额</th>
+                                <td>￥{$data['remaining_amount']}</td>
+                            </tr>
+                            {if condition="$data['overdue_days'] gt 0"}
+                            <tr>
+                                <th>逾期天数</th>
+                                <td><span class="label label-danger">{$data['overdue_days']}天</span></td>
+                            </tr>
+                            <tr>
+                                <th>逾期利息</th>
+                                <td>￥{$data['overdue_interest']}</td>
+                            </tr>
+                            <tr>
+                                <th>总应还金额</th>
+                                <td>￥{$data['remaining_amount'] + $data['overdue_interest']}</td>
+                            </tr>
+                            {/if}
+                        </table>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>用户信息</h4>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="150">用户ID</th>
+                                <td>{$data['user_id']}</td>
+                            </tr>
+                            <tr>
+                                <th>手机号</th>
+                                <td>{$data['user']['phone']}</td>
+                            </tr>
+                            <tr>
+                                <th>姓名</th>
+                                <td>{$data['user']['realname']}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h4>贷款申请信息</h4>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="150">申请ID</th>
+                                <td>{$data['application_id']}</td>
+                            </tr>
+                            <tr>
+                                <th>贷款金额</th>
+                                <td>￥{$data['application']['loan_amount']}</td>
+                            </tr>
+                            <tr>
+                                <th>申请时间</th>
+                                <td>{$data['application']['created_at']}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                {if condition="!empty($data['repaymentRecords']) && count($data['repaymentRecords']) gt 0"}
+                <div class="row">
+                    <div class="col-md-12">
+                        <h4>还款记录</h4>
+                        <table class="table table-bordered table-hover table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>还款金额</th>
+                                    <th>还款类型</th>
+                                    <th>还款方式</th>
+                                    <th>钱包类型</th>
+                                    <th>备注</th>
+                                    <th>还款时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($data['repaymentRecords'] as $record) { ?>
+                                <tr>
+                                    <td>{$record['id']}</td>
+                                    <td>￥{$record['repayment_amount']}</td>
+                                    <td>
+                                        <span class="label label-{if condition="$record['repayment_type'] eq 1"}success{elseif condition="$record['repayment_type'] eq 2"}info{else/}warning{/if}">
+                                            {$record['repayment_type_text']}
+                                        </span>
+                                    </td>
+                                    <td>{$record['repayment_method_text']}</td>
+                                    <td>
+                                        <?php
+                                        $walletTypeMap = [
+                                            1 => '充值余额',
+                                            2 => '荣誉钱包',
+                                            3 => '稳盈钱包',
+                                            4 => '民生钱包',
+                                            5 => '惠民钱包',
+                                            6 => '普惠钱包',
+                                        ];
+                                        echo $walletTypeMap[$record['wallet_type']] ?? '未知';
+                                        ?>
+                                    </td>
+                                    <td>{$record['remark']}</td>
+                                    <td>{$record['created_at']}</td>
+                                    <td>
+                                        <a href="{:url('admin/LoanRepayment/showRecord', ['id' => $record['id']])}" class="btn btn-flat btn-info btn-xs">详情</a>
+                                    </td>
+                                </tr>
+                                <?php } ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {else/}
+                <div class="row">
+                    <div class="col-md-12">
+                        <h4>还款记录</h4>
+                        <p class="text-muted">暂无还款记录</p>
+                    </div>
+                </div>
+                {/if}
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="box-footer">
+                            <a href="{:url('admin/LoanRepayment/planList')}" class="btn btn-flat btn-default">返回列表</a>
+                            {if condition="$data['status'] neq 2"}
+                            <button class="btn btn-flat btn-primary" onclick="manualRepay({$data['id']})">手动还款</button>
+                            {/if}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 手动还款模态框 -->
+<div class="modal fade" id="repayModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <h4 class="modal-title">手动还款</h4>
+            </div>
+            <div class="modal-body">
+                <form id="repay-form">
+                    <input type="hidden" id="repay-plan-id" name="plan_id">
+                    <div class="form-group">
+                        <label>还款金额</label>
+                        <input type="number" class="form-control" name="repayment_amount" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>钱包类型</label>
+                        <select class="form-control" name="wallet_type" id="wallet-type" required>
+                            <option value="">请选择钱包类型</option>
+                            <option value="1">充值余额</option>
+                            <option value="2">荣誉钱包</option>
+                            <option value="5">惠民钱包</option>
+                            <option value="6">普惠钱包</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>用户钱包余额</label>
+                        <div id="wallet-balance" class="form-control-static">
+                            请先选择钱包类型
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>备注</label>
+                        <textarea class="form-control" name="remark" rows="3" placeholder="请输入备注"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="submit-repay">提交</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+var currentPlanId = null;
+var userWalletBalances = {};
+
+function manualRepay(planId) {
+    currentPlanId = planId;
+    $('#repay-plan-id').val(planId);
+    
+    // 获取用户钱包余额
+    $.get('{:url("admin/LoanRepayment/getUserWalletBalances")}', {plan_id: planId}, function(res) {
+        if (res.code == 0) {
+            userWalletBalances = res.data;
+            $('#repayModal').modal('show');
+        } else {
+            alert('获取用户钱包信息失败：' + res.msg);
+        }
+    });
+}
+
+$(document).ready(function() {
+    // 钱包类型选择变化时更新余额显示
+    $('#wallet-type').change(function() {
+        var walletType = $(this).val();
+        if (walletType && userWalletBalances[walletType]) {
+            var balance = userWalletBalances[walletType].balance;
+            var name = userWalletBalances[walletType].name;
+            $('#wallet-balance').html(name + '：￥' + balance);
+        } else {
+            $('#wallet-balance').html('请先选择钱包类型');
+        }
+    });
+
+    $('#submit-repay').click(function() {
+        var planId = $('#repay-plan-id').val();
+        var repaymentAmount = $('input[name="repayment_amount"]').val();
+        var walletType = $('#wallet-type').val();
+        var remark = $('textarea[name="remark"]').val();
+
+        if (!repaymentAmount || repaymentAmount <= 0) {
+            alert('请输入有效的还款金额');
+            return;
+        }
+
+        if (!walletType) {
+            alert('请选择钱包类型');
+            return;
+        }
+
+        // 检查余额是否足够
+        if (userWalletBalances[walletType] && parseFloat(userWalletBalances[walletType].balance) < parseFloat(repaymentAmount)) {
+            alert('钱包余额不足，无法还款');
+            return;
+        }
+
+        var formData = {
+            plan_id: planId,
+            repayment_amount: repaymentAmount,
+            wallet_type: walletType,
+            remark: remark
+        };
+
+        $.post('{:url("admin/LoanRepayment/manualRepay")}', formData, function(res) {
+            if (res.code == 0) {
+                alert('还款成功');
+                $('#repayModal').modal('hide');
+                location.reload();
+            } else {
+                alert('还款失败：' + res.msg);
+            }
+        });
+    });
+});
+</script>
+

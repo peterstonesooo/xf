@@ -1138,7 +1138,7 @@ $extend = [
             if (isset($parsed['fragment'])) {
                 $payUrl .= '#' . $parsed['fragment'];
             }
-            
+            $payUrl = str_replace('&', '%26', $payUrl);
             // 返回支付URL
             return [
                 'data' => $payUrl,

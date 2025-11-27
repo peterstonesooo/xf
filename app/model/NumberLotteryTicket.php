@@ -22,9 +22,25 @@ class NumberLotteryTicket extends Model
         'win_level'     => 'string',
         'win_prize'     => 'string',
         'status'        => 'int',
+        'ticket_status' => 'int',
         'created_at'    => 'datetime',
         'updated_at'    => 'datetime',
     ];
+
+    // 抽奖状态映射
+    public static $ticketStatusMap = [
+        1 => '待开奖',
+        2 => '已开奖未中奖',
+        3 => '已中奖',
+    ];
+
+    /**
+     * 获取抽奖状态文本
+     */
+    public function getTicketStatusTextAttr($value, $data)
+    {
+        return self::$ticketStatusMap[$data['ticket_status']] ?? '未知';
+    }
 
     // 关联用户
     public function user()

@@ -2465,6 +2465,9 @@ class UserController extends AuthController
         if (isset($req['is_win']) && $req['is_win'] !== '') {
             $builder->where('is_win', $req['is_win']);
         }
+        if (isset($req['ticket_status']) && $req['ticket_status'] !== '') {
+            $builder->where('ticket_status', $req['ticket_status']);
+        }
         if (isset($req['phone']) && $req['phone'] !== '') {
             $builder->whereHas('user', function($query) use ($req) {
                 $query->where('phone', 'like', '%' . $req['phone'] . '%');
@@ -2514,6 +2517,7 @@ class UserController extends AuthController
         $this->assign('req', $req);
         $this->assign('data', $data);
         $this->assign('count', NumberLotteryTicket::count());
+        $this->assign('ticketStatusMap', NumberLotteryTicket::$ticketStatusMap);
 
         return $this->fetch();
     }

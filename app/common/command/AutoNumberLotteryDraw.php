@@ -50,18 +50,27 @@ class AutoNumberLotteryDraw extends Command
                 $output->writeln("中奖号码：<info>{$todayDraw->winning_number}</info>");
                 $output->writeln("开奖时间：{$todayDraw->draw_time}");
                 
-                // 检查是否已经更新过用户抽奖记录
-                $updatedCount = \app\model\NumberLotteryTicket::where('lottery_date', $drawDate)
-                    ->where('draw_id', $todayDraw->id)
-                    ->where('is_win', 1)
+                // 检查是否已经更新过用户抽奖记录（通过ticket_status判断）
+                // 如果还有待开奖状态的记录，说明还没更新
+                $pendingCount = \app\model\NumberLotteryTicket::where('lottery_date', $drawDate)
+                    ->where('status', 1)
+                    ->where('ticket_status', 1) // 待开奖状态
                     ->count();
                 
-                if ($updatedCount > 0) {
-                    $output->writeln("中奖人数（已更新）：{$updatedCount}");
+                if ($pendingCount == 0) {
+                    // 统计中奖人数
+                    $winCount = \app\model\NumberLotteryTicket::where('lottery_date', $drawDate)
+                        ->where('draw_id', $todayDraw->id)
+                        ->where('ticket_status', 3) // 已中奖状态
+                        ->count();
+                    
+                    $output->writeln("中奖人数（已更新）：{$winCount}");
                     $output->writeln('');
                     $output->writeln('<info>任务完成：用户抽奖记录已更新</info>');
                     return;
                 }
+                
+                $output->writeln("待更新记录数：{$pendingCount}");
                 
                 // 如果设置了中奖号码但还没更新用户抽奖记录，则更新
                 $output->writeln("<comment>开始更新用户抽奖记录...</comment>");
@@ -143,10 +152,18 @@ class AutoNumberLotteryDraw extends Command
      */
     private function updateTicketsByDraw($drawRecord, $drawDate)
     {
-        // 获取今日所有抽奖记录
+        // 获取今日所有待开奖的抽奖记录（只处理ticket_status = 1的记录）
         $tickets = \app\model\NumberLotteryTicket::where('lottery_date', $drawDate)
             ->where('status', 1)
+            ->where('ticket_status', 1) // 只获取待开奖状态的记录
             ->select();
+        
+        if (empty($tickets)) {
+            return [
+                'win_count' => 0,
+                'total_tickets' => 0,
+            ];
+        }
         
         $winningNumber = $drawRecord->winning_number;
         $winningNumbersJson = $drawRecord->winning_numbers;
@@ -155,7 +172,7 @@ class AutoNumberLotteryDraw extends Command
         $winTickets = NumberLotteryDraw::findWinningTickets($tickets, $winningNumber, $winningNumbersJson);
         $winCount = count($winTickets);
         
-        // 更新用户抽奖记录
+        // 更新用户抽奖记录（会自动更新ticket_status：2-未中奖，3-中奖）
         NumberLotteryDraw::updateTicketWinStatus($drawDate, $winTickets, $winningNumber, $winningNumbersJson, $drawRecord->id);
         
         return [

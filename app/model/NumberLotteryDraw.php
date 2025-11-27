@@ -183,17 +183,20 @@ class NumberLotteryDraw extends Model
      */
     public static function updateTicketWinStatus($drawDate, $winTickets, $winningNumber, $winningNumbersJson = null, $drawId)
     {
-        // 先重置所有指定日期的抽奖记录为非中奖
+        // 先重置所有指定日期的待开奖记录为非中奖（状态：2-已开奖未中奖）
+        // 只更新待开奖状态（ticket_status = 1）的记录，避免重复更新已开奖的记录
         NumberLotteryTicket::where('lottery_date', $drawDate)
             ->where('status', 1)
+            ->where('ticket_status', 1) // 只更新待开奖状态的记录
             ->update([
                 'is_win' => 0,
                 'win_level' => null,
                 'win_prize' => null,
-                'draw_id' => null,
+                'draw_id' => $drawId,
+                'ticket_status' => 2, // 2-已开奖未中奖
             ]);
         
-        // 更新中奖记录
+        // 更新中奖记录（状态：3-已中奖）
         if (!empty($winTickets)) {
             $winningNumbersArray = [];
             if ($winningNumbersJson) {
@@ -219,12 +222,16 @@ class NumberLotteryDraw extends Model
                     }
                 }
                 
-                NumberLotteryTicket::where('id', $ticket['id'])->update([
-                    'is_win' => 1,
-                    'win_level' => $winLevel,
-                    'win_prize' => $winPrize,
-                    'draw_id' => $drawId,
-                ]);
+                // 更新中奖记录，确保只更新待开奖状态的记录
+                NumberLotteryTicket::where('id', $ticket['id'])
+                    ->where('ticket_status', 1) // 只更新待开奖状态的记录
+                    ->update([
+                        'is_win' => 1,
+                        'win_level' => $winLevel,
+                        'win_prize' => $winPrize,
+                        'draw_id' => $drawId,
+                        'ticket_status' => 3, // 3-已中奖
+                    ]);
             }
         }
     }

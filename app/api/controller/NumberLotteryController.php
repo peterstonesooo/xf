@@ -67,6 +67,7 @@ class NumberLotteryController extends AuthController
                 'lottery_date' => $lotteryDate,
                 'is_win' => 0,
                 'status' => 1,
+                'ticket_status' => 1, // 1-待开奖
             ]);
             
             Db::commit();
@@ -75,6 +76,8 @@ class NumberLotteryController extends AuthController
                 'ticket_id' => $ticket->id,
                 'ticket_number' => $ticketNumber,
                 'lottery_date' => $lotteryDate,
+                'ticket_status' => 1,
+                'ticket_status_text' => '待开奖',
                 'draw_time' => $ticket->created_at,
             ], 200, '抽奖成功');
             
@@ -134,6 +137,8 @@ class NumberLotteryController extends AuthController
                 'win_level' => $item->win_level,
                 'win_prize' => $item->win_prize,
                 'draw_id' => $item->draw_id,
+                'ticket_status' => $item->ticket_status ?? 1,
+                'ticket_status_text' => $item->ticket_status_text ?? '待开奖',
                 'created_at' => $item->created_at,
             ];
         }
@@ -241,6 +246,8 @@ class NumberLotteryController extends AuthController
                 'win_level' => $item->win_level,
                 'win_prize' => $item->win_prize,
                 'draw_id' => $item->draw_id,
+                'ticket_status' => $item->ticket_status ?? 3,
+                'ticket_status_text' => $item->ticket_status_text ?? '已中奖',
                 'created_at' => $item->created_at,
             ];
         }

@@ -15,6 +15,17 @@
             } ?> value="1">已中奖
             </option>
         </select>
+        <select name="ticket_status" class="form-control">
+            <option value="">抽奖状态</option>
+            <?php if (isset($ticketStatusMap)) { ?>
+                <?php foreach ($ticketStatusMap as $k => $v) { ?>
+                    <option <?php if (isset($req['ticket_status']) && $req['ticket_status'] !== '' && $req['ticket_status'] == $k) {
+                        echo 'selected = "selected"';
+                    } ?> value="{$k}">{$v}
+                    </option>
+                <?php } ?>
+            <?php } ?>
+        </select>
         <input placeholder="开始时间" autocomplete="off" value="{$req['start_date']??''}" name="start_date" class="form-control layer-date" id="start">
         ～
         <input placeholder="结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
@@ -40,6 +51,7 @@
                             <th>是否中奖</th>
                             <th>中奖等级</th>
                             <th>中奖奖品</th>
+                            <th>抽奖状态</th>
                             <th>状态</th>
                             <th>抽奖时间</th>
                         </tr>
@@ -88,6 +100,21 @@
                                     <?php } else { ?>
                                         <span class="text-muted">-</span>
                                     <?php } ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    $ticketStatus = $v['ticket_status'] ?? 1;
+                                    $statusText = $ticketStatusMap[$ticketStatus] ?? '未知';
+                                    $statusClass = '';
+                                    if ($ticketStatus == 1) {
+                                        $statusClass = 'label-warning'; // 待开奖 - 黄色
+                                    } elseif ($ticketStatus == 2) {
+                                        $statusClass = 'label-default'; // 已开奖未中奖 - 灰色
+                                    } elseif ($ticketStatus == 3) {
+                                        $statusClass = 'label-success'; // 已中奖 - 绿色
+                                    }
+                                    ?>
+                                    <span class="label {$statusClass}">{$statusText}</span>
                                 </td>
                                 <td>
                                     <?php if ($v['status'] == 1) { ?>

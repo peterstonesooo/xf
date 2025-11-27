@@ -168,10 +168,11 @@ class LoanRepaymentController extends AuthController
             3 => ['field' => 'butie', 'name' => '稳盈钱包'],
             4 => ['field' => 'balance', 'name' => '民生钱包'],
             5 => ['field' => 'digit_balance', 'name' => '惠民钱包'],
+            6 => ['field' => 'puhui', 'name' => '普惠钱包'],
         ];
 
         // 获取支持的钱包类型配置
-        $supportedTypes = \app\model\LoanConfig::getConfig('back_money_types', '1,2,3,4,5');
+        $supportedTypes = \app\model\LoanConfig::getConfig('back_money_types', '1,2,3,4,5,6');
         $supportedTypes = explode(',', $supportedTypes);
 
         $data = [];
@@ -218,6 +219,7 @@ class LoanRepaymentController extends AuthController
             3 => ['field' => 'butie', 'name' => '稳盈钱包'],
             4 => ['field' => 'balance', 'name' => '民生钱包'],
             5 => ['field' => 'digit_balance', 'name' => '惠民钱包'],
+            6 => ['field' => 'puhui', 'name' => '普惠钱包'],
         ];
 
         // 验证钱包类型
@@ -226,7 +228,7 @@ class LoanRepaymentController extends AuthController
         }
 
         // 获取支持的钱包类型配置
-        $supportedTypes = \app\model\LoanConfig::getConfig('back_money_types', '1,2,3,4,5');
+        $supportedTypes = \app\model\LoanConfig::getConfig('back_money_types', '1,2,3,4,5,6');
         $supportedTypes = explode(',', $supportedTypes);
         if (!in_array($req['wallet_type'], $supportedTypes)) {
             return out(null, 10001, '该钱包类型不支持还款');

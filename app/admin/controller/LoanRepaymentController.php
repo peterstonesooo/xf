@@ -9,6 +9,7 @@ use app\model\LoanApplication;
 use app\model\User;
 use think\facade\Db;
 use think\facade\View;
+use think\facade\Url;
 
 class LoanRepaymentController extends AuthController
 {
@@ -42,10 +43,7 @@ class LoanRepaymentController extends AuthController
         
         $builder->order('due_date asc, id desc');
         
-        $data = $builder->paginate([
-            'query' => $req,
-            'path' => url('admin/LoanRepayment/planList', [], false, true) // 指定正确的分页路径
-        ])->each(function ($item, $key) {
+        $data = $builder->paginate(['query' => $req])->each(function ($item, $key) {
             $item->status_text = $item->getStatusTextAttr(null, $item->toArray());
             return $item;
         });

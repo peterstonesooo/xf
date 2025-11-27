@@ -24,7 +24,7 @@ class NumberLotteryController extends AuthController
         
         // 检查是否在19点之后（19点及之后不能抽奖）
         if ($currentHour >= 19) {
-            return out(null, 10001, '每天19点后不能抽奖，请明天再来');
+            // return out(null, 10001, '每天19点后不能抽奖，请明天再来');
         }
         
         // 防重复提交（5秒内）

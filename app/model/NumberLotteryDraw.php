@@ -183,18 +183,31 @@ class NumberLotteryDraw extends Model
      */
     public static function updateTicketWinStatus($drawDate, $winTickets, $winningNumber, $winningNumbersJson = null, $drawId)
     {
-        // 先重置所有指定日期的待开奖记录为非中奖（状态：2-已开奖未中奖）
-        // 只更新待开奖状态（ticket_status = 1）的记录，避免重复更新已开奖的记录
-        NumberLotteryTicket::where('lottery_date', $drawDate)
+        // 先获取中奖记录的ID列表，用于后续排除
+        $winTicketIds = [];
+        if (!empty($winTickets)) {
+            foreach ($winTickets as $ticket) {
+                $winTicketIds[] = $ticket['id'];
+            }
+        }
+        
+        // 更新所有待开奖记录为非中奖（状态：2-已开奖未中奖）
+        // 排除中奖记录，因为中奖记录需要单独更新
+        $updateQuery = NumberLotteryTicket::where('lottery_date', $drawDate)
             ->where('status', 1)
-            ->where('ticket_status', 1) // 只更新待开奖状态的记录
-            ->update([
-                'is_win' => 0,
-                'win_level' => null,
-                'win_prize' => null,
-                'draw_id' => $drawId,
-                'ticket_status' => 2, // 2-已开奖未中奖
-            ]);
+            ->where('ticket_status', 1); // 只更新待开奖状态的记录
+        
+        if (!empty($winTicketIds)) {
+            $updateQuery->whereNotIn('id', $winTicketIds); // 排除中奖记录
+        }
+        
+        $updateQuery->update([
+            'is_win' => 0,
+            'win_level' => null,
+            'win_prize' => null,
+            'draw_id' => $drawId,
+            'ticket_status' => 2, // 2-已开奖未中奖
+        ]);
         
         // 更新中奖记录（状态：3-已中奖）
         if (!empty($winTickets)) {
@@ -222,9 +235,9 @@ class NumberLotteryDraw extends Model
                     }
                 }
                 
-                // 更新中奖记录，确保只更新待开奖状态的记录
+                // 更新中奖记录，允许 ticket_status 为 1 或 2（可能已经被第一步更新为2了）
                 NumberLotteryTicket::where('id', $ticket['id'])
-                    ->where('ticket_status', 1) // 只更新待开奖状态的记录
+                    ->whereIn('ticket_status', [1, 2]) // 允许待开奖或已开奖未中奖状态
                     ->update([
                         'is_win' => 1,
                         'win_level' => $winLevel,

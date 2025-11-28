@@ -37,9 +37,13 @@ class RujinPointsTaskBatch extends Command
                 $batch = [];
                 $startTime = microtime(true);
                 
-                // 检查队列长度
+                // 检查队列长度（减少日志输出频率，避免频繁IO）
+                static $logCounter = 0;
                 $queueLength = $redis->lLen($queueName);
-                $output->writeln("[" . date('Y-m-d H:i:s') . "] 当前队列长度: {$queueLength}");
+                if ($logCounter % 10 == 0 || $queueLength > 0) { // 每10次或队列有数据时才输出日志
+                    // $output->writeln("[" . date('Y-m-d H:i:s') . "] 当前队列长度: {$queueLength}");
+                }
+                $logCounter++;
                 
                 // 批量获取数据（非阻塞方式）
                 for ($i = 0; $i < $batchSize; $i++) {
@@ -50,24 +54,24 @@ class RujinPointsTaskBatch extends Command
                     $batch[] = $data;
                 }
                 
-                // 如果没有数据，等待一下
+                // 如果没有数据，等待一下（增加等待时间，减少CPU占用）
                 if (empty($batch)) {
-                    $output->writeln("队列为空，等待新数据...\n");
-                    sleep(2);
+                    // $output->writeln("队列为空，等待新数据...\n");
+                    sleep(5); // 从2秒增加到5秒，减少CPU占用
                     continue;
                 }
                 
-                $output->writeln("获取到 " . count($batch) . " 条数据，开始批量处理...");
+                // $output->writeln("获取到 " . count($batch) . " 条数据，开始批量处理...");
                 
                 // 批量处理
                 $this->processBatch($batch, $output);
                 
                 $endTime = microtime(true);
-                $output->writeln("批量处理完成，耗时: " . round($endTime - $startTime, 2) . " 秒\n");
+                // $output->writeln("批量处理完成，耗时: " . round($endTime - $startTime, 2) . " 秒\n");
                 
             } catch (Exception $e) {
-                $output->writeln("系统错误: {$e->getMessage()}");
-                $output->writeln("错误堆栈: " . $e->getTraceAsString());
+                // $output->writeln("系统错误: {$e->getMessage()}");
+                // $output->writeln("错误堆栈: " . $e->getTraceAsString());
                 sleep(3);
             }
         }
@@ -91,7 +95,7 @@ class RujinPointsTaskBatch extends Command
             $remark = str_replace('备注=', '', $params['备注'] ?? '');
             
             if (empty($phone) || empty($amount)) {
-                $output->writeln("无效的数据: {$queueValue}");
+                // $output->writeln("无效的数据: {$queueValue}");
                 continue;
             }
             
@@ -163,7 +167,7 @@ class RujinPointsTaskBatch extends Command
         ];
         
         if (!isset($fieldMap[$walletType])) {
-            $output->writeln("未知的钱包类型: {$walletType}");
+            // $output->writeln("未知的钱包类型: {$walletType}");
             return;
         }
         
@@ -266,17 +270,17 @@ class RujinPointsTaskBatch extends Command
             // 记录成功
             foreach ($tasks as $task) {
                 $this->recordSuccess($task['batch_id'], $task['phone']);
-                $output->writeln("处理成功: {$task['raw_data']}");
+                // $output->writeln("处理成功: {$task['raw_data']}");
             }
             
         } catch (Exception $e) {
             Db::rollback();
-            $output->writeln("批量处理失败: {$e->getMessage()}");
+            // $output->writeln("批量处理失败: {$e->getMessage()}");
             
             // 记录失败
             foreach ($tasks as $task) {
                 $this->recordFailure($task['batch_id'], $task['phone']);
-                $output->writeln("处理失败: {$task['raw_data']}");
+                // $output->writeln("处理失败: {$task['raw_data']}");
             }
         }
     }

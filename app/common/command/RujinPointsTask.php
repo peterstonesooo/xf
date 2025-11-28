@@ -82,12 +82,12 @@ class RujinPointsTask extends Command
                             }
                             $retryCount++;
                             if ($retryCount < $maxRetries) {
-                                usleep(100000); // 等待1秒后重试
+                                usleep(1000000); // 等待1秒后重试（修复：从0.1秒改为1秒）
                             }
                         } catch (Exception $e) {
                             $retryCount++;
                             if ($retryCount < $maxRetries) {
-                                usleep(100000); // 等待1秒后重试
+                                usleep(1000000); // 等待1秒后重试（修复：从0.1秒改为1秒）
                             } else {
                                 throw $e; // 重试次数用完，抛出异常
                             }

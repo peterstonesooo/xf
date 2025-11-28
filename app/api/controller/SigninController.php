@@ -56,6 +56,7 @@ class SigninController extends AuthController
             $signin_15_jifen = dbconfig('signin_15_jifen');
             $asignin_30_amount = dbconfig('signin_30_amount');
             $signin_30_jifen = dbconfig('signin_30_jifen');
+            $signin_30_gold = dbconfig('signin_30_gold');
             $vote_tickets = 1;
             //vip签到奖励翻倍
             if($user['vip_status'] == 1){
@@ -65,6 +66,7 @@ class SigninController extends AuthController
                 $signin_15_jifen = $signin_15_jifen*2;
                 $asignin_30_amount = $asignin_30_amount*2;
                 $signin_30_jifen = $signin_30_jifen*2;
+                $signin_30_gold = $signin_30_gold*2;
                 $vote_tickets = 2;
             }
             $date['return_amount'] = $signin_1_amount;
@@ -86,8 +88,10 @@ class SigninController extends AuthController
                     if($continue_days % 30 == 0) {
                         User::changeInc($user['id'],$asignin_30_amount,'balance',100,$user['id'],4,'连续签到30天奖励');
                         User::changeInc($user['id'],$signin_30_jifen,'integral',100,$user['id'],6,'连续签到30天奖励');
+                        User::changeInc($user['id'],$signin_30_gold,'gold',100,$user['id'],18,'连续签到30天奖励');
                         $date['return_amount'] = $asignin_30_amount;
                         $date['return_jifen'] = $signin_30_jifen;
+                        $date['return_gold'] = $signin_30_gold;
                     }
                     //连续签到15天
                     if($continue_days % 30 != 0 && $continue_days % 15 == 0) {

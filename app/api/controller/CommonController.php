@@ -22,6 +22,7 @@ use app\model\UserBalanceLog;
 use app\model\UserRelation;
 use app\model\WalletAddress;
 use app\model\Agreements;
+use app\model\UserLoginLog;
 use Exception;
 use think\facade\Db;
 use think\facade\Cache;
@@ -109,16 +110,60 @@ class CommonController extends BaseController
         $password = sha1(md5($req['password']));
         //$user = User::field('id,status,pay_password')->where('phone', $req['phone'])->where('password', $password)->find();
         $user = User::field('id,status')->where('phone', $req['phone'])->where('password', $password)->find();
+        
+        // 获取登录相关信息
+        $ipAddress = $req['ip'] ?? getRealIp();
+        $userAgent = request()->header('user-agent', '');
+        $deviceType = sysType(); // 使用已有的 sysType() 函数判断设备类型
+        $sessionId = session_id();
+        
+        // 记录登录失败信息
         if (empty($user)) {
+            // 记录登录失败
+            try {
+                UserLoginLog::recordLogin([
+                    'user_id'      => 0,
+                    'phone'        => $req['phone'],
+                    'login_type'   => 1, // 手机号登录
+                    'login_status' => 2, // 失败
+                    'fail_reason'  => '账号或密码错误',
+                    'ip_address'   => $ipAddress,
+                    'user_agent'   => $userAgent,
+                    'device_type'  => $deviceType,
+                    'device_info'  => $req['device_id'] ?? null,
+                    'session_id'   => $sessionId,
+                ]);
+            } catch (\Exception $e) {
+                // 记录失败不影响登录流程
+                Log::error('记录登录日志失败：' . $e->getMessage());
+            }
             return out(null, 10001, '账号或密码错误');
         }
+        
+        // 记录账号状态异常
         if ($user['status'] == 0) {
+            try {
+                UserLoginLog::recordLogin([
+                    'user_id'      => $user['id'],
+                    'phone'        => $req['phone'],
+                    'login_type'   => 1, // 手机号登录
+                    'login_status' => 2, // 失败
+                    'fail_reason'  => '账户状态异常',
+                    'ip_address'   => $ipAddress,
+                    'user_agent'   => $userAgent,
+                    'device_type'  => $deviceType,
+                    'device_info'  => $req['device_id'] ?? null,
+                    'session_id'   => $sessionId,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('记录登录日志失败：' . $e->getMessage());
+            }
             return out(null, 10001, '您的账户状态异常，请联系客服处理！');
         }
 
         db::startTrans();
         try{
-            User::where('id', $user['id'])->update(['login_ip' => $req['ip'] ?? '']);
+            User::where('id', $user['id'])->update(['login_ip' => $ipAddress]);
             // if (!empty($user['pay_password']) && $user['pay_password'] !== sha1(md5($req['pay_password']))) {
             //     return out(null, 10001, '支付密码错误');
             // }
@@ -146,6 +191,24 @@ class CommonController extends BaseController
             }else{
                 //删除设备token
                 UserLoginTokens::where('user_id',$user['id'])->where('device_id',$req['device_id'])->delete();
+            }
+            
+            // 记录登录成功信息
+            try {
+                UserLoginLog::recordLogin([
+                    'user_id'      => $user['id'],
+                    'phone'        => $req['phone'],
+                    'login_type'   => 1, // 手机号登录
+                    'login_status' => 1, // 成功
+                    'ip_address'   => $ipAddress,
+                    'user_agent'   => $userAgent,
+                    'device_type'  => $deviceType,
+                    'device_info'  => $req['device_id'] ?? null,
+                    'session_id'   => $sessionId,
+                ]);
+            } catch (\Exception $e) {
+                // 记录失败不影响登录流程
+                Log::error('记录登录日志失败：' . $e->getMessage());
             }
             
             db::commit();

@@ -4,6 +4,7 @@ namespace app\model;
 
 use think\Model;
 use think\facade\Db;
+use think\facade\Log;
 use Exception;
 
 class NumberLotteryDraw extends Model
@@ -24,6 +25,9 @@ class NumberLotteryDraw extends Model
         'total_tickets'  => 'int',
         'total_users'    => 'int',
         'win_count'      => 'int',
+        'money'          => 'int',
+        'moneys'         => 'string',
+        'log_type'       => 'int',
         'remark'         => 'string',
         'operator_id'    => 'int',
         'created_at'     => 'datetime',
@@ -38,10 +42,13 @@ class NumberLotteryDraw extends Model
      * @param string|null $remark 备注
      * @param int|null $operatorId 操作员ID
      * @param bool $updateTickets 是否更新用户抽奖记录的中奖状态，默认true
+     * @param int|null $money 中奖金额（可选）
+     * @param string|null $moneys 多奖金JSON字符串（可选）
+     * @param int $logType 中奖钱包类型，默认13（普惠钱包）
      * @return array 返回开奖结果 ['draw_id' => int, 'winning_number' => string, 'win_count' => int, 'total_tickets' => int]
      * @throws Exception
      */
-    public static function setWinningNumber($winningNumber, $winningNumbersJson = null, $drawDate = null, $remark = null, $operatorId = null, $updateTickets = true)
+    public static function setWinningNumber($winningNumber, $winningNumbersJson = null, $drawDate = null, $remark = null, $operatorId = null, $updateTickets = true, $money = null, $moneys = null, $logType = 13)
     {
         // 验证中奖号码
         if (empty($winningNumber) || !preg_match('/^\d{6}$/', $winningNumber)) {
@@ -57,6 +64,19 @@ class NumberLotteryDraw extends Model
             }
             $winningNumbers = json_encode($winningNumbers, JSON_UNESCAPED_UNICODE);
         }
+
+        // 验证多奖金JSON格式
+        $moneysJson = null;
+        if (!empty($moneys)) {
+            $moneysArray = json_decode($moneys, true);
+            if (json_last_error() !== JSON_ERROR_NONE || !is_array($moneysArray)) {
+                throw new Exception('多奖金JSON格式错误');
+            }
+            $moneysJson = json_encode($moneysArray, JSON_UNESCAPED_UNICODE);
+        }
+
+        // 处理金额（转换为整数）
+        $moneyInt = $money !== null ? intval($money) : 0;
 
         // 设置默认值
         if ($drawDate === null) {
@@ -94,6 +114,9 @@ class NumberLotteryDraw extends Model
                 $drawRecord->total_tickets = $totalTickets;
                 $drawRecord->total_users = $totalUsers;
                 $drawRecord->win_count = $winCount;
+                $drawRecord->money = $moneyInt;
+                $drawRecord->moneys = $moneysJson;
+                $drawRecord->log_type = $logType;
                 $drawRecord->remark = $remark;
                 $drawRecord->operator_id = $operatorId;
                 $drawRecord->save();
@@ -109,6 +132,9 @@ class NumberLotteryDraw extends Model
                     'total_tickets' => $totalTickets,
                     'total_users' => $totalUsers,
                     'win_count' => $winCount,
+                    'money' => $moneyInt,
+                    'moneys' => $moneysJson,
+                    'log_type' => $logType,
                     'remark' => $remark,
                     'operator_id' => $operatorId,
                 ]);
@@ -174,7 +200,7 @@ class NumberLotteryDraw extends Model
     }
 
     /**
-     * 更新抽奖记录的中奖状态
+     * 更新抽奖记录的中奖状态并发放奖金
      * @param string $drawDate 开奖日期
      * @param array $winTickets 中奖的抽奖记录
      * @param string $winningNumber 主中奖号码
@@ -245,6 +271,103 @@ class NumberLotteryDraw extends Model
                         'draw_id' => $drawId,
                         'ticket_status' => 3, // 3-已中奖
                     ]);
+            }
+            
+            // 发放奖金给中奖用户
+            self::distributeRewardsToWinners($drawId, $winTickets);
+        }
+    }
+
+    /**
+     * 发放奖金给中奖用户
+     * @param int $drawId 开奖记录ID
+     * @param array $winTickets 中奖的抽奖记录
+     */
+    private static function distributeRewardsToWinners($drawId, $winTickets)
+    {
+        if (empty($winTickets)) {
+            return;
+        }
+
+        // 获取开奖记录
+        $drawRecord = self::where('id', $drawId)->find();
+        if (!$drawRecord) {
+            Log::error('数字抽奖发放奖金失败：开奖记录不存在', ['draw_id' => $drawId]);
+            return;
+        }
+
+        // 获取奖金信息
+        $money = $drawRecord->money ?? 0; // 单个奖金金额（分）
+        $moneysJson = $drawRecord->moneys; // 多等级奖金JSON
+        $logType = $drawRecord->log_type ?? 13; // 钱包类型，默认13（普惠钱包）
+
+        // 解析多等级奖金
+        $moneysArray = [];
+        if (!empty($moneysJson)) {
+            $moneysArray = json_decode($moneysJson, true) ?: [];
+        }
+
+        // 确定钱包字段（log_type = 13 对应普惠钱包 puhui）
+        $walletField = 'puhui'; // 默认普惠钱包
+        if ($logType == 13) {
+            $walletField = 'puhui';
+        } elseif ($logType == 14) {
+            $walletField = 'zhenxing_wallet';
+        } elseif ($logType == 16) {
+            $walletField = 'gongfu_wallet';
+        }
+
+        // 遍历中奖记录，发放奖金
+        foreach ($winTickets as $ticket) {
+            try {
+                // 确定奖金金额
+                $rewardAmount = 0;
+                $winLevel = $ticket['win_level'] ?? null;
+
+                if (!empty($moneysArray) && !empty($winLevel) && isset($moneysArray[$winLevel])) {
+                    // 使用多等级奖金
+                    $rewardAmount = intval($moneysArray[$winLevel]);
+                } elseif ($money > 0) {
+                    // 使用单个奖金
+                    $rewardAmount = $money;
+                }
+
+                // 如果奖金为0，跳过
+                if ($rewardAmount <= 0) {
+                    continue;
+                }
+
+                // 发放奖金
+                $drawDate = $drawRecord->draw_date;
+                $ticketNumber = $ticket['ticket_number'];
+                $remark = "数字抽奖中奖奖励（{$drawDate}，中奖号码：{$ticketNumber}";
+                if ($winLevel) {
+                    $remark .= "，等级：{$winLevel}";
+                }
+                $remark .= "）";
+
+                \app\model\User::changeInc(
+                    $ticket['user_id'],
+                    $rewardAmount,
+                    $walletField,
+                    128, // type: 128 表示数字抽奖中奖奖励
+                    0, // relation_id
+                    $logType, // log_type
+                    $remark,
+                    0, // admin_user_id
+                    2, // status: 2 表示已完成
+                    'CJ', // sn_prefix: 抽奖
+                    0 // is_delete
+                );
+
+            } catch (Exception $e) {
+                Log::error('数字抽奖发放奖金失败', [
+                    'user_id' => $ticket['user_id'] ?? 0,
+                    'ticket_id' => $ticket['id'] ?? 0,
+                    'draw_id' => $drawId,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
             }
         }
     }

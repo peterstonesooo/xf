@@ -140,6 +140,8 @@
         // 清空表单
         $('#winning_number').val('');
         $('#winning_numbers_json').val('');
+        $('#money').val('');
+        $('#moneys').val('');
         $('#remark').val('');
     }
 
@@ -147,6 +149,8 @@
     function submitSetWinningNumber() {
         var winningNumber = $('#winning_number').val().trim();
         var winningNumbersJson = $('#winning_numbers_json').val().trim();
+        var money = $('#money').val().trim();
+        var moneys = $('#moneys').val().trim();
         var remark = $('#remark').val().trim();
 
         // 验证中奖号码（6位数字）
@@ -173,6 +177,25 @@
             }
         }
 
+        // 验证中奖金额（如果填写了，必须是数字）
+        if (money && isNaN(money)) {
+            layer.msg('中奖金额必须是数字', {icon: 2, time: 2000});
+            return;
+        }
+
+        // 验证多奖金JSON格式（如果填写了）
+        if (moneys) {
+            try {
+                var moneysObj = JSON.parse(moneys);
+                if (typeof moneysObj !== 'object' || Array.isArray(moneysObj)) {
+                    throw new Error('格式错误');
+                }
+            } catch (e) {
+                layer.msg('多奖金JSON格式错误，请检查', {icon: 2, time: 2000});
+                return;
+            }
+        }
+
         // 确认提示
         layer.confirm('确定要设置今日中奖号码吗？设置后将自动更新所有匹配的抽奖记录。', {
             icon: 3,
@@ -184,6 +207,8 @@
             $.post('{:url("admin/User/setTodayWinningNumber")}', {
                 winning_number: winningNumber,
                 winning_numbers: winningNumbersJson || '',
+                money: money || '',
+                moneys: moneys || '',
                 remark: remark
             }, function(res) {
                 if (res.code == 200) {
@@ -215,10 +240,25 @@
                     <input type="text" class="form-control" id="winning_number" placeholder="请输入6位数字，如：123456" maxlength="6">
                     <small class="help-block">必须是6位数字</small>
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="display: none;">
                     <label for="winning_numbers_json">多等级中奖号码（可选）</label>
                     <textarea class="form-control" id="winning_numbers_json" rows="4" placeholder='JSON格式，如：{"一等奖":"123456","二等奖":"123457","三等奖":"123458"}'></textarea>
                     <small class="help-block">JSON格式，支持多个等级的中奖号码</small>
+                </div>
+                <div class="form-group">
+                    <label for="money">中奖金额（可选）</label>
+                    <input type="number" class="form-control" id="money" placeholder="请输入中奖金额（整数）" min="0" step="1">
+                    <small class="help-block">单位：分（例如：10000 表示 100.00 元）</small>
+                </div>
+                <div class="form-group" style="display: none;">
+                    <label for="moneys">多奖金（可选）</label>
+                    <textarea class="form-control" id="moneys" rows="4" placeholder='JSON格式，如：{"一等奖":10000,"二等奖":5000,"三等奖":2000}'></textarea>
+                    <small class="help-block">JSON格式，支持多个等级的奖金，单位：分</small>
+                </div>
+                <div class="form-group">
+                    <label>中奖钱包</label>
+                    <input type="text" class="form-control" value="普惠钱包（log_type: 13）" readonly style="background-color: #f5f5f5;">
+                    <small class="help-block">固定为普惠钱包，不可修改</small>
                 </div>
                 <div class="form-group">
                     <label for="remark">备注</label>

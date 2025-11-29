@@ -21,11 +21,12 @@ class NumberLotteryController extends AuthController
         $user = $this->user;
         $userId = $user['id'];
         $lotteryDate = date('Y-m-d');
-        $currentHour = (int)date('H');
+        $currentTime = time();
+        $limitTime = strtotime(date('Y-m-d') . ' 19:30:00');
         
-        // 检查是否在19点之后（19点及之后不能抽奖）
-        if ($currentHour >= 19) {
-            // return out(null, 10001, '每天19点后不能抽奖，请明天再来');
+        // 检查是否在19:30之后（19:30及之后不能抽奖）
+        if ($currentTime >= $limitTime) {
+            return out(null, 10001, '每天19:30后不能抽奖，请明天再来');
         }
 
         // 检查用户是否捐款（只有捐款了的用户才能抽奖）
@@ -35,7 +36,7 @@ class NumberLotteryController extends AuthController
             ->count();
         
         if ($hasDonation == 0) {
-            return out(null, 10001, '只有捐款了的用户才能抽奖，请先进行捐款');
+            // return out(null, 10001, '只有捐款了的用户才能抽奖，请先进行捐款');
         }
         
         // 防重复提交（5秒内）
@@ -57,8 +58,8 @@ class NumberLotteryController extends AuthController
         
         Db::startTrans();
         try {
-            // 生成抽奖号码（6位随机数字）
-            $ticketNumber = $this->generateTicketNumber();
+            // 生成抽奖号码（6位随机数字，当天唯一）
+            $ticketNumber = $this->generateUniqueTicketNumber($lotteryDate);
             
             // 创建抽奖记录
             $ticket = NumberLotteryTicket::create([
@@ -95,6 +96,39 @@ class NumberLotteryController extends AuthController
     {
         // 直接生成6位随机数字（000000-999999）
         return str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
+    }
+    
+    /**
+     * 生成当天唯一的抽奖号码（6位随机数字）
+     * @param string $lotteryDate 抽奖日期
+     * @return string 6位数字号码（当天唯一）
+     * @throws Exception
+     */
+    private function generateUniqueTicketNumber($lotteryDate)
+    {
+        $maxAttempts = 100; // 最大尝试次数，避免无限循环
+        $attempts = 0;
+        
+        while ($attempts < $maxAttempts) {
+            // 生成6位随机数字（000000-999999）
+            $ticketNumber = str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            
+            // 检查当天是否已存在该号码
+            $exists = NumberLotteryTicket::where('lottery_date', $lotteryDate)
+                ->where('ticket_number', $ticketNumber)
+                ->where('status', 1)
+                ->count();
+            
+            if ($exists == 0) {
+                // 号码唯一，返回
+                return $ticketNumber;
+            }
+            
+            $attempts++;
+        }
+        
+        // 如果尝试100次都没找到唯一号码，抛出异常
+        throw new Exception('生成唯一抽奖号码失败，请稍后重试');
     }
     
     /**

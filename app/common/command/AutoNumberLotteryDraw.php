@@ -3,10 +3,13 @@
 namespace app\common\command;
 
 use app\model\NumberLotteryDraw;
+use app\model\NumberLotteryTicket;
+use app\model\User;
 use think\console\Command;
 use think\console\Input;
 use think\console\Output;
 use think\facade\Log;
+use think\facade\Db;
 use Exception;
 
 /**
@@ -79,6 +82,9 @@ class AutoNumberLotteryDraw extends Command
                 $output->writeln('');
                 $output->writeln('<info>✅ 更新成功！</info>');
                 $output->writeln("中奖人数：<info>{$result['win_count']}</info>");
+                if ($result['win_count'] > 0) {
+                    $output->writeln("<comment>奖金已自动发放给中奖用户</comment>");
+                }
                 $output->writeln('');
                 $output->writeln('<info>任务完成</info>');
                 return;
@@ -91,13 +97,17 @@ class AutoNumberLotteryDraw extends Command
             $output->writeln("随机生成的中奖号码：<info>{$winningNumber}</info>");
 
             // 调用模型方法开奖（更新用户抽奖记录）
+            // log_type 固定为 13（普惠钱包）
             $result = NumberLotteryDraw::setWinningNumber(
                 $winningNumber,
                 null, // 不设置多等级中奖号码
                 $drawDate,
                 '系统自动开奖', // 备注
                 0, // 操作员ID为0表示系统自动
-                true // 自动开奖需要更新用户抽奖记录
+                true, // 自动开奖需要更新用户抽奖记录
+                null, // 不设置中奖金额
+                null, // 不设置多奖金
+                13 // log_type 固定为 13（普惠钱包）
             );
 
             $output->writeln('');
@@ -107,6 +117,9 @@ class AutoNumberLotteryDraw extends Command
             $output->writeln("总抽奖次数：{$result['total_tickets']}");
             $output->writeln("参与用户数：{$result['total_users']}");
             $output->writeln("中奖人数：<info>{$result['win_count']}</info>");
+            if ($result['win_count'] > 0) {
+                $output->writeln("<comment>奖金已自动发放给中奖用户</comment>");
+            }
             $output->writeln('');
 
             // 记录日志
@@ -180,5 +193,6 @@ class AutoNumberLotteryDraw extends Command
             'total_tickets' => count($tickets),
         ];
     }
+
 }
 

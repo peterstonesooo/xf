@@ -2584,19 +2584,27 @@ class UserController extends AuthController
         $winningNumbersJson = !empty($req['winning_numbers']) ? trim($req['winning_numbers']) : null;
         $remark = !empty($req['remark']) ? trim($req['remark']) : null;
         
+        // 获取金额参数
+        $money = isset($req['money']) && $req['money'] !== '' ? intval($req['money']) : null;
+        $moneys = !empty($req['moneys']) ? trim($req['moneys']) : null;
+        
         // 获取操作员ID
         $adminUser = session('admin_user');
         $operatorId = $adminUser['id'] ?? 0;
         
         try {
             // 调用模型方法设置开奖号码（不更新用户抽奖记录）
+            // log_type 固定为 13（普惠钱包）
             $result = NumberLotteryDraw::setWinningNumber(
                 $winningNumber,
                 $winningNumbersJson,
                 date('Y-m-d'), // 今天
                 $remark,
                 $operatorId,
-                false // 后台手动开奖不更新用户抽奖记录
+                false, // 后台手动开奖不更新用户抽奖记录
+                $money, // 中奖金额
+                $moneys, // 多奖金JSON
+                13 // log_type 固定为 13（普惠钱包）
             );
             
             return out($result, 200, '设置成功，共找到 ' . $result['win_count'] . ' 个中奖记录');

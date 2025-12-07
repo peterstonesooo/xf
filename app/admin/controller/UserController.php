@@ -398,7 +398,7 @@ class UserController extends AuthController
         $req = request()->get();
         $this->validate($req, [
             'user_id' => 'require|number',
-            'type' => 'require|in:15,16',
+            'type' => 'require|in:15,16,18',
         ]);
 
         $this->assign('req', $req);
@@ -697,6 +697,12 @@ class UserController extends AuthController
                 $log_type = 16;
                 $balance_type = 15;
                 $text = '共富钱包';
+                break;
+            case 18:
+                $filed = 'integral';
+                $log_type = 6;
+                $balance_type = 15;
+                $text = '积分';
                 break;
             default:
                 return out(null, 10001, '类型错误');

@@ -14,8 +14,10 @@ class UserBalanceLogController extends AuthController
         //$req['log_type'] = 1;
         $data = $this->logList($req);
         $typeMap = config('map.user_balance_log.balance_type_map');
+        $logTypeMap = config('map.user_balance_log.log_type_map');
         foreach($data as &$item){
             $item['type_text'] = $typeMap[$item['type']];
+            $item['log_type_text'] = $logTypeMap[$item['log_type']] ?? '';
         }
 
         $this->assign('req', $req);
@@ -76,10 +78,12 @@ class UserBalanceLogController extends AuthController
 
         $data = $builder->select();
         $typeMap = config('map.user_balance_log.balance_type_map');
+        $logTypeMap = config('map.user_balance_log.log_type_map');
         
         // 处理数据
         foreach ($data as &$item) {
             $item['type_text'] = $typeMap[$item['type']] ?? '';
+            $item['log_type_text'] = $logTypeMap[$item['log_type']] ?? '';
             $item['user_phone'] = $item['user']['phone'] ?? '';
             $item['admin_nickname'] = $item['adminUser']['nickname'] ?? '';
         }
@@ -89,6 +93,7 @@ class UserBalanceLogController extends AuthController
             'id' => 'ID',
             'user_phone' => '会员手机号',
             'type_text' => '类型',
+            'log_type_text' => '钱包类型',
             'before_balance' => '变化前余额',
             'change_balance' => '变动金额',
             'after_balance' => '变化后余额',

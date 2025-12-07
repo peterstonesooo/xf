@@ -33,6 +33,7 @@
                                 <option value="17">共富钱包</option>
                                 <option value="15">普惠钱包</option>
                                 <option value="16">振兴钱包</option>
+                                <option value="18">积分</option>
                                 
                             </select>
                         </div>
@@ -76,7 +77,7 @@
 
     function sub()
     {
-        var subUrl = "<?php $map = [15 => url('admin/User/addBalance'), 16 => url('admin/User/deductBalance')]; echo $map[$req['type']]; ?>";
+        var subUrl = "<?php $map = [15 => url('admin/User/addBalance'), 16 => url('admin/User/deductBalance'), 18 => url('admin/User/addBalance')]; echo $map[$req['type']] ?? url('admin/User/addBalance'); ?>";
         $.post(subUrl, $('#commentForm').serialize(), function (res) {
             if (res.code == '200') {
                 window.location.href = document.referrer;

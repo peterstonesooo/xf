@@ -1675,7 +1675,7 @@ class UserController extends AuthController
                 $obj = $obj->where('log_type', 'not in', [6,9,10]);
             }
         }else{
-            $obj = $obj->where('log_type', 'not in', [9,10]);
+            $obj = $obj->where('log_type', 'not in', [6,9,10]);
         }
 
         if(isset($req['days'])) {

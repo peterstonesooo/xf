@@ -110,7 +110,7 @@ class ProjectController extends AuthController
                     $order = Order::where('user_id', $user_id)->where('project_id', $item['id'])->count();
                 }
                 if($item['purchase_limit_per_user'] > 0){   //每人限购
-                    if($order > $item['purchase_limit_per_user']){
+                    if($order >= $item['purchase_limit_per_user']){
                         $item['is_buy'] = 1;
                     }else{
                         $item['is_buy'] = 0;

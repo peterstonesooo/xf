@@ -125,6 +125,43 @@ class LotteryController extends AuthController
         return out($list);
     }
 
+    /**
+     * 获取最新中奖记录
+     * @return \think\response\Json
+     */
+    public function getLatestWinners()
+    {
+        // 获取最新10条中奖记录（排除"谢谢惠顾"）
+        $records = LotteryRecord::with(['user'])
+            ->where('lottery_result', '<>', '谢谢惠顾')
+            ->order('id', 'desc')
+            ->limit(10)
+            ->select();
+        
+        // 格式化中奖记录：手机号-奖品
+        $winners = [];
+        foreach ($records as $record) {
+            $phone = $record->user ? $record->user->phone : '';
+            // 隐藏手机号中间4位
+            if ($phone && strlen($phone) == 11) {
+                $phone = substr($phone, 0, 3) . '****' . substr($phone, 7);
+            }
+            $winners[] = [
+                'phone' => $phone,
+                'prize' => $record->lottery_result,
+                'text' => $phone . '-' . $record->lottery_result
+            ];
+        }
+        
+        // 统计中奖总人数（去重用户ID，排除"谢谢惠顾"）
+        $totalWinners = Db::query("SELECT COUNT(DISTINCT user_id) as count FROM mp_lottery_record WHERE lottery_result <> '谢谢惠顾'")[0]['count'] ?? 0;
+        
+        return out([
+            'winners' => $winners,
+            'total_winners' => $totalWinners
+        ]);
+    }
+
     public function getLotterys(){
         $req = $this->validate(request(), [
             'type|类型' => 'in:1,2',

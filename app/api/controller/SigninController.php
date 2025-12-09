@@ -461,7 +461,7 @@ class SigninController extends AuthController
             ->where('user_id',$user['id'])
             ->order('signin_date','desc')->select();
         $contue = 0;
-        if($lastsign){
+        if($lastsign && !$lastsign->isEmpty()){
             $contue = $lastsign[0]['continue_days'];
         }
         //leiji

@@ -105,11 +105,13 @@ class NumberLotteryController extends AuthController
             ->where('pay_time', '>', 0)  // 有支付时间
             ->count();
         
-        // 查询今天已摇号次数
-        $todayCount = NumberLotteryTicket::where('user_id', $userId)
+        // 查询今天已摇号记录
+        $todayTicket = NumberLotteryTicket::where('user_id', $userId)
             ->where('lottery_date', $lotteryDate)
             ->where('status', 1)
-            ->count();
+            ->find();
+        
+        $todayCount = $todayTicket ? 1 : 0;
         
         // 计算可摇号次数（有捐款的用户每天可以一次）
         $availableCount = 0;
@@ -123,12 +125,32 @@ class NumberLotteryController extends AuthController
             ->group('user_id')
             ->count();
         
+        // 如果已经摇号，返回摇号结果
+        $ticketInfo = null;
+        if ($todayTicket) {
+            $ticketInfo = [
+                'id' => $todayTicket->id,
+                'ticket_id' => $todayTicket->id,
+                'ticket_number' => $todayTicket->ticket_number,
+                'lottery_date' => $todayTicket->lottery_date,
+                'is_win' => $todayTicket->is_win,
+                'win_level' => $todayTicket->win_level,
+                'win_prize' => $todayTicket->win_prize,
+                'draw_id' => $todayTicket->draw_id,
+                'ticket_status' => $todayTicket->ticket_status ?? 1,
+                'ticket_status_text' => $todayTicket->ticket_status_text ?? '待开奖',
+                'draw_time' => $todayTicket->created_at,
+                'created_at' => $todayTicket->created_at,
+            ];
+        }
+        
         return out([
             'has_donation' => $hasDonation > 0 ? 1 : 0,  // 是否有捐款：1-有，0-无
             'today_count' => $todayCount,  // 今天已摇号次数
             'available_count' => $availableCount,  // 今天可摇号次数
             'total_win_count' => $totalWinCount,  // 总的中奖人数
             'lottery_date' => $lotteryDate,  // 抽奖日期
+            'ticket_info' => $ticketInfo,  // 今天的摇号结果（如果已摇号）
         ], 200, '查询成功');
     }
 

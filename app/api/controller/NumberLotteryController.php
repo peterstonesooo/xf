@@ -87,6 +87,52 @@ class NumberLotteryController extends AuthController
             return out(null, 10001, '抽奖失败：' . $e->getMessage());
         }
     }
+
+    /**
+     * 计算用户的摇号次数
+     * 有捐款的用户，每天可以一次摇号
+     * @return \think\response\Json
+     */
+    public function drawCount()
+    {
+        $user = $this->user;
+        $userId = $user['id'];
+        $lotteryDate = date('Y-m-d');
+        
+        // 检查用户是否捐款（只有捐款了的用户才能抽奖）
+        $hasDonation = OrderTongxing::where('user_id', $userId)
+            ->where('status', '>', 1)  // 已支付状态
+            ->where('pay_time', '>', 0)  // 有支付时间
+            ->count();
+        
+        // 查询今天已摇号次数
+        $todayCount = NumberLotteryTicket::where('user_id', $userId)
+            ->where('lottery_date', $lotteryDate)
+            ->where('status', 1)
+            ->count();
+        
+        // 计算可摇号次数（有捐款的用户每天可以一次）
+        $availableCount = 0;
+        if ($hasDonation > 0) {
+            $availableCount = max(0, 1 - $todayCount); // 每天最多1次，减去已摇号次数
+        }
+        
+        // 查询总的中奖人数（不重复的用户数）
+        $totalWinCount = NumberLotteryTicket::where('is_win', 1)
+            ->where('status', 1)
+            ->group('user_id')
+            ->count();
+        
+        return out([
+            'has_donation' => $hasDonation > 0 ? 1 : 0,  // 是否有捐款：1-有，0-无
+            'today_count' => $todayCount,  // 今天已摇号次数
+            'available_count' => $availableCount,  // 今天可摇号次数
+            'total_win_count' => $totalWinCount,  // 总的中奖人数
+            'lottery_date' => $lotteryDate,  // 抽奖日期
+        ], 200, '查询成功');
+    }
+
+    
     
     /**
      * 生成抽奖号码（6位随机数字）
@@ -230,6 +276,7 @@ class NumberLotteryController extends AuthController
                 'total_tickets' => $item->total_tickets,
                 'total_users' => $item->total_users,
                 'win_count' => $item->win_count,
+                'money' => $item->money,
                 'remark' => $item->remark,
             ];
         }

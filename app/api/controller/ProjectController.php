@@ -94,14 +94,17 @@ class ProjectController extends AuthController
             }else{
                 if($discount != 1){
                     $item['discount'] = round($item['single_amount'] * $discount, 2);
+                    $item['yuding_discount'] = round($item['yuding_amount'] * $discount, 2);
                 }else{
                     $item['discount'] = $item['single_amount'];
                     if($user['vip_status'] == 1 && in_array($req['project_group_id'], [7,8,9,10,11])){
                         $item['discount'] = round($item['single_amount'] * 0.9, 2);
+                        $item['yuding_discount'] = round($item['yuding_amount'] * 0.9, 2);
                     }
                 }
                 if($req['project_group_id'] ==13){
                     $item['discount'] = intval($item['single_amount']);
+                    $item['yuding_discount'] = intval($item['yuding_amount']);
                 }
                 
                 if($item['daily_bonus_ratio'] > 0){

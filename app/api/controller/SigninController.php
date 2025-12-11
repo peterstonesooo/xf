@@ -16,6 +16,7 @@ use think\facade\Cache;
 use app\model\User;
 use app\model\TurntableUserLog;
 use app\model\UserSignin;
+use app\model\UserSigninRewardLog;
 use Exception;
 use think\facade\Db;
 
@@ -731,5 +732,137 @@ class SigninController extends AuthController
         ];
         return out($arr);
 
+    }
+
+    /**
+     * 领取签到奖励
+     * 参数：type=1（连续7天），type=2（连续15天），type=3（连续30天）
+     * @return \think\response\Json
+     */
+    public function receiveReward()
+    {
+        $user = $this->user;
+        $userId = $user['id'];
+        $req = request()->param();
+        
+        // 验证参数
+        if (!isset($req['type']) || !in_array($req['type'], [1, 2, 3])) {
+            return out(null, 10001, '参数错误：type必须为1、2或3（1-连续7天，2-连续15天，3-连续30天）');
+        }
+        
+        $type = intval($req['type']);
+        $rewardDays = UserSigninRewardLog::getRewardDaysByType($type);
+        
+        if (!$rewardDays) {
+            return out(null, 10001, '参数错误：无效的type值');
+        }
+        
+        // 获取当前年月
+        $rewardYearMonth = date('Y-m');
+        $monthStart = date('Y-m-01');
+        $monthEnd = date('Y-m-t');
+        
+        // 查询用户本月的最大连续签到天数
+        $maxContinueDays = UserSignin::where('user_id', $userId)
+            ->where('signin_date', '>=', $monthStart)
+            ->where('signin_date', '<=', $monthEnd)
+            ->max('continue_days') ?: 0;
+        
+        // 检查本月连续签到天数是否达到要求
+        if ($maxContinueDays < $rewardDays) {
+            return out(null, 10001, '您本月连续签到天数不足' . $rewardDays . '天，当前最大连续签到天数为' . $maxContinueDays . '天，无法领取该奖励');
+        }
+        
+        // 检查本月是否已经领取过该奖励
+        $exists = UserSigninRewardLog::where('user_id', $userId)
+            ->where('reward_days', $rewardDays)
+            ->where('reward_year_month', $rewardYearMonth)
+            ->where('status', 1)
+            ->find();
+        
+        if ($exists) {
+            return out(null, 10001, '您本月已经领取过' . UserSigninRewardLog::getRewardDaysText($rewardDays) . '的奖励了');
+        }
+        
+        Db::startTrans();
+        try {
+            // 创建领取记录
+            $rewardLog = UserSigninRewardLog::create([
+                'user_id' => $userId,
+                'reward_days' => $rewardDays,
+                'reward_year_month' => $rewardYearMonth,
+                'reward_amount' => 0.00,  // 可根据实际业务设置奖励金额
+                'reward_jifen' => 0,      // 可根据实际业务设置奖励积分
+                'reward_gold' => 0,       // 可根据实际业务设置奖励金币
+                'status' => 1,
+                'remark' => '用户领取' . UserSigninRewardLog::getRewardDaysText($rewardDays) . '签到奖励',
+            ]);
+            
+            Db::commit();
+            
+            return out([
+                'id' => $rewardLog->id,
+                'reward_days' => $rewardDays,
+                'reward_days_text' => UserSigninRewardLog::getRewardDaysText($rewardDays),
+                'reward_year_month' => $rewardYearMonth,
+                'created_at' => $rewardLog->created_at,
+            ], 200, '领取成功');
+            
+        } catch (Exception $e) {
+            Db::rollback();
+            return out(null, 10001, '领取失败：' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 本月领取记录
+     * @return \think\response\Json
+     */
+    public function monthRewardList()
+    {
+        $user = $this->user;
+        $userId = $user['id'];
+        $rewardYearMonth = date('Y-m');
+        
+        // 查询本月所有领取记录
+        $list = UserSigninRewardLog::where('user_id', $userId)
+            ->where('reward_year_month', $rewardYearMonth)
+            ->where('status', 1)
+            ->order('reward_days', 'asc')
+            ->order('created_at', 'desc')
+            ->select();
+        
+        // 格式化数据
+        $data = [];
+        foreach ($list as $item) {
+            $data[] = [
+                'id' => $item->id,
+                'reward_days' => $item->reward_days,
+                'reward_days_text' => UserSigninRewardLog::getRewardDaysText($item->reward_days),
+                'reward_year_month' => $item->reward_year_month,
+                'reward_amount' => $item->reward_amount,
+                'reward_jifen' => $item->reward_jifen,
+                'reward_gold' => $item->reward_gold,
+                'status' => $item->status,
+                'remark' => $item->remark,
+                'created_at' => $item->created_at,
+            ];
+        }
+        
+        // 统计本月已领取的奖励类型
+        $receivedTypes = [];
+        foreach ($list as $item) {
+            $type = array_search($item->reward_days, UserSigninRewardLog::$rewardDaysMap);
+            if ($type) {
+                $receivedTypes[] = $type;
+            }
+        }
+        
+        return out([
+            'reward_year_month' => $rewardYearMonth,
+            'list' => $data,
+            'total' => count($data),
+            'received_types' => $receivedTypes,  // 已领取的类型：[1,2,3]
+        ], 200, '查询成功');
     }
 }

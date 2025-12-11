@@ -1099,9 +1099,9 @@ class UserController extends AuthController
             if(dbconfig('direct_recommend_reward_zhulijuan') > 0){
                 User::changeInc($user['up_user_id'], dbconfig('direct_recommend_reward_zhulijuan'), 'xingfu_tickets', 66, $user['id'], 12, '实名审核通过奖励-' . $user['realname'], 0, 2, 'TD');
             }
-            //振兴钱包
+            //振兴钱包【改共富金】
             if(dbconfig('direct_recommend_reward_zhenxing') > 0){
-                User::changeInc($user['up_user_id'], dbconfig('direct_recommend_reward_zhenxing'), 'zhenxing_wallet', 66, $user['id'], 14, '直推实名认证奖励-' . $user['realname'], 0, 2, 'TD');
+                User::changeInc($user['up_user_id'], dbconfig('direct_recommend_reward_zhenxing'), 'gongfu_wallet', 66, $user['id'], 16, '直推实名认证奖励-' . $user['realname'], 0, 2, 'TD');
             }
             
 
@@ -1766,9 +1766,9 @@ class UserController extends AuthController
                     if(dbconfig('direct_recommend_reward_zhulijuan') > 0){
                         User::changeInc($user['up_user_id'], dbconfig('direct_recommend_reward_zhulijuan'), 'xingfu_tickets', 66, $user['id'], 12, '实名审核通过奖励-' . $user['realname'], 0, 2, 'TD');
                     }
-                    //振兴钱包
+                    //振兴钱包【改共富金】
                     if(dbconfig('direct_recommend_reward_zhenxing') > 0){
-                        User::changeInc($user['up_user_id'], dbconfig('direct_recommend_reward_zhenxing'), 'zhenxing_wallet', 66, $user['id'], 14, '直推实名认证奖励-' . $user['realname'], 0, 2, 'TD');
+                        User::changeInc($user['up_user_id'], dbconfig('direct_recommend_reward_zhenxing'), 'gongfu_wallet', 66, $user['id'], 16, '直推实名认证奖励-' . $user['realname'], 0, 2, 'TD');
                     }
                     
 
@@ -2128,9 +2128,9 @@ class UserController extends AuthController
                 if(dbconfig('direct_recommend_reward_zhulijuan') > 0){
                     User::changeInc($user['up_user_id'], dbconfig('direct_recommend_reward_zhulijuan'), 'xingfu_tickets', 66, $user['id'], 12, '实名审核通过奖励-' . $user['realname'], 0, 2, 'TD');
                 }
-                //振兴钱包
+                //振兴钱包【改共富金】
                 if(dbconfig('direct_recommend_reward_zhenxing') > 0){
-                    User::changeInc($user['up_user_id'], dbconfig('direct_recommend_reward_zhenxing'), 'zhenxing_wallet', 66, $user['id'], 14, '直推实名认证奖励-' . $user['realname'], 0, 2, 'TD');
+                    User::changeInc($user['up_user_id'], dbconfig('direct_recommend_reward_zhenxing'), 'gongfu_wallet', 66, $user['id'], 16, '直推实名认证奖励-' . $user['realname'], 0, 2, 'TD');
                 }
             
                 if(dbconfig('direct_recommend_reward_jifen') > 0){

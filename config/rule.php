@@ -912,6 +912,16 @@ return array(
                     'name' => 'LoanConfig/batchUpdate',
                     'title' => '批量更新配置',
                 ),
+            6 =>
+                array(
+                    'name' => 'LoanConfig/investmentWalletList',
+                    'title' => '查看出资钱包管理',
+                ),
+            7 =>
+                array(
+                    'name' => 'LoanConfig/saveInvestmentWallet',
+                    'title' => '保存出资钱包配置',
+                ),
         ),
     '出资申请记录管理' =>
         array(

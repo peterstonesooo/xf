@@ -1,0 +1,138 @@
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <h3 class="box-title">出资钱包管理</h3>
+            </div>
+            <div class="box-body">
+                <form class="form-horizontal" id="wallet-form">
+                    <input type="hidden" name="id" value="{$config['id']}">
+                    
+                    <!-- 启用状态配置 -->
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">是否启用</label>
+                        <div class="col-sm-8">
+                            <select class="form-control" name="is_show" id="is_show" required>
+                                <option value="0" {if condition="$config['is_show'] == 0"}selected{/if}>禁用</option>
+                                <option value="1" {if condition="$config['is_show'] == 1"}selected{/if}>启用</option>
+                            </select>
+                            <small class="help-block">控制出资钱包功能是否启用</small>
+                        </div>
+                    </div>
+                    
+                    <!-- 支持的出资钱包类型 -->
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">支持的出资钱包类型</label>
+                        <div class="col-sm-8">
+                            <div class="checkbox-group" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; border-radius: 4px;">
+                                {volist name="walletOptions" id="walletName" key="walletId"}
+                                    <div class="checkbox" style="margin: 10px 0;">
+                                        <label>
+                                            <input type="checkbox" name="wallet_types[]" value="{$walletId}" 
+                                                {if condition="in_array($walletId, $selectedWallets)"}checked{/if}>
+                                            {$walletName}
+                                        </label>
+                                    </div>
+                                {/volist}
+                            </div>
+                            <small class="help-block">选择支持用于出资的钱包类型，可多选</small>
+                        </div>
+                    </div>
+                    
+                    <!-- 当前配置信息 -->
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">当前配置值</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" value="{$config['config_value']}" readonly>
+                            <small class="help-block">当前选中的钱包类型ID（逗号分隔）</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">配置描述</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" value="{$config['config_desc']}" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-8">
+                            <button type="button" class="btn btn-primary" id="save-btn">保存配置</button>
+                            <a href="{:url('admin/LoanConfig/configList')}" class="btn btn-default">返回配置列表</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // 全选/取消全选功能
+    var $checkboxes = $('input[name="wallet_types[]"]');
+    
+    // 添加全选按钮
+    $('.checkbox-group').prepend(
+        '<div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee;">' +
+        '<button type="button" class="btn btn-sm btn-default" id="select-all">全选</button> ' +
+        '<button type="button" class="btn btn-sm btn-default" id="select-none">取消全选</button>' +
+        '</div>'
+    );
+    
+    $('#select-all').click(function() {
+        $checkboxes.prop('checked', true);
+    });
+    
+    $('#select-none').click(function() {
+        $checkboxes.prop('checked', false);
+    });
+    
+    // Ajax提交表单
+    $('#save-btn').click(function() {
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('保存中...');
+        
+        var formData = new FormData($('#wallet-form')[0]);
+        
+        $.ajax({
+            url: '{:url("admin/LoanConfig/saveInvestmentWallet")}',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(res) {
+                if (res.code == 200) {
+                    alert('保存成功！');
+                    location.reload();
+                } else {
+                    alert('保存失败：' + res.msg);
+                    $btn.prop('disabled', false).text('保存配置');
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('保存失败：' + error);
+                $btn.prop('disabled', false).text('保存配置');
+            }
+        });
+    });
+});
+</script>
+
+<style>
+.checkbox-group {
+    background-color: #f9f9f9;
+}
+.checkbox-group .checkbox {
+    padding: 5px 0;
+}
+.checkbox-group .checkbox label {
+    font-weight: normal;
+    cursor: pointer;
+}
+.checkbox-group .checkbox input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+</style>

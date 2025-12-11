@@ -212,4 +212,97 @@ class LoanConfigController extends AuthController
             return out(null, 500, '批量更新失败：' . $e->getMessage());
         }
     }
+
+    /**
+     * 出资钱包管理列表
+     */
+    public function investmentWalletList()
+    {
+        // 查询出资钱包配置
+        $config = LoanConfig::where('config_key', 'investment_wallet_types')->find();
+        
+        if (!$config) {
+            // 如果配置不存在，创建一个默认配置
+            $config = LoanConfig::create([
+                'config_key' => 'investment_wallet_types',
+                'config_value' => '1,16,13,2,17',
+                'config_desc' => '支持的出资钱包类型',
+                'config_type' => 'select',
+                'config_options' => json_encode([
+                    "1" => "充值余额",
+                    "2" => "荣誉钱包",
+                    "3" => "稳盈钱包",
+                    "4" => "民生钱包",
+                    "5" => "惠民钱包",
+                    "6" => "积分",
+                    "7" => "幸福收益",
+                    "8" => "稳赢钱包转入",
+                    "9" => "抽奖卷",
+                    "10" => "体验钱包预支金",
+                    "11" => "体验钱包",
+                    "12" => "幸福助力卷",
+                    "13" => "普惠钱包",
+                    "14" => "振兴钱包",
+                    "15" => "投票奖励",
+                    "16" => "共富钱包",
+                    "17" => "收益钱包"
+                ]),
+                'sort' => 33,
+                'is_show' => 1
+            ]);
+        }
+        
+        // 解析配置选项
+        $walletOptions = [];
+        if (!empty($config->config_options)) {
+            $walletOptions = json_decode($config->config_options, true) ?: [];
+        }
+        
+        // 解析已选中的钱包类型
+        $selectedWallets = [];
+        if (!empty($config->config_value)) {
+            $selectedWallets = explode(',', $config->config_value);
+        }
+        
+        View::assign('config', $config);
+        View::assign('walletOptions', $walletOptions);
+        View::assign('selectedWallets', $selectedWallets);
+        View::assign('isShowMap', LoanConfig::$isShowMap);
+        
+        return View::fetch('loan_config/investment_wallet_list');
+    }
+
+    /**
+     * 保存出资钱包配置
+     */
+    public function saveInvestmentWallet()
+    {
+        try {
+            $req = request()->param();
+            
+            $config = LoanConfig::where('config_key', 'investment_wallet_types')->find();
+            
+            if (!$config) {
+                return out(null, 500, '配置不存在');
+            }
+            
+            // 更新配置值（选中的钱包类型，逗号分隔）
+            if (isset($req['wallet_types']) && is_array($req['wallet_types'])) {
+                $config->config_value = implode(',', $req['wallet_types']);
+            } else {
+                $config->config_value = '';
+            }
+            
+            // 更新启用状态
+            if (isset($req['is_show'])) {
+                $config->is_show = intval($req['is_show']);
+            }
+            
+            $config->save();
+            
+            return out(null, 200, '保存成功');
+        } catch (\Exception $e) {
+            return out(null, 500, '保存失败：' . $e->getMessage());
+        }
+    }
 }

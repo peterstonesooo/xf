@@ -301,6 +301,11 @@ return array(
                             'icon' => 'fa-circle-o',
                             'url' => 'admin/LoanConfig/configList',
                         ),
+                    '出资钱包管理' =>
+                        array(
+                            'icon' => 'fa-circle-o',
+                            'url' => 'admin/LoanConfig/investmentWalletList',
+                        ),
                     '出资申请记录' =>
                         array(
                             'icon' => 'fa-circle-o',

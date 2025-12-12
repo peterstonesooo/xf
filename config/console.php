@@ -69,7 +69,10 @@ return [
         'project:reset-progress' => 'app\common\command\ResetProjectProgress',
         'auto:number-lottery-draw' => 'app\common\command\AutoNumberLotteryDraw',
         'fix:user-relation' => 'app\common\command\FixUserRelation',
+        // 定投返还
         'mp_order_dingtou' => 'app\common\command\MpOrderDingtou',
+        // 钱包余额迁移
+        'migrate:wallet-balance' => 'app\common\command\MigrateWalletBalance',
         
         // 黄金K线系统命令
         'sync:gold-kline' => 'app\common\command\SyncGoldKline',

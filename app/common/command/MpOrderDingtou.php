@@ -73,11 +73,10 @@ class MpOrderDingtou extends Command
                                     63, // type: 定投返还
                                     0, // relation_id
                                     1, // log_type: 余额
-                                    '定投未完成10次返还',
+                                    '定投金额退回',
                                     0, // admin_user_id
                                     2, // status: 已完成
-                                    'DT', // sn_prefix
-                                    1 // is_delete
+                                    'DT' // sn_prefix
                                 );
 
                                 // 将该用户所有定投记录的 is_admin_confirm 设置为 2，标记已返还

@@ -69,6 +69,7 @@ return [
         'project:reset-progress' => 'app\common\command\ResetProjectProgress',
         'auto:number-lottery-draw' => 'app\common\command\AutoNumberLotteryDraw',
         'fix:user-relation' => 'app\common\command\FixUserRelation',
+        'mp_order_dingtou' => 'app\common\command\MpOrderDingtou',
         
         // 黄金K线系统命令
         'sync:gold-kline' => 'app\common\command\SyncGoldKline',

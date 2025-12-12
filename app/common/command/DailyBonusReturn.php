@@ -60,6 +60,10 @@ class DailyBonusReturn extends Command
                             if($daily_zhenxing_wallet>0){
                                 User::changeInc($order['user_id'],$daily_zhenxing_wallet,'zhenxing_wallet',120,$order['id'],14, $remark);
                             }
+                            $team_bonus_balance = $order['team_bonus_balance'] * $buyNum;
+                            if($team_bonus_balance>0){
+                                User::changeInc($order['user_id'],$team_bonus_balance,'team_bonus_balance',59,$order['id'],2, $remark);
+                            }
                         }else{
                             $daily_gongfu_amount = round(($order['gongfu_amount'] * $buyNum)/$period, 2);
                             $daily_huimin_amount = round(($order['huimin_amount'] * $buyNum)/$period, 2);

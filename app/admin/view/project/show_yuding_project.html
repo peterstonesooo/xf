@@ -245,11 +245,11 @@
                 </div>
                 <div class="row dd_input_group">
                     <div class="form-group">
-                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">缴付开始时间</label>
+                        <label class="col-xs-4 col-sm-2 col-md-2 col-lg-1 control-label dd_input_l">预定结束时间</label>
                         <div class="col-xs-7 col-sm-6 col-md-4 col-lg-4">
                             <div class="left-box" style="margin-right: 20px;">
                                 <div class="max-box">
-                                    <input id="yuding_time" type="text" name="yuding_time" placeholder="请选择缴付开始时间" value="{$data['yuding_time']??''}"/>
+                                    <input id="yuding_time" type="text" name="yuding_time" placeholder="请选择预定结束时间" value="{$data['yuding_time']??''}"/>
                                 </div>
                             </div>
                         </div>
@@ -319,7 +319,7 @@
             timeFormat: "HH:mm:ss"
         });
         
-        // 缴付开始时间选择器
+        // 预定结束时间选择器
         $("#yuding_time").datetimepicker({
             controlType: "select",
             dayNamesMin: dayNamesMin,

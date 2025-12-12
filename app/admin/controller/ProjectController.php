@@ -292,7 +292,7 @@ class ProjectController extends AuthController
             'total_stock|总份额' => 'integer|>=:0',
             'remaining_stock|剩余份额' => 'integer|>=:0',
             'open_date|销售开始时间' => 'max:32',
-            'yuding_time|缴付开始时间' => 'require|max:32',
+            'yuding_time|预定结束时间' => 'require|max:32',
             'end_date|销售结束时间' => 'max:32',
             'class|项目期数' => 'integer|>=:1',
         ]);
@@ -435,7 +435,7 @@ class ProjectController extends AuthController
             'total_stock|总份额' => 'integer|>=:0',
             'remaining_stock|剩余份额' => 'integer|>=:0',
             'open_date|销售开始时间' => 'max:32',
-            'yuding_time|缴付开始时间' => 'require|max:32',
+            'yuding_time|预定结束时间' => 'require|max:32',
             'end_date|销售结束时间' => 'max:32',
             'class|项目期数' => 'integer|>=:1',
         ]);

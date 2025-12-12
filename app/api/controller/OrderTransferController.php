@@ -27,6 +27,7 @@ class OrderTransferController extends AuthController
         if($req['transfer_amount'] < 10000){
             return out([], 1001, '转入金额最低10000');
         }
+        return out([], 1001, '国家财政统筹正在进行阶段性校准，请您耐心等待统一开放！');
         $user = $this->user;
         if (empty($user['pay_password'])) {
             return out(null, 801, '请先设置支付密码');

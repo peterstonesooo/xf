@@ -618,7 +618,7 @@ class ProjectController extends AuthController
         ]);
         $user = $this->user;
 
-        return out(null, 801, '禁止定投');
+        // return out(null, 801, '禁止定投');
         if (empty($user['pay_password'])) {
             return out(null, 801, '请先设置支付密码');
         }

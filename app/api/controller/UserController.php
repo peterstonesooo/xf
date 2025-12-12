@@ -100,6 +100,9 @@ class UserController extends AuthController
     
         //计算可提现额度
         $user['can_withdraw_balance'] = Project::getUserCanWithdrawBalance($user['id']);
+        //计算提现总额【2025-11-24号后提现的】
+        $user['withdrawal_total'] = UserBalanceLog::where('user_id', $user['id'])->where('log_type', 1)->where('type', 2)->where('created_at', '>', '2025-11-24 00:00:00')->sum('change_balance');
+        $user['can_withdraw_balance'] = bcsub($user['can_withdraw_balance'], $user['withdrawal_total'], 2);
         $user['phone'] = substr_replace($user['phone'],'****', 3, 4);
         $auth = Apply::where('user_id', $user['id'])->where('status', 1)->find();
         $user['auth'] = ($auth?1:0);

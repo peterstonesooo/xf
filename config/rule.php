@@ -922,6 +922,11 @@ return array(
                     'name' => 'LoanConfig/saveInvestmentWallet',
                     'title' => '保存出资钱包配置',
                 ),
+            8 =>
+                array(
+                    'name' => 'LoanConfig/saveInvestmentWalletSort',
+                    'title' => '保存出资钱包排序',
+                ),
         ),
     '出资申请记录管理' =>
         array(

@@ -258,15 +258,36 @@ class LoanConfigController extends AuthController
             $walletOptions = json_decode($config->config_options, true) ?: [];
         }
         
-        // 解析已选中的钱包类型
+        // 解析已选中的钱包类型（保持顺序）
         $selectedWallets = [];
+        $selectedWalletList = []; // 用于显示，包含ID和名称
         if (!empty($config->config_value)) {
             $selectedWallets = explode(',', $config->config_value);
+            // 按照配置值中的顺序组织数据
+            foreach ($selectedWallets as $walletId) {
+                $walletId = trim($walletId);
+                if (isset($walletOptions[$walletId])) {
+                    $selectedWalletList[] = [
+                        'id' => $walletId,
+                        'name' => $walletOptions[$walletId]
+                    ];
+                }
+            }
+        }
+        
+        // 未选中的钱包（用于添加）
+        $unselectedWallets = [];
+        foreach ($walletOptions as $walletId => $walletName) {
+            if (!in_array($walletId, $selectedWallets)) {
+                $unselectedWallets[$walletId] = $walletName;
+            }
         }
         
         View::assign('config', $config);
         View::assign('walletOptions', $walletOptions);
         View::assign('selectedWallets', $selectedWallets);
+        View::assign('selectedWalletList', $selectedWalletList);
+        View::assign('unselectedWallets', $unselectedWallets);
         View::assign('isShowMap', LoanConfig::$isShowMap);
         
         return View::fetch('loan_config/investment_wallet_list');
@@ -301,6 +322,37 @@ class LoanConfigController extends AuthController
             $config->save();
             
             return out(null, 200, '保存成功');
+        } catch (\Exception $e) {
+            return out(null, 500, '保存失败：' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 保存出资钱包排序
+     */
+    public function saveInvestmentWalletSort()
+    {
+        try {
+            $req = request()->param();
+            
+            $config = LoanConfig::where('config_key', 'investment_wallet_types')->find();
+            
+            if (!$config) {
+                return out(null, 500, '配置不存在');
+            }
+            
+            // 接收排序后的钱包ID数组
+            if (isset($req['wallet_order']) && is_array($req['wallet_order'])) {
+                // 过滤空值并保持顺序
+                $walletOrder = array_filter($req['wallet_order'], function($id) {
+                    return !empty($id);
+                });
+                $config->config_value = implode(',', $walletOrder);
+                $config->save();
+                return out(null, 200, '排序保存成功');
+            } else {
+                return out(null, 500, '参数错误');
+            }
         } catch (\Exception $e) {
             return out(null, 500, '保存失败：' . $e->getMessage());
         }

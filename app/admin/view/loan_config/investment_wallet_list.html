@@ -20,22 +20,47 @@
                         </div>
                     </div>
                     
-                    <!-- 支持的出资钱包类型 -->
+                    <!-- 已选中的钱包类型（可拖拽排序） -->
                     <div class="form-group">
-                        <label class="col-sm-2 control-label">支持的出资钱包类型</label>
+                        <label class="col-sm-2 control-label">已选钱包（可拖拽排序）</label>
                         <div class="col-sm-8">
-                            <div class="checkbox-group" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; border-radius: 4px;">
-                                {volist name="walletOptions" id="walletName" key="walletId"}
-                                    <div class="checkbox" style="margin: 10px 0;">
-                                        <label>
-                                            <input type="checkbox" name="wallet_types[]" value="{$walletId}" 
-                                                {if condition="in_array($walletId, $selectedWallets)"}checked{/if}>
-                                            {$walletName}
-                                        </label>
+                            <div id="selected-wallet-list" class="wallet-sortable-list">
+                                {volist name="selectedWalletList" id="wallet"}
+                                    <div class="wallet-item" data-wallet-id="{$wallet.id}">
+                                        <span class="drag-handle"><i class="fa fa-arrows"></i></span>
+                                        <span class="wallet-name">{$wallet.name}</span>
+                                        <span class="wallet-id">(ID: {$wallet.id})</span>
+                                        <button type="button" class="btn btn-xs btn-danger remove-wallet" style="float: right; margin-top: -5px;">移除</button>
+                                        <input type="hidden" name="wallet_types[]" value="{$wallet.id}">
                                     </div>
                                 {/volist}
+                                {empty name="selectedWalletList"}
+                                    <div class="empty-tip">暂无已选钱包，请在下方添加</div>
+                                {/empty}
                             </div>
-                            <small class="help-block">选择支持用于出资的钱包类型，可多选</small>
+                            <small class="help-block">拖拽左侧图标可调整钱包显示顺序，顺序将影响接口返回的列表顺序</small>
+                        </div>
+                    </div>
+                    
+                    <!-- 未选中的钱包类型（可添加） -->
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">可选钱包</label>
+                        <div class="col-sm-8">
+                            <div class="wallet-available-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; border-radius: 4px; background-color: #f9f9f9;">
+                                {volist name="unselectedWallets" id="walletName" key="walletId"}
+                                    <div class="wallet-item-available">
+                                        <button type="button" class="btn btn-xs btn-success add-wallet" data-wallet-id="{$walletId}" data-wallet-name="{$walletName}">
+                                            <i class="fa fa-plus"></i> 添加
+                                        </button>
+                                        <span class="wallet-name">{$walletName}</span>
+                                        <span class="wallet-id">(ID: {$walletId})</span>
+                                    </div>
+                                {/volist}
+                                {empty name="unselectedWallets"}
+                                    <div class="empty-tip">所有钱包已添加</div>
+                                {/empty}
+                            </div>
+                            <small class="help-block">点击"添加"按钮将钱包添加到已选列表</small>
                         </div>
                     </div>
                     
@@ -43,8 +68,8 @@
                     <div class="form-group">
                         <label class="col-sm-2 control-label">当前配置值</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control" value="{$config['config_value']}" readonly>
-                            <small class="help-block">当前选中的钱包类型ID（逗号分隔）</small>
+                            <input type="text" class="form-control" id="config-value-display" value="{$config['config_value']}" readonly>
+                            <small class="help-block">当前选中的钱包类型ID（按顺序，逗号分隔）</small>
                         </div>
                     </div>
                     
@@ -58,6 +83,7 @@
                     <div class="form-group">
                         <div class="col-sm-offset-2 col-sm-8">
                             <button type="button" class="btn btn-primary" id="save-btn">保存配置</button>
+                            <button type="button" class="btn btn-info" id="save-sort-btn">仅保存排序</button>
                             <a href="{:url('admin/LoanConfig/configList')}" class="btn btn-default">返回配置列表</a>
                         </div>
                     </div>
@@ -67,28 +93,97 @@
     </div>
 </div>
 
+<!-- 引入jQuery UI -->
+<link rel="stylesheet" href="/admin/jquery-ui-1.12.1/jquery-ui.min.css">
+<script src="/admin/jquery-ui-1.12.1/jquery-ui.min.js"></script>
+
 <script>
 $(document).ready(function() {
-    // 全选/取消全选功能
-    var $checkboxes = $('input[name="wallet_types[]"]');
+    // 初始化拖拽排序
+    $("#selected-wallet-list").sortable({
+        handle: '.drag-handle',
+        placeholder: 'wallet-item-placeholder',
+        tolerance: 'pointer',
+        update: function(event, ui) {
+            updateConfigValue();
+        }
+    });
+    $("#selected-wallet-list").disableSelection();
     
-    // 添加全选按钮
-    $('.checkbox-group').prepend(
-        '<div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee;">' +
-        '<button type="button" class="btn btn-sm btn-default" id="select-all">全选</button> ' +
-        '<button type="button" class="btn btn-sm btn-default" id="select-none">取消全选</button>' +
-        '</div>'
-    );
+    // 更新配置值显示
+    function updateConfigValue() {
+        var walletIds = [];
+        $('#selected-wallet-list input[name="wallet_types[]"]').each(function() {
+            walletIds.push($(this).val());
+        });
+        $('#config-value-display').val(walletIds.join(','));
+    }
     
-    $('#select-all').click(function() {
-        $checkboxes.prop('checked', true);
+    // 添加钱包
+    $(document).on('click', '.add-wallet', function() {
+        var walletId = $(this).data('wallet-id');
+        var walletName = $(this).data('wallet-name');
+        
+        // 检查是否已存在
+        if ($('#selected-wallet-list input[value="' + walletId + '"]').length > 0) {
+            alert('该钱包已添加');
+            return;
+        }
+        
+        // 创建新项
+        var newItem = $('<div class="wallet-item" data-wallet-id="' + walletId + '">' +
+            '<span class="drag-handle"><i class="fa fa-arrows"></i></span> ' +
+            '<span class="wallet-name">' + walletName + '</span> ' +
+            '<span class="wallet-id">(ID: ' + walletId + ')</span> ' +
+            '<button type="button" class="btn btn-xs btn-danger remove-wallet" style="float: right; margin-top: -5px;">移除</button> ' +
+            '<input type="hidden" name="wallet_types[]" value="' + walletId + '">' +
+            '</div>');
+        
+        // 移除空提示
+        $('#selected-wallet-list .empty-tip').remove();
+        
+        // 添加到列表
+        $('#selected-wallet-list').append(newItem);
+        
+        // 从可选列表移除
+        $(this).closest('.wallet-item-available').remove();
+        
+        // 更新配置值
+        updateConfigValue();
+        
+        // 重新初始化排序
+        $("#selected-wallet-list").sortable('refresh');
     });
     
-    $('#select-none').click(function() {
-        $checkboxes.prop('checked', false);
+    // 移除钱包
+    $(document).on('click', '.remove-wallet', function() {
+        var $item = $(this).closest('.wallet-item');
+        var walletId = $item.data('wallet-id');
+        var walletName = $item.find('.wallet-name').text();
+        
+        // 从已选列表移除
+        $item.remove();
+        
+        // 添加到可选列表
+        var availableItem = $('<div class="wallet-item-available">' +
+            '<button type="button" class="btn btn-xs btn-success add-wallet" data-wallet-id="' + walletId + '" data-wallet-name="' + walletName + '">' +
+            '<i class="fa fa-plus"></i> 添加</button> ' +
+            '<span class="wallet-name">' + walletName + '</span> ' +
+            '<span class="wallet-id">(ID: ' + walletId + ')</span>' +
+            '</div>');
+        
+        $('.wallet-available-list').append(availableItem);
+        
+        // 如果已选列表为空，显示提示
+        if ($('#selected-wallet-list .wallet-item').length === 0) {
+            $('#selected-wallet-list').html('<div class="empty-tip">暂无已选钱包，请在下方添加</div>');
+        }
+        
+        // 更新配置值
+        updateConfigValue();
     });
     
-    // Ajax提交表单
+    // 保存配置（包含启用状态和钱包选择）
     $('#save-btn').click(function() {
         var $btn = $(this);
         $btn.prop('disabled', true).text('保存中...');
@@ -117,22 +212,118 @@ $(document).ready(function() {
             }
         });
     });
+    
+    // 仅保存排序
+    $('#save-sort-btn').click(function() {
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('保存中...');
+        
+        var walletOrder = [];
+        $('#selected-wallet-list input[name="wallet_types[]"]').each(function() {
+            walletOrder.push($(this).val());
+        });
+        
+        $.ajax({
+            url: '{:url("admin/LoanConfig/saveInvestmentWalletSort")}',
+            type: 'POST',
+            data: {
+                wallet_order: walletOrder
+            },
+            dataType: 'json',
+            success: function(res) {
+                if (res.code == 200) {
+                    alert('排序保存成功！');
+                    location.reload();
+                } else {
+                    alert('保存失败：' + res.msg);
+                    $btn.prop('disabled', false).text('仅保存排序');
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('保存失败：' + error);
+                $btn.prop('disabled', false).text('仅保存排序');
+            }
+        });
+    });
 });
 </script>
 
 <style>
-.checkbox-group {
-    background-color: #f9f9f9;
+.wallet-sortable-list {
+    min-height: 50px;
+    border: 2px dashed #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    background-color: #fafafa;
 }
-.checkbox-group .checkbox {
-    padding: 5px 0;
+
+.wallet-item {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    cursor: move;
+    position: relative;
+    transition: all 0.2s;
 }
-.checkbox-group .checkbox label {
-    font-weight: normal;
-    cursor: pointer;
+
+.wallet-item:hover {
+    border-color: #3c8dbc;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-.checkbox-group .checkbox input[type="checkbox"] {
-    margin-right: 8px;
-    cursor: pointer;
+
+.wallet-item .drag-handle {
+    color: #999;
+    margin-right: 10px;
+    cursor: move;
+}
+
+.wallet-item .drag-handle:hover {
+    color: #3c8dbc;
+}
+
+.wallet-item .wallet-name {
+    font-weight: 500;
+    margin-right: 10px;
+}
+
+.wallet-item .wallet-id {
+    color: #999;
+    font-size: 12px;
+}
+
+.wallet-item-placeholder {
+    background-color: #f0f0f0;
+    border: 2px dashed #3c8dbc;
+    height: 45px;
+    margin-bottom: 8px;
+}
+
+.wallet-item-available {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.wallet-item-available:last-child {
+    border-bottom: none;
+}
+
+.wallet-item-available .wallet-name {
+    margin-left: 10px;
+    font-weight: 500;
+}
+
+.wallet-item-available .wallet-id {
+    color: #999;
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+.empty-tip {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+    font-style: italic;
 }
 </style>

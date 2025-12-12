@@ -409,7 +409,7 @@ class InvestmentController extends AuthController
         try {
             // 钱包类型映射
             $walletTypeMap = [
-                1 => ['field' => 'topup_balance', 'name' => '充值余额'],
+                1 => ['field' => 'topup_balance', 'name' => '余额钱包'],
                 2 => ['field' => 'team_bonus_balance', 'name' => '荣誉钱包'],
                 3 => ['field' => 'butie', 'name' => '稳盈钱包'],
                 4 => ['field' => 'balance', 'name' => '民生钱包'],

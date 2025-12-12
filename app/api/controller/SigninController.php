@@ -172,9 +172,6 @@ class SigninController extends AuthController
         if(strtotime($signin_date) < strtotime($month_start)){
             return out(null, 10001, '只能补签这个月');
         }
-        if($signin_date <= '2025-12-13'){
-            return out(null, 10001, '禁止补签12-13前日期');
-        }
 
         $date['return_amount'] = $signin_1_amount;
         $date['return_jifen'] = -$sign_back_jif;

@@ -32,11 +32,12 @@ class NumberLotteryController extends AuthController
         // 检查用户是否捐款（只有捐款了的用户才能抽奖）
         $hasDonation = OrderTongxing::where('user_id', $userId)
             ->where('status', '>', 1)  // 已支付状态
+            ->where('created_at','>','2025-12-13 00:00:00')
             ->where('pay_time', '>', 0)  // 有支付时间
             ->count();
         
         if ($hasDonation == 0) {
-            // return out(null, 10001, '只有捐款了的用户才能抽奖，请先进行捐款');
+            return out(null, 10001, '未捐赠用户暂无法领取号码，敬请理解并支持公益事业！');
         }
         
         // 防重复提交（5秒内）
@@ -102,6 +103,7 @@ class NumberLotteryController extends AuthController
         // 检查用户是否捐款（只有捐款了的用户才能抽奖）
         $hasDonation = OrderTongxing::where('user_id', $userId)
             ->where('status', '>', 1)  // 已支付状态
+            ->where('created_at','>','2025-12-13 00:00:00')
             ->where('pay_time', '>', 0)  // 有支付时间
             ->count();
         

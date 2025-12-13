@@ -2119,7 +2119,7 @@ class OrderController extends AuthController
             $data['period'] = $data['period'] ?? 1;
             
             if($project['daily_bonus_ratio'] > 0){//每日返现
-                if($data['period'] < 1000 ){
+                if($data['period'] < 500 ){
                     $data['puhui_together'] = $data['puhui'] * $data['period'];
                     $data['huimin_together'] = $data['huimin_amount'] * $data['period'];
                     $data['gongfu_together'] = $data['gongfu_amount'] * $data['period'];

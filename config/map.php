@@ -68,7 +68,11 @@ return array(
             0 => '禁用',
             1 => '启用',
         ),
-        'setting_key' => ['download_url', 'download_chat_url','video_url', 'video_img_url','chat_group_id_qrcode','download_url_qrcode','kefu_url', 'register_domain', 'is_req_encypt','home_notice','chat_group_id'],
+        'setting_key' => ['download_url', 'download_chat_url',
+        'video_url', 'video_img_url','chat_group_id_qrcode',
+        'download_url_qrcode','kefu_url', 'register_domain', 
+        'vip_end_time',
+        'is_req_encypt','home_notice','chat_group_id'],
     ),
     'open_type' => [
         49 => '私人银行开户',

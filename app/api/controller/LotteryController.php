@@ -98,11 +98,6 @@ class LotteryController extends AuthController
                         $log_type_name = "共富金";
                         $log_type = 16;
                         break;
-                    case 'zhenxing_wallet':
-                        $cash_to_wallet = 'zhenxing_wallet';
-                        $log_type_name = "振兴钱包";
-                        $log_type = 14;
-                        break;
                     case 'balance':
                         $cash_to_wallet = 'balance';
                         $log_type_name = "民生钱包";

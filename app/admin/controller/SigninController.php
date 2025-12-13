@@ -13,6 +13,7 @@ use app\model\LotterySetting;
 use app\model\LotteryRecord;
 use app\model\Order;
 use app\model\OrderDailyBonus;
+use app\model\Setting;
 use think\facade\Db;
 
 class SigninController extends AuthController
@@ -467,5 +468,67 @@ class SigninController extends AuthController
             'updated_count' => $updated_count,
             'fail_count' => $failCount
         ]);
+    }
+
+    /**
+     * 获取抽奖中奖人数配置
+     */
+    public function getLotteryConfig()
+    {
+        $lotteryTimes = Setting::where('key', 'lottery_times')->value('value') ?: '30';
+        $lotterySecondAdds = Setting::where('key', 'lottery_second_adds')->value('value') ?: '3';
+        
+        return out([
+            'lottery_times' => $lotteryTimes,
+            'lottery_second_adds' => $lotterySecondAdds
+        ]);
+    }
+
+    /**
+     * 更新抽奖中奖人数配置
+     */
+    public function updateLotteryConfig()
+    {
+        $req = $this->validate(request(), [
+            'lottery_times|抽奖倍数' => 'require|number|>=:0',
+            'lottery_second_adds|抽奖n秒新增数' => 'require|number|>=:0',
+        ]);
+
+        Db::startTrans();
+        try {
+            // 更新或创建 lottery_times 配置
+            $lotteryTimesSetting = Setting::where('key', 'lottery_times')->find();
+            if ($lotteryTimesSetting) {
+                Setting::where('key', 'lottery_times')->update(['value' => $req['lottery_times']]);
+            } else {
+                Setting::create([
+                    'name' => '抽奖倍数',
+                    'key' => 'lottery_times',
+                    'value' => $req['lottery_times'],
+                    'sort' => 0,
+                    'is_show' => 0
+                ]);
+            }
+
+            // 更新或创建 lottery_second_adds 配置
+            $lotterySecondAddsSetting = Setting::where('key', 'lottery_second_adds')->find();
+            if ($lotterySecondAddsSetting) {
+                Setting::where('key', 'lottery_second_adds')->update(['value' => $req['lottery_second_adds']]);
+            } else {
+                Setting::create([
+                    'name' => '抽奖n秒新增数1',
+                    'key' => 'lottery_second_adds',
+                    'value' => $req['lottery_second_adds'],
+                    'sort' => 0,
+                    'is_show' => 0
+                ]);
+            }
+
+            Db::commit();
+            return out();
+        } catch (\Exception $e) {
+            Db::rollback();
+            return out(null, 10001, '更新失败：' . $e->getMessage());
+        }
     }
 }

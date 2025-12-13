@@ -8,6 +8,9 @@
         <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
         <a {:auth_show_judge('PaymentConfig/addPaymentConfig')} class="btn btn-flat btn-success m_10 f_r"
         href="{:url('admin/Signin/signinPrizeAdd')}"><i class="fa fa-plus m-r-10"></i>添 加</a>
+        <a class="btn btn-flat btn-info m_10 f_r" href="javascript:;" onclick="showLotteryConfig()">
+            <i class="fa fa-cog m-r-10"></i>配置中奖人数
+        </a>
         <!-- <a class="btn btn-flat btn-warning m_10 f_r" href="javascript:;" onclick="updateLotteryTickets()">
             <i class="fa fa-refresh m-r-10"></i>一键更新抽奖次数
         </a> -->
@@ -117,6 +120,57 @@
                 layer.close(loadIndex);
                 layer.msg('更新失败，请稍后重试', {icon: 5, time: 3000});
             });
+        });
+    }
+
+    // 显示抽奖中奖人数配置弹框
+    function showLotteryConfig()
+    {
+        // 先获取当前配置
+        $.get('{:url("admin/Signin/getLotteryConfig")}', function (res) {
+            if (res.code == '200') {
+                var config = res.data;
+                var html = '<form id="lotteryConfigForm" style="padding: 20px;">' +
+                    '<div class="form-group">' +
+                    '<label>抽奖倍数：</label>' +
+                    '<input type="number" name="lottery_times" class="form-control" value="' + (config.lottery_times || 30) + '" placeholder="请输入抽奖倍数" min="0">' +
+                    '<small class="help-block text-muted">计算公式：中奖人数 = （实际人数）* 倍数 + n秒新增1人</small>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                    '<label>抽奖n秒新增数：</label>' +
+                    '<input type="number" name="lottery_second_adds" class="form-control" value="' + (config.lottery_second_adds || 3) + '" placeholder="请输入秒数" min="0">' +
+                    '<small class="help-block text-muted">每 ' + (config.lottery_second_adds || 3) + ' 秒新增1人</small>' +
+                    '</div>' +
+                    '</form>';
+                
+                layer.open({
+                    type: 1,
+                    title: '配置中奖人数',
+                    area: ['500px', 'auto'],
+                    content: html,
+                    btn: ['保存', '取消'],
+                    yes: function(index, layero) {
+                        var formData = $(layero).find('#lotteryConfigForm').serialize();
+                        $.post('{:url("admin/Signin/updateLotteryConfig")}', formData, function (res) {
+                            if (res.code == '200') {
+                                layer.msg('配置保存成功', {icon: 1, time: 2000});
+                                layer.close(index);
+                            } else {
+                                layer.msg(res.msg || '保存失败', {icon: 5, time: 3000});
+                            }
+                        }).fail(function() {
+                            layer.msg('保存失败，请稍后重试', {icon: 5, time: 3000});
+                        });
+                    },
+                    btn2: function(index) {
+                        layer.close(index);
+                    }
+                });
+            } else {
+                layer.msg('获取配置失败', {icon: 5, time: 3000});
+            }
+        }).fail(function() {
+            layer.msg('获取配置失败，请稍后重试', {icon: 5, time: 3000});
         });
     }
 </script>

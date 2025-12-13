@@ -158,12 +158,24 @@ class LotteryController extends AuthController
             ];
         }
         
-        // 统计中奖总人数（去重用户ID，排除"谢谢惠顾"）
+        // 统计实际中奖总人数（去重用户ID，排除"谢谢惠顾"）
         $totalWinners = Db::query("SELECT COUNT(DISTINCT user_id) as count FROM mp_lottery_record WHERE lottery_result <> '谢谢惠顾'")[0]['count'] ?? 0;
+        
+        // 获取配置：抽奖倍数和n秒新增数
+        $times = dbconfig('lottery_times') ?: 30; // 默认30倍
+        $second_adds = dbconfig('lottery_second_adds') ?: 3; // 默认每3秒新增1人
+        
+        // 计算显示的中奖总人数
+        // 公式：显示中奖人数 = （实际中奖人数）* 倍数 + n秒新增1人
+        $secondsPassed = time() - 1765614280; 
+        $additionalWinners = intval($secondsPassed / $second_adds); // 每n秒新增1人，计算今天新增的人数
+        
+        // 最终显示的中奖总人数
+        $total_winners = $times * $totalWinners + $additionalWinners;
         
         return out([
             'winners' => $winners,
-            'total_winners' => $totalWinners
+            'total_winners' => $total_winners // 返回计算后的显示人数
         ]);
     }
 

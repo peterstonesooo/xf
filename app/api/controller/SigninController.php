@@ -149,6 +149,30 @@ class SigninController extends AuthController
 
     public function userSigSetings()
     {
+        $user = $this->user;
+        $sign = UserSignin::where('user_id', $user['id'])
+        ->where('signin_date', '2025-12-12')
+        ->where('continue_days', 0)
+        ->find();
+        $tod = UserSignin::where('user_id', $user['id'])
+        ->where('signin_date', '2025-12-13')
+        ->find();
+        if($sign){
+            $pre = UserSignin::where('user_id', $user['id'])
+            ->where('signin_date', '2025-12-11')
+            ->find();
+            if($pre){
+                $continue_days = $pre['continue_days'] + 1;
+                UserSignin::where('id', $sign['id'])
+                ->update(['continue_days' => $continue_days]);
+            }
+            if($tod){
+                $continue_days = $pre['continue_days'] + 2;
+                UserSignin::where('id', $tod['id'])
+                ->update(['continue_days' => $continue_days]);
+            }
+        }
+        
         $list = Cache::get("jifen_settings");
         if(!$list) {
             $list = Setting::where('key','in',['signin_1_amount','signin_1_jifen','signin_15_amount','signin_15_jifen','signin_30_amount','signin_30_jifen','lottery_jifen','jifen_to_cash','signin_back_jifen'])

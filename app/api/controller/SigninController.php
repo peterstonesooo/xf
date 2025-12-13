@@ -165,9 +165,13 @@ class SigninController extends AuthController
                 $continue_days = $pre['continue_days'] + 1;
                 UserSignin::where('id', $sign['id'])
                 ->update(['continue_days' => $continue_days]);
+            }else{
+                $continue_days = 1;
+                UserSignin::where('id', $sign['id'])
+                ->update(['continue_days' => $continue_days]);
             }
             if($tod){
-                $continue_days = $pre['continue_days'] + 2;
+                $continue_days = $continue_days + 1;
                 UserSignin::where('id', $tod['id'])
                 ->update(['continue_days' => $continue_days]);
             }

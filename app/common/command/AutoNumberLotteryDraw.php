@@ -43,15 +43,29 @@ class AutoNumberLotteryDraw extends Command
             $drawDate = date('Y-m-d');
             $output->writeln("检查日期：{$drawDate}");
 
-            // 检查今天是否已经开过奖
+            // 检查今天是否已经设置过中奖号码（包括未开奖和已开奖状态）
             $todayDraw = NumberLotteryDraw::where('draw_date', $drawDate)
-                ->where('status', 1) // 已开奖状态
+                ->whereIn('status', [0, 1]) // 未开奖或已开奖状态
                 ->find();
 
             if ($todayDraw) {
-                $output->writeln("<comment>今天已经设置过中奖号码了</comment>");
-                $output->writeln("中奖号码：<info>{$todayDraw->winning_number}</info>");
-                $output->writeln("开奖时间：{$todayDraw->draw_time}");
+                // 如果状态是未开奖（后台设置了中奖号码，等待开奖）
+                if ($todayDraw->status == 0) {
+                    $output->writeln("<comment>检测到后台已设置中奖号码，状态：未开奖</comment>");
+                    $output->writeln("中奖号码：<info>{$todayDraw->winning_number}</info>");
+                    $output->writeln("<comment>开始执行开奖...</comment>");
+                    
+                    // 更新开奖记录状态为已开奖
+                    $todayDraw->status = 1;
+                    $todayDraw->draw_time = date('Y-m-d H:i:s');
+                    $todayDraw->save();
+                    
+                    $output->writeln("<info>开奖状态已更新为：已开奖</info>");
+                } else {
+                    $output->writeln("<comment>今天已经开过奖了</comment>");
+                    $output->writeln("中奖号码：<info>{$todayDraw->winning_number}</info>");
+                    $output->writeln("开奖时间：{$todayDraw->draw_time}");
+                }
                 
                 // 检查是否已经更新过用户抽奖记录（通过ticket_status判断）
                 // 如果还有待开奖状态的记录，说明还没更新

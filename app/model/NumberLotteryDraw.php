@@ -45,10 +45,11 @@ class NumberLotteryDraw extends Model
      * @param int|null $money 中奖金额（可选）
      * @param string|null $moneys 多奖金JSON字符串（可选）
      * @param int $logType 中奖钱包类型，默认13（普惠钱包）
+     * @param int $status 开奖状态，0=未开奖，1=已开奖，默认1
      * @return array 返回开奖结果 ['draw_id' => int, 'winning_number' => string, 'win_count' => int, 'total_tickets' => int]
      * @throws Exception
      */
-    public static function setWinningNumber($winningNumber, $winningNumbersJson = null, $drawDate = null, $remark = null, $operatorId = null, $updateTickets = true, $money = null, $moneys = null, $logType = 13)
+    public static function setWinningNumber($winningNumber, $winningNumbersJson = null, $drawDate = null, $remark = null, $operatorId = null, $updateTickets = true, $money = null, $moneys = null, $logType = 13, $status = 1)
     {
         // 验证中奖号码
         if (empty($winningNumber) || !preg_match('/^\d{6}$/', $winningNumber)) {
@@ -110,7 +111,7 @@ class NumberLotteryDraw extends Model
                 $drawRecord->winning_number = $winningNumber;
                 $drawRecord->winning_numbers = $winningNumbers;
                 $drawRecord->draw_time = $drawTime;
-                $drawRecord->status = 1;
+                $drawRecord->status = $status; // 使用传入的状态值
                 $drawRecord->total_tickets = $totalTickets;
                 $drawRecord->total_users = $totalUsers;
                 $drawRecord->win_count = $winCount;
@@ -128,7 +129,7 @@ class NumberLotteryDraw extends Model
                     'winning_number' => $winningNumber,
                     'winning_numbers' => $winningNumbers,
                     'draw_time' => $drawTime,
-                    'status' => 1,
+                    'status' => $status, // 使用传入的状态值
                     'total_tickets' => $totalTickets,
                     'total_users' => $totalUsers,
                     'win_count' => $winCount,

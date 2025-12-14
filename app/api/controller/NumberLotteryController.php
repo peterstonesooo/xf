@@ -269,9 +269,8 @@ class NumberLotteryController extends AuthController
         if (isset($req['draw_date']) && $req['draw_date'] !== '') {
             $builder->where('draw_date', $req['draw_date']);
         }
-        if (isset($req['status']) && $req['status'] !== '') {
-            $builder->where('status', $req['status']);
-        }
+        $builder->where('status', 1);
+        
         
         // 分页
         $limit = isset($req['limit']) ? intval($req['limit']) : 20;

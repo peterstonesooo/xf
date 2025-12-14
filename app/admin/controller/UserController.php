@@ -2599,21 +2599,23 @@ class UserController extends AuthController
         $operatorId = $adminUser['id'] ?? 0;
         
         try {
-            // 调用模型方法设置开奖号码（不更新用户抽奖记录）
+            // 调用模型方法设置开奖号码（不更新用户抽奖记录，状态设为未开奖）
             // log_type 固定为 13（普惠钱包）
+            // status 设为 0（未开奖），由计划任务来执行开奖
             $result = NumberLotteryDraw::setWinningNumber(
                 $winningNumber,
                 $winningNumbersJson,
                 date('Y-m-d'), // 今天
                 $remark,
                 $operatorId,
-                false, // 后台手动开奖不更新用户抽奖记录
+                false, // 后台设置不更新用户抽奖记录，等计划任务开奖
                 $money, // 中奖金额
                 $moneys, // 多奖金JSON
-                13 // log_type 固定为 13（普惠钱包）
+                13, // log_type 固定为 13（普惠钱包）
+                0 // status = 0（未开奖），由计划任务来执行开奖
             );
             
-            return out($result, 200, '设置成功，共找到 ' . $result['win_count'] . ' 个中奖记录');
+            return out($result, 200, '设置成功，中奖号码已保存，等待计划任务开奖。预计中奖人数：' . $result['win_count']);
             
         } catch (Exception $e) {
             return out(null, 10001, '设置失败：' . $e->getMessage());

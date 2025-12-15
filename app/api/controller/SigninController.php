@@ -825,7 +825,10 @@ class SigninController extends AuthController
                 'status' => 1,
                 'remark' => '用户领取' . UserSigninRewardLog::getRewardDaysText($rewardDays) . '签到奖励',
             ]);
-            
+
+            if($req['type'] == 1){
+                User::changeInc($userId,1,'lottery_tickets',100,$rewardLog->id,9, '签到奖励','',1,'SR');
+            }
             Db::commit();
             
             return out([

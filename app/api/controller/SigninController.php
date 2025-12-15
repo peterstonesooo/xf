@@ -851,7 +851,7 @@ class SigninController extends AuthController
                 User::changeInc($userId,1,'lottery_tickets',100,$rewardLog->id,9, '签到奖励','',1,'SR');
             }
             if($req['type'] == 2){
-                User::changeInc($userId,1,'lucky_tickets',100,$rewardLog->id,19, '幸运奖卷','',1,'SR');
+                User::changeInc($userId,1,'lucky_tickets',100,$rewardLog->id,19, '连续签到','',1,'SR');
             }
             if($req['type'] == 3){
                 User::changeInc($userId,100,'gold_wallet',100,$rewardLog->id,18, '签到奖励','',1,'SR');

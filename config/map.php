@@ -430,6 +430,7 @@ return array(
             16 => '共富钱包',//gongfu_wallet
             17 => '收益钱包',//shouyi_wallet
             18 => '黄金',//gold_wallet
+            19 => '幸运礼物',//lucky_tickets
         ),
         'status_map' =>
         array(

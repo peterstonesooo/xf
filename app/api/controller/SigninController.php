@@ -762,6 +762,16 @@ class SigninController extends AuthController
 
     }
 
+    public function getHuangJinReward(){
+        $user = $this->user;
+        // 检查本月是否已经领取过该奖励
+         $huangjin_reward = UserSigninRewardLog::where('user_id', $user['id'])
+         ->where('reward_days', 30)
+         ->where('status', 1)
+         ->find()->toArray();
+        return out($huangjin_reward);
+    }
+
     /**
      * 领取签到奖励
      * 参数：type=1（连续7天），type=2（连续15天），type=3（连续30天）
@@ -784,7 +794,18 @@ class SigninController extends AuthController
         if (!$rewardDays) {
             return out(null, 10001, '参数错误：无效的type值');
         }
+
+         // 检查本月是否已经领取过该奖励
+         $huangjin_reward = UserSigninRewardLog::where('user_id', $userId)
+         ->where('reward_days', 30)
+         ->where('status', 1)
+         ->find();
+
+         if($huangjin_reward){
+            return out(null, 10001, '已完成领取黄金奖励');
+         }
         
+
         // 获取当前年月
         $rewardYearMonth = date('Y-m');
         $monthStart = date('Y-m-01');
@@ -828,6 +849,12 @@ class SigninController extends AuthController
 
             if($req['type'] == 1){
                 User::changeInc($userId,1,'lottery_tickets',100,$rewardLog->id,9, '签到奖励','',1,'SR');
+            }
+            if($req['type'] == 2){
+                User::changeInc($userId,1,'lucky_tickets',100,$rewardLog->id,19, '幸运奖卷','',1,'SR');
+            }
+            if($req['type'] == 3){
+                User::changeInc($userId,100,'gold_wallet',100,$rewardLog->id,18, '签到奖励','',1,'SR');
             }
             Db::commit();
             

@@ -1237,7 +1237,19 @@ class UserController extends AuthController
         }
         $batchId = date('YmdHi').'-'.uniqid();
         foreach ($sheetData as $key => $value) {
-            $v = "用户phone=".$value[0]."｜金额=".$amount."｜钱包=".$walletType."｜备注=".$remark."｜批次id=".$batchId;
+            // 优先使用CSV第二列的金额，如果没有第二列则使用固定金额
+            $rowAmount = $amount; // 默认使用固定金额
+            if (isset($value[1]) && !empty(trim($value[1]))) {
+                // CSV有第二列且不为空，使用CSV中的金额
+                $rowAmount = trim($value[1]);
+            }
+            
+            // 如果金额还是为空，跳过这条记录
+            if (empty($rowAmount)) {
+                continue;
+            }
+            
+            $v = "用户phone=".$value[0]."｜金额=".$rowAmount."｜钱包=".$walletType."｜备注=".$remark."｜批次id=".$batchId;
             Cache::store('redis')->lpush('批量入金任务队列', $v);
             // $res = Db::name('user')->field('realname, phone, id')->where('phone', trim($value[0]))->select()->toArray();
             // // return out(trim($value[0]));

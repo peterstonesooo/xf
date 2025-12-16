@@ -1165,8 +1165,69 @@ class UserController extends AuthController
         $amount = request()->param('amount');
         $remark = request()->param('remark', ''); // 获取备注字段，默认为空字符串
         
-        $spreadsheet = IOFactory::load($file);
-        $sheetData = $spreadsheet->getActiveSheet()->toArray();
+        // 检测文件类型
+        $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        $sheetData = [];
+        
+        if ($fileExtension == 'csv') {
+            // CSV 文件特殊处理，支持多种分隔符
+            $reader = IOFactory::createReader('Csv');
+            // 设置输入编码为 UTF-8
+            $reader->setInputEncoding('UTF-8');
+            // 尝试自动检测分隔符
+            $reader->setDelimiter(',');
+            $reader->setEnclosure('"');
+            
+            // 先尝试用逗号读取
+            try {
+                $spreadsheet = $reader->load($file);
+                $sheetData = $spreadsheet->getActiveSheet()->toArray();
+                
+                // 如果第一行数据为空或只有一列，可能是分隔符不对，尝试其他分隔符
+                if (!empty($sheetData) && count($sheetData[0]) <= 1) {
+                    // 尝试制表符
+                    $reader->setDelimiter("\t");
+                    $spreadsheet = $reader->load($file);
+                    $sheetData = $spreadsheet->getActiveSheet()->toArray();
+                }
+                
+                // 如果还是只有一列，尝试空格（多个空格）
+                if (!empty($sheetData) && count($sheetData[0]) <= 1) {
+                    // 手动读取文件，按空格分割
+                    $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                    $sheetData = [];
+                    foreach ($lines as $line) {
+                        // 按多个空格或制表符分割
+                        $row = preg_split('/[\s\t]+/', trim($line));
+                        if (!empty($row)) {
+                            $sheetData[] = $row;
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // 如果读取失败，尝试手动解析
+                $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                $sheetData = [];
+                foreach ($lines as $line) {
+                    // 尝试多种分隔符：逗号、制表符、多个空格
+                    if (strpos($line, ',') !== false) {
+                        $row = str_getcsv($line);
+                    } elseif (strpos($line, "\t") !== false) {
+                        $row = explode("\t", $line);
+                    } else {
+                        // 按多个空格分割
+                        $row = preg_split('/[\s]+/', trim($line));
+                    }
+                    if (!empty($row)) {
+                        $sheetData[] = $row;
+                    }
+                }
+            }
+        } else {
+            // Excel 文件正常处理
+            $spreadsheet = IOFactory::load($file);
+            $sheetData = $spreadsheet->getActiveSheet()->toArray();
+        }
 
         
         $newArr = [];

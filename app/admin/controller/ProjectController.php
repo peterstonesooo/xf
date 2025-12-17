@@ -475,6 +475,26 @@ class ProjectController extends AuthController
     }
 
     /**
+     * 更新项目排序号
+     */
+    public function updateSort()
+    {
+        $req = $this->validate(request(), [
+            'id' => 'require|number',
+            'sort' => 'require|number|>=:0',
+        ]);
+
+        $project = Project::where('id', $req['id'])->find();
+        if (!$project) {
+            return out(null, 10001, '项目不存在');
+        }
+
+        Project::where('id', $req['id'])->update(['sort' => $req['sort']]);
+
+        return out(null, 200, '排序号更新成功');
+    }
+
+    /**
      * 更新项目剩余份额
      */
     public function updateStock()

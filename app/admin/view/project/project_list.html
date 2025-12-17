@@ -56,7 +56,7 @@
                             <th>进度调整</th>
                             <th>周期返利</th>
                             <th>项目期数</th>
-                            <!-- <th>排序号</th> -->
+                            <th>排序号</th>
                             <!-- <th>创建时间</th> -->
                             <th>操作</th>
                         </tr>
@@ -152,7 +152,14 @@
                                     ?>
                                 </td>
                                 <td><?php echo $v['class']; ?>期</td>
-                                <!-- <td>{$v['sort']}</td> -->
+                                <td>
+                                    <input type="number" 
+                                           class="form-control sort-input" 
+                                           data-project-id="{$v['id']}" 
+                                           value="{$v['sort']|default=0}" 
+                                           style="width: 80px; display: inline-block; text-align: center;"
+                                           min="0">
+                                </td>
                                 <!-- <td>{$v['created_at']}</td> -->
                                 <td>
                                     <?php 
@@ -394,6 +401,66 @@
                     $('.percentage-text-' + projectId).text(originalValues[projectId].percentage.toFixed(2) + '%');
                 }
             });
+        });
+
+        // 排序号修改功能
+        $(document).on('blur', '.sort-input', function() {
+            var $input = $(this);
+            var projectId = $input.data('project-id');
+            var newSort = parseInt($input.val());
+            var oldSort = $input.data('old-value') || parseInt($input.attr('value')) || 0;
+            
+            // 验证输入
+            if (isNaN(newSort) || newSort < 0) {
+                layer.msg('排序号必须是非负整数', {icon: 5, time: 2000});
+                $input.val(oldSort);
+                return;
+            }
+            
+            // 如果没有变化，不发送请求
+            if (newSort === oldSort) {
+                return;
+            }
+            
+            // 发送AJAX请求更新排序
+            $.ajax({
+                url: '<?php echo url("admin/Project/updateSort");?>',
+                type: 'POST',
+                data: {
+                    id: projectId,
+                    sort: newSort
+                },
+                success: function(res) {
+                    if (res.code == 200) {
+                        layer.msg('排序号更新成功', {icon: 1, time: 1500});
+                        $input.data('old-value', newSort);
+                        // 可选：刷新页面以反映新的排序
+                        // location.reload();
+                    } else {
+                        layer.msg(res.msg || '更新失败', {icon: 5, time: 2000});
+                        $input.val(oldSort);
+                    }
+                },
+                error: function() {
+                    layer.msg('网络错误，请稍后重试', {icon: 2, time: 2000});
+                    $input.val(oldSort);
+                }
+            });
+        });
+        
+        // 记录原始值
+        $(document).on('focus', '.sort-input', function() {
+            var $input = $(this);
+            if (!$input.data('old-value')) {
+                $input.data('old-value', parseInt($input.val()) || 0);
+            }
+        });
+        
+        // 回车键提交
+        $(document).on('keypress', '.sort-input', function(e) {
+            if (e.which === 13) { // Enter键
+                $(this).blur();
+            }
         });
     });
 </script>

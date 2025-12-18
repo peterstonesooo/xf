@@ -33,17 +33,6 @@
                                 <td>{$data['repayment_method_text']}</td>
                             </tr>
                             <tr>
-                                <th>钱包类型</th>
-                                <td>
-                                    <?php
-                                    // 使用配置文件中的完整钱包类型映射
-                                    $logTypeMap = config('map.user_balance_log.log_type_map');
-                                    $walletType = $data['wallet_type'] ?? 0;
-                                    echo $logTypeMap[$walletType] ?? '未知';
-                                    ?>
-                                </td>
-                            </tr>
-                            <tr>
                                 <th>备注</th>
                                 <td>{$data['remark']|default='-'}</td>
                             </tr>

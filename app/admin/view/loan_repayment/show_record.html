@@ -36,16 +36,10 @@
                                 <th>钱包类型</th>
                                 <td>
                                     <?php
-                                    $walletTypeMap = [
-                                        1 => '充值余额',
-                                        2 => '荣誉钱包',
-                                        3 => '稳盈钱包',
-                                        4 => '民生钱包',
-                                        5 => '惠民钱包',
-                                        6 => '普惠钱包',
-                                        13 => '普惠钱包',
-                                    ];
-                                    echo $walletTypeMap[$data['wallet_type']] ?? '未知';
+                                    // 使用配置文件中的完整钱包类型映射
+                                    $logTypeMap = config('map.user_balance_log.log_type_map');
+                                    $walletType = $data['wallet_type'] ?? 0;
+                                    echo $logTypeMap[$walletType] ?? '未知';
                                     ?>
                                 </td>
                             </tr>

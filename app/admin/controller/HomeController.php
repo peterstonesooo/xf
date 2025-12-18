@@ -195,9 +195,112 @@ class HomeController extends AuthController
 
     public function uploadSummernoteImg()
     {
-        $img_url = upload_file2('img_url',true,false);
+        $file = request()->file('img_url');
+        
+        if (!$file) {
+            return out(null, 10001, '请选择要上传的图片');
+        }
+        
+        try {
+            // 验证文件
+            validate([
+                'file' => [
+                    'fileSize' => 10 * 1024 * 1024, // 10MB
+                    'fileExt'  => 'png,jpg,jpeg,gif',
+                ]
+            ], [
+                'file.fileSize' => '文件太大，最大支持10MB',
+                'file.fileExt' => '不支持的文件格式，仅支持png、jpg、jpeg、gif',
+            ])->check(['file' => $file]);
+            
+            // 上传到七牛云
+            $savename = \think\facade\Filesystem::disk('qiniu')->putFile('', $file);
+            $baseUrl = 'http://'.config('filesystem.disks.qiniu.domain').'/';
+            $img_url = $baseUrl.str_replace("\\", "/", $savename);
+            
+            return out(['img_url' => $img_url, 'filename' => md5(time()).'.jpg']);
+        } catch (\think\exception\ValidateException $e) {
+            return out(null, 10001, $e->getMessage());
+        } catch (\Exception $e) {
+            return out(null, 10001, '上传失败：' . $e->getMessage());
+        }
+    }
 
-        return out(['img_url' => env('app.img_host').$img_url, 'filename' => md5(time()).'.jpg']);
+    /**
+     * 上传base64图片到七牛云
+     */
+    public function uploadBase64Image()
+    {
+        $base64 = request()->param('base64');
+        
+        if (empty($base64)) {
+            return out(null, 10001, '图片数据不能为空');
+        }
+        
+        try {
+            // 解析base64数据
+            if (preg_match('/^data:image\/(\w+);base64,(.+)$/', $base64, $matches)) {
+                $imageType = strtolower($matches[1]);
+                $imageData = $matches[2];
+                
+                // 统一jpeg为jpg
+                if ($imageType == 'jpeg') {
+                    $imageType = 'jpg';
+                }
+                
+                // 验证图片类型
+                if (!in_array($imageType, ['png', 'jpg', 'gif'])) {
+                    return out(null, 10001, '不支持的图片格式，仅支持png、jpg、jpeg、gif');
+                }
+                
+                // 解码base64
+                $imageContent = base64_decode($imageData);
+                
+                if ($imageContent === false) {
+                    return out(null, 10001, '图片数据解码失败');
+                }
+                
+                // 验证文件大小（10MB）
+                if (strlen($imageContent) > 10 * 1024 * 1024) {
+                    return out(null, 10001, '图片太大，最大支持10MB');
+                }
+                
+                // 创建临时文件
+                $tempFile = sys_get_temp_dir() . '/' . uniqid() . '.' . $imageType;
+                file_put_contents($tempFile, $imageContent);
+                
+                // 确定MIME类型
+                $mimeTypes = [
+                    'png' => 'image/png',
+                    'jpg' => 'image/jpeg',
+                    'gif' => 'image/gif'
+                ];
+                $mimeType = $mimeTypes[$imageType] ?? 'image/jpeg';
+                
+                // 创建文件对象（使用test=true避免is_uploaded_file检查）
+                $file = new \think\file\UploadedFile(
+                    $tempFile,
+                    'image.' . $imageType,
+                    $mimeType,
+                    UPLOAD_ERR_OK,
+                    true // test模式，允许非上传文件
+                );
+                
+                // 上传到七牛云
+                $savename = \think\facade\Filesystem::disk('qiniu')->putFile('', $file);
+                $baseUrl = 'http://'.config('filesystem.disks.qiniu.domain').'/';
+                $img_url = $baseUrl.str_replace("\\", "/", $savename);
+                
+                // 删除临时文件
+                @unlink($tempFile);
+                
+                return out(['img_url' => $img_url]);
+            } else {
+                return out(null, 10001, '无效的base64图片格式');
+            }
+        } catch (\Exception $e) {
+            return out(null, 10001, '上传失败：' . $e->getMessage());
+        }
     }
 
     /**

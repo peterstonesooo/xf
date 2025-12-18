@@ -1,0 +1,140 @@
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <h3 class="box-title">还款记录详情</h3>
+                <div class="box-tools">
+                    <a href="{:url('admin/LoanRepayment/recordList')}" class="btn btn-flat btn-default btn-sm">返回列表</a>
+                </div>
+            </div>
+            <div class="box-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>基本信息</h4>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="150">记录ID</th>
+                                <td>{$data['id']}</td>
+                            </tr>
+                            <tr>
+                                <th>还款金额</th>
+                                <td><strong style="color: #3c8dbc; font-size: 18px;">￥{$data['repayment_amount']}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>还款类型</th>
+                                <td>
+                                    <span class="label label-{if condition="$data['repayment_type'] eq 1"}success{elseif condition="$data['repayment_type'] eq 2"}info{else/}warning{/if}">
+                                        {$data['repayment_type_text']}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>还款方式</th>
+                                <td>{$data['repayment_method_text']}</td>
+                            </tr>
+                            <tr>
+                                <th>钱包类型</th>
+                                <td>
+                                    <?php
+                                    $walletTypeMap = [
+                                        1 => '充值余额',
+                                        2 => '荣誉钱包',
+                                        3 => '稳盈钱包',
+                                        4 => '民生钱包',
+                                        5 => '惠民钱包',
+                                        6 => '普惠钱包',
+                                        13 => '普惠钱包',
+                                    ];
+                                    echo $walletTypeMap[$data['wallet_type']] ?? '未知';
+                                    ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>备注</th>
+                                <td>{$data['remark']|default='-'}</td>
+                            </tr>
+                            <tr>
+                                <th>创建时间</th>
+                                <td>{$data['created_at']}</td>
+                            </tr>
+                            <tr>
+                                <th>更新时间</th>
+                                <td>{$data['updated_at']|default='-'}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h4>用户信息</h4>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="150">用户ID</th>
+                                <td>{$data['user_id']}</td>
+                            </tr>
+                            <tr>
+                                <th>手机号</th>
+                                <td>{$data['user']['phone']|default='-'}</td>
+                            </tr>
+                            <tr>
+                                <th>姓名</th>
+                                <td>{$data['user']['realname']|default='-'}</td>
+                            </tr>
+                        </table>
+
+                        <h4>贷款申请信息</h4>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="150">申请ID</th>
+                                <td>{$data['application_id']}</td>
+                            </tr>
+                            {if condition="!empty($data['application'])"}
+                            <tr>
+                                <th>贷款金额</th>
+                                <td>￥{$data['application']['loan_amount']|default='-'}</td>
+                            </tr>
+                            <tr>
+                                <th>申请时间</th>
+                                <td>{$data['application']['created_at']|default='-'}</td>
+                            </tr>
+                            {/if}
+                        </table>
+
+                        <h4>还款计划信息</h4>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="150">计划ID</th>
+                                <td>{$data['plan_id']|default='-'}</td>
+                            </tr>
+                            {if condition="!empty($data['plan'])"}
+                            <tr>
+                                <th>期数</th>
+                                <td>第{$data['plan']['period']}期</td>
+                            </tr>
+                            <tr>
+                                <th>到期日期</th>
+                                <td>{$data['plan']['due_date']|default='-'}</td>
+                            </tr>
+                            <tr>
+                                <th>计划状态</th>
+                                <td>
+                                    <span class="label label-{if condition="$data['plan']['status'] eq 1"}warning{elseif condition="$data['plan']['status'] eq 2"}success{else/}danger{/if}">
+                                        {if condition="$data['plan']['status'] eq 1"}待还款{elseif condition="$data['plan']['status'] eq 2"}已还清{else/}已逾期{/if}
+                                    </span>
+                                </td>
+                            </tr>
+                            {/if}
+                        </table>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="box-footer">
+                            <a href="{:url('admin/LoanRepayment/recordList')}" class="btn btn-flat btn-default">返回列表</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

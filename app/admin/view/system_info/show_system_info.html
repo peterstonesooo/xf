@@ -171,28 +171,56 @@
 
     function sendFile(files, key)
     {
+        // 显示加载提示
+        var loadIndex = layer.load(2, {
+            content: '正在上传图片...',
+            shade: [0.3, '#000']
+        });
+        
         var formdata = new FormData();
         formdata.append("img_url", $('.' + key + '_div .note-image-input')[0].files[0]);
-        $.ajax({
-            data : formdata,
-            type : "POST",
-            url  : '{:url("admin/Home/uploadSummernoteImg")}',
-            async: false,
-            cache: false,
-            contentType: false,
-            processData: false,
-            success: function(res) {
-                if (res.code == '200'){
-                    $('.' + key).summernote('insertImage', res.data.img_url, res.data.filename);
+        
+        // 使用 setTimeout 确保加载提示能显示
+        setTimeout(function() {
+            $.ajax({
+                data : formdata,
+                type : "POST",
+                url  : '{:url("admin/Home/uploadSummernoteImg")}',
+                async: false,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function(res) {
+                    layer.close(loadIndex);
+                    // 调试：输出响应数据
+                    console.log('上传响应:', res);
+                    
+                    if (res.code == '200' || res.code == 200){
+                        // 检查响应数据
+                        if (res.data && res.data.img_url) {
+                            try {
+                                // 使用 insertImage 方法插入图片（两个参数：URL 和 filename）
+                                $('.' + key).summernote('insertImage', res.data.img_url, res.data.filename || 'image.jpg');
+                                layer.msg('图片上传成功', {icon: 1, time: 1500});
+                            } catch(e) {
+                                console.error('插入图片失败:', e);
+                                layer.msg('图片插入失败：' + e.message, {icon: 5, time: 2500});
+                            }
+                        } else {
+                            console.error('响应数据格式错误:', res);
+                            layer.msg('图片上传失败：响应数据格式错误', {icon: 5, time: 2500});
+                        }
+                    }
+                    else {
+                        layer.msg(res.msg || '上传失败', {icon: 5, time: 2500, offset: '80px'});
+                    }
+                },
+                error:function(res){
+                    layer.close(loadIndex);
+                    layer.msg('图片上传失败', {icon: 5, time: 2500, offset: '80px'});
                 }
-                else {
-                    layer.msg(res.msg, {icon: 5, time: 2500, offset: '80px'});
-                }
-            },
-            error:function(res){
-                layer.msg('图片上传失败', {icon: 5, time: 2500, offset: '80px'});
-            }
-        });
+            });
+        }, 100);
     }
 
     function sub()

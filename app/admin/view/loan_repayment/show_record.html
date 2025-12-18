@@ -75,6 +75,14 @@
                                 <td>￥{$data['application']['loan_amount']|default='-'}</td>
                             </tr>
                             <tr>
+                                <th>贷款天数</th>
+                                <td>{$data['application']['loan_days']|default='-'} 天</td>
+                            </tr>
+                            <tr>
+                                <th>总利息</th>
+                                <td>￥{$data['application']['total_interest']|default='-'}</td>
+                            </tr>
+                            <tr>
                                 <th>申请时间</th>
                                 <td>{$data['application']['created_at']|default='-'}</td>
                             </tr>

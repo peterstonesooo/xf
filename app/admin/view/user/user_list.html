@@ -159,6 +159,7 @@
 <!--                                    <a {:auth_show_judge('User/homeland')} class="btn btn-flat btn-xs" href="{:url('admin/User/wallet', ['user_id' => $v['id']])}">收货地址</a>-->
                                     <!-- <a {:auth_show_judge('User/editBank')} class="btn btn-flat btn-xs" href="{:url('admin/User/editBank', ['user_id' => $v['id']])}">修改银行卡</a> -->
                                     <a {:auth_show_judge('User/message')} class="btn btn-flat btn-xs" href="{:url('admin/User/message', ['user_id' => $v['id']])}">发送站内信</a>
+                                    <a {:auth_show_judge('User/giveVip')} class="btn btn-flat btn-xs btn-success" onclick="giveVip({$v['id']})">赠送VIP</a>
                                 </td>
                             </tr>
                         <?php } ?>
@@ -505,6 +506,30 @@
         } else {
             layer.msg('未获取到用户ID', {icon: 2, time: 2000});
         }
+    }
+
+    // 赠送VIP
+    function giveVip(userId) {
+        layer.confirm('确定要赠送VIP给该用户吗？', {
+            icon: 3,
+            title: '赠送VIP',
+            btn: ['确定赠送', '取消']
+        }, function(index) {
+            layer.close(index);
+            $.post('{:url("admin/User/giveVip")}', {
+                user_id: userId
+            }, function(res) {
+                if (res.code == 200) {
+                    layer.msg(res.msg || 'VIP赠送成功', {icon: 1, time: 2000}, function() {
+                        window.location.reload();
+                    });
+                } else {
+                    layer.msg(res.msg || '赠送失败', {icon: 2, time: 2500});
+                }
+            }).fail(function() {
+                layer.msg('网络错误，请重试', {icon: 2, time: 2500});
+            });
+        });
     }
 </script>
 <style>

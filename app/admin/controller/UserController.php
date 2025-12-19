@@ -281,6 +281,50 @@ class UserController extends AuthController
     }
 
     /**
+     * 赠送VIP
+     */
+    public function giveVip()
+    {
+        $req = $this->validate(request(), [
+            'user_id' => 'require|number',
+        ]);
+
+        $user = User::where('id', $req['user_id'])->find();
+        if (!$user) {
+            return out(null, 10001, '用户不存在');
+        }
+
+        if ($user['vip_status'] == 1) {
+            return out(null, 10001, '该用户已经是VIP');
+        }
+
+        Db::startTrans();
+        try {
+            // 设置VIP状态为1
+            User::where('id', $req['user_id'])->update(['vip_status' => 1]);
+            
+            // 赠送抽奖机会
+            // User::where('id', $req['user_id'])->inc('lottery_tickets', 1)->update();
+            
+            // 记录VIP日志
+            if (class_exists('\app\model\VipLog')) {
+                \app\model\VipLog::create([
+                    'user_id' => $req['user_id'],
+                    'status' => 1,
+                    'pay_amount' => 0,
+                    'pay_time' => time(),
+                ]);
+            }
+
+            Db::commit();
+            return out(null, 200, 'VIP赠送成功');
+        } catch (\Exception $e) {
+            Db::rollback();
+            return out(null, 10001, '赠送失败：' . $e->getMessage());
+        }
+    }
+
+    /**
      * 一键封禁/解封用户及其下属团队
      */
     public function banUserAndTeam()

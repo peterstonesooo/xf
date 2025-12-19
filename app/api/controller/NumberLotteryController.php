@@ -124,7 +124,6 @@ class NumberLotteryController extends AuthController
         // 查询总的中奖人数（不重复的用户数）
         $totalWinCount = NumberLotteryTicket::where('is_win', 1)
             ->where('status', 1)
-            ->group('user_id')
             ->count();
         
         // 如果已经摇号，返回摇号结果

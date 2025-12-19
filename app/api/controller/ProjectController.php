@@ -36,7 +36,7 @@ class ProjectController extends AuthController
         $user_id = $user['id'];
         $status_name = "开放";
         $status = 1;
-        $this->projectProcess();
+        // $this->projectProcess();
         $isOpenAll = dbconfig('open_all_projects');
         if($isOpenAll != 1){
             if(in_array($req['project_group_id'], [7,8,9,10,11])){

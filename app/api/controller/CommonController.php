@@ -2412,7 +2412,7 @@ class CommonController extends BaseController
         //$user = User::getUserByToken();
         
         $system =[];
-        $system = Cache::get('system_'.$req['type'],[]);
+        $system = Cache::get('systemlist_'.$req['type'],[]);
         
         if(empty($system) || $system == null){
             $builder =  SystemInfo::where('status', 1);
@@ -2428,7 +2428,7 @@ class CommonController extends BaseController
                  $system[$k]['cover_img']=get_img_api($v['cover_img']);
                  $system[$k]['content'] = str_replace('"/storage/', '"' . env('app.host') . '/storage/', $system[$k]['content']);
             }
-            Cache::set('system_'.$req['type'], json_decode(json_encode($system, JSON_UNESCAPED_UNICODE),true), 10);
+            Cache::set('systemlist_'.$req['type'], json_decode(json_encode($system, JSON_UNESCAPED_UNICODE),true), 10);
         }
         return out($system);
     }

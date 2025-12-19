@@ -1725,6 +1725,9 @@ class UserController extends AuthController
             }else{
                 $change_balance = $v['log_type_text'].'(0)';
             }
+            if($v['log_type'] == 20){
+                $change_balance = '已开通';
+            }
             $in = [
                 'after_balance' => $v['after_balance'],
                 'before_balance' => $v['before_balance'],

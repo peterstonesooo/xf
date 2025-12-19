@@ -778,6 +778,7 @@ class Project extends Model
     /**
      * 获取用户可提现余额
      * 根据参与的五福产品组解锁提现额度
+     * 根据class和project_group_id判断是否完成系列
      * 
      * @param int $userId 用户ID
      * @return float 可提现余额
@@ -786,57 +787,77 @@ class Project extends Model
     {
         $user = User::where('id', $userId)->find();
         
-        // 五福产品组解锁额度配置（单位：元）
-        $unlockAmounts = [
-            7 => 600000,  // 健康福：60万
-            8 => 500000,  // 智享福：50万
-            9 => 200000,  // 就业福：20万
-            10 => 800000, // 丰收福：80万
-            11 => 1000000, // 惠享福：100万
+        // 配置1：class在[32,33,34]中的解锁额度
+        $clas1 = [
+            'classes' => [32, 33, 34],
+            'unlockAmounts' => [
+                7 => 300000,  // 健康福：30万
+                8 => 800000,  // 智享福：80万
+                9 => 500000,  // 就业福：50万
+                10 => 1500000, // 兴农福：150万
+                11 => 2000000, // 惠享福：200万    
+            ]
         ];
         
-        // 计算解锁额度（每个组只能算一次）
+        // 配置2：class在[35,36,37]中的解锁额度
+        $clas2 = [
+            'classes' => [35, 36, 37],
+            'unlockAmounts' => [
+                7 => 600000,   // 健康福：60万
+                8 => 500000,   // 智享福：50万
+                9 => 200000,   // 就业福：20万
+                10 => 800000,  // 丰收福：80万
+                11 => 1000000, // 惠享福：100万
+            ]
+        ];
+        
         $unlockBalance = 0;
         $wufuGroupIds = [7, 8, 9, 10, 11];
         
-        foreach ($wufuGroupIds as $groupId) {
-            $hasParticipated = false;
+        // 遍历两个配置
+        $configs = [$clas1, $clas2];
+        foreach ($configs as $config) {
+            $classes = $config['classes'];
+            $unlockAmounts = $config['unlockAmounts'];
             
-            // 检查mp_order表中的购买记录（申领或预定）
-            $orderPurchased = Order::alias('o')
-                ->join('project p', 'o.project_id = p.id')
-                ->where('o.user_id', $userId)
-                ->where('p.project_group_id', $groupId)
-                ->where('p.status', 1) // 产品状态为启用
-                // ->where('o.status', '>=', 2) // 订单状态已支付
-                ->find();
+            // 遍历每个产品组
+            foreach ($wufuGroupIds as $groupId) {
+                $hasParticipated = false;
                 
-            if (!empty($orderPurchased)) {
-                $hasParticipated = true;
-            }
-            
-            // 如果在mp_order表中没找到，再检查mp_order_daily_bonus表
-            if (!$hasParticipated) {
-                $dailyBonusPurchased = OrderDailyBonus::alias('o')
+                // 检查mp_order表中是否有符合条件的订单
+                // 条件：project_group_id匹配 且 class在classes数组中
+                $orderPurchased = Order::alias('o')
                     ->join('project p', 'o.project_id = p.id')
                     ->where('o.user_id', $userId)
                     ->where('p.project_group_id', $groupId)
-                    ->where('p.status', 1) // 产品状态为启用
-                    // ->where('o.status', '>=', 2) // 订单状态已支付
+                    ->whereIn('p.class', $classes)
                     ->find();
                     
-                if (!empty($dailyBonusPurchased)) {
+                if (!empty($orderPurchased)) {
                     $hasParticipated = true;
                 }
-            }
-            
-            // 如果参与了该组，加上对应的解锁额度
-            if ($hasParticipated && isset($unlockAmounts[$groupId])) {
-                $unlockBalance += $unlockAmounts[$groupId];
+                
+                // 如果在mp_order表中没找到，再检查mp_order_daily_bonus表
+                if (!$hasParticipated) {
+                    $dailyBonusPurchased = OrderDailyBonus::alias('o')
+                        ->join('project p', 'o.project_id = p.id')
+                        ->where('o.user_id', $userId)
+                        ->where('p.project_group_id', $groupId)
+                        ->whereIn('p.class', $classes)
+                        ->find();
+                        
+                    if (!empty($dailyBonusPurchased)) {
+                        $hasParticipated = true;
+                    }
+                }
+                
+                // 如果完成了该系列（project_group_id匹配且class在classes中），加上对应的解锁额度
+                if ($hasParticipated && isset($unlockAmounts[$groupId])) {
+                    $unlockBalance += $unlockAmounts[$groupId];
+                }
             }
         }
         
-        // 可提现余额 = 总资产 - 锁定余额 + 解锁额度
         return $unlockBalance;
     }
 

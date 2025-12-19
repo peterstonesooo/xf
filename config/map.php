@@ -303,6 +303,7 @@ return array(
             127 => '赠送抽奖卷',
             128 => '数字抽奖中奖奖励',
             129 => '定投未完成10次返还',
+            130 => '赠送VIP',
         ),
         'balance_type_map' =>
         array(
@@ -401,7 +402,7 @@ return array(
             127 => '赠送抽奖卷',
             128 => '数字抽奖中奖奖励',
             129 => '定投未完成10次返还',
-
+            130 => '赠送VIP',
         ),
         'integral_type_map' =>
         array(
@@ -431,6 +432,7 @@ return array(
             17 => '收益钱包',//shouyi_wallet
             18 => '黄金',//gold_wallet
             19 => '幸运礼物',//lucky_tickets
+            20 => 'VIP',//vip_status
         ),
         'status_map' =>
         array(

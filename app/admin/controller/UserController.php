@@ -289,7 +289,7 @@ class UserController extends AuthController
             'user_id' => 'require|number',
         ]);
 
-        $user = User::where('id', $req['user_id'])->find();
+        $user = User::where('id', $req['user_id'])->lock(true)->find();
         if (!$user) {
             return out(null, 10001, '用户不存在');
         }
@@ -300,11 +300,35 @@ class UserController extends AuthController
 
         Db::startTrans();
         try {
-            // 设置VIP状态为1
-            User::where('id', $req['user_id'])->update(['vip_status' => 1]);
+            // 使用条件更新，确保只有 vip_status = 0 时才能更新，防止并发导致累加
+            $affectedRows = User::where('id', $req['user_id'])
+                ->where('vip_status', 0)
+                ->update(['vip_status' => 1]);
+            
+            if ($affectedRows == 0) {
+                Db::rollback();
+                return out(null, 10001, '该用户已经是VIP或状态已变更');
+            }
+            
+            // 手动记录余额日志（不调用 changeInc，避免再次累加）
+            $sn = build_order_sn($req['user_id'], 'VIP');
+            \app\model\UserBalanceLog::create([
+                'user_id' => $req['user_id'],
+                'type' => 130,
+                'log_type' => 20,
+                'relation_id' => 0,
+                'before_balance' => 0,
+                'change_balance' => 1,
+                'after_balance' => 1,
+                'remark' => '获赠幸福VIP',
+                'admin_user_id' => 0,
+                'status' => 1,
+                'order_sn' => $sn,
+                'is_delete' => 0,
+            ]);
             
             // 赠送抽奖机会
-            // User::where('id', $req['user_id'])->inc('lottery_tickets', 1)->update();
+            User::where('id', $req['user_id'])->inc('lottery_tickets', 1)->update();
             
             // 记录VIP日志
             if (class_exists('\app\model\VipLog')) {

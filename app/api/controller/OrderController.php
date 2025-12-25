@@ -175,6 +175,7 @@ class OrderController extends AuthController
                 return out(null, 10003, '请先前往【幸福同行】中完成“红色传承”或“八一精神”任意窗口申领');
             }
         }
+
         
         $numbers = isset($req['numbers']) && (int)$req['numbers'] > 0 ? (int)$req['numbers'] : 1;
 
@@ -259,6 +260,16 @@ class OrderController extends AuthController
                         return out(null, 10003, $msg);
                     }
                 }
+            }
+        }
+
+        //固定项目计算金额
+        if(in_array($project['project_id'], [187,188,189,190])){
+            $pay_amount = $project['single_amount'] * $numbers;
+            $summounts = explode('-', $project['sum_amount']);
+            $total_amount = $user['balance'] + $user['gongfu_wallet'];
+            if($total_amount < $summounts[0]*10000 || $total_amount > $summounts[1]*10000){
+                return out(null, 10003, '您不能购买该产品');
             }
         }
         

@@ -433,6 +433,7 @@ return array(
             18 => '黄金',//gold_wallet
             19 => '幸运礼物',//lucky_tickets
             20 => 'VIP',//vip_status
+            21 => '综合钱包',//zonghe_wallet
         ),
         'status_map' =>
         array(

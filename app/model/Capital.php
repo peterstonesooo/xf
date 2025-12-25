@@ -228,6 +228,10 @@ class Capital extends Model
                      } elseif ($capital['log_type'] == 17) {
                         $field = 'shouyi_wallet';
                         $log_type = 17;
+                     } elseif ($capital['log_type'] == 21) {
+                        // 综合钱包提现拒绝，返回到民生钱包
+                        $field = 'balance';
+                        $log_type = 4;
                      } else {
                         // 默认使用余额钱包
                         $field = 'topup_balance';

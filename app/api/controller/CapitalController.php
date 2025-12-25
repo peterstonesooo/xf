@@ -22,6 +22,7 @@ use app\model\Hongli;
 use app\model\HongliOrder;
 use app\model\UserBank;
 use app\model\UserDelivery;
+use app\model\UserBalanceLog;
 use Exception;
 use think\facade\Db;
 
@@ -351,6 +352,10 @@ class CapitalController extends AuthController
             return out(null, 10001, '单笔提现须满100元方可申请');
         }
 
+        if($user['shiming_status'] == 0){
+            return out(null, 10001, '请先完成实名认证');
+        }
+
         Db::startTrans();
         try {
 
@@ -364,9 +369,7 @@ class CapitalController extends AuthController
                     return out(null, 803, '请补缴'.$user['tiyan_wallet_lock'].'元体验金');
                 }
             }
-            if($user['shiming_status'] == 0){
-                return out(null, 10001, '请先完成实名认证');
-            }
+            
  
             if(!isset($req['type'])) {
                 $req['type'] = 1;
@@ -388,12 +391,22 @@ class CapitalController extends AuthController
            }elseif ($req['type'] == 5){
                $field = 'shouyi_wallet';
                $log_type = 17;
+           }elseif ($req['type'] == 6){
+               $field = 'zonghe_wallet';
+               $log_type = 21;
            }
 
-            if ($user[$field] < $req['amount']) {
-                return out(null, 10001, '可提现金额不足');
-            }
-   
+
+           if($req['type'] == 6){
+                $total_amount = $user['balance'] + $user['gongfu_wallet'];
+                if($total_amount < $req['amount']){
+                    return out(null, 10001, '可提现金额不足');
+                }
+           }else{
+                if ($user[$field] < $req['amount']) {
+                    return out(null, 10001, '可提现金额不足');
+                }
+           }
             // 判断每天最大提现次数
            $num = Capital::where('user_id', $user['id'])->where('type', 2)->where('created_at', '>=', date('Y-m-d 00:00:00'))->lock(true)->count();
            if ($num >= dbconfig('per_day_withdraw_max_num')) {
@@ -432,10 +445,51 @@ class CapitalController extends AuthController
                 'bank_branch' => $payAccount['bank_address'],
                 'log_type' => $log_type,
             ]);
-            // 扣减用户余额
-            User::changeInc($user['id'],$change_amount,$field,2,$capital['id'],$log_type,'提现',0,1,'TX');
-            //User::changeInc($user['id'],$change_amount,'invite_bonus',2,$capital['id'],1);
-            //User::changeBalance($user['id'], $change_amount, 2, $capital['id']);
+            if($req['type'] == 6){
+                // 先尝试从民生钱包扣除，不够再从共富金扣除
+                $balanceAmount = $user['balance']; // 民生钱包余额
+                $gongfuAmount = $user['gongfu_wallet']; // 共富金余额
+                $needDeduct = abs($change_amount); // 需要扣除的金额
+                
+                if ($balanceAmount >= $needDeduct) {
+                    // 民生钱包足够，全部从民生钱包扣除
+                    User::changeInc($user['id'], $change_amount, 'balance', 2, $capital['id'], $log_type, '提现', 0, 1, 'TX',1);
+                } else {
+                    // 民生钱包不够，先扣除民生钱包全部余额，剩余从共富金扣除
+                    $balanceDeduct = -$balanceAmount; // 民生钱包扣除金额（负数）
+                    $gongfuDeduct = -($needDeduct - $balanceAmount); // 共富金扣除金额（负数）
+                    
+                    if ($balanceAmount > 0) {
+                        User::changeInc($user['id'], $balanceDeduct, 'balance', 2, $capital['id'], $log_type, '提现(民生钱包)', 0, 1, 'TX',1);
+                    }
+                    User::changeInc($user['id'], $gongfuDeduct, 'gongfu_wallet', 2, $capital['id'], $log_type, '提现(共富金)', 0, 1, 'TX',1);
+                    
+                    //添加资金明细记录
+                    // 重新获取用户最新余额（扣除后）
+                    $userAfter = User::where('id', $user['id'])->find();
+                    $beforeTotalBalance = $balanceAmount + $gongfuAmount; // 扣除前的总余额
+                    $afterTotalBalance = $userAfter['balance'] + $userAfter['gongfu_wallet']; // 扣除后的总余额
+                    
+                    $sn = build_order_sn($user['id'], 'TX');
+                    UserBalanceLog::create([
+                        'user_id' => $user['id'],
+                        'type' => 2, // 提现
+                        'log_type' => 21, // 综合钱包
+                        'relation_id' => $capital['id'],
+                        'before_balance' => $beforeTotalBalance,
+                        'change_balance' => $change_amount, // 负数
+                        'after_balance' => $afterTotalBalance,
+                        'remark' => '提现（综合钱包）',
+                        'admin_user_id' => 0,
+                        'status' => 1, // 待确认
+                        'order_sn' => $sn,
+                    ]);
+                }
+                
+            }else{
+                User::changeInc($user['id'],$change_amount,$field,2,$capital['id'],$log_type,'提现',0,1,'TX');
+            }
+
 
             Db::commit();
         } catch (Exception $e) {

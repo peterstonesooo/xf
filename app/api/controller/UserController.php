@@ -98,6 +98,15 @@ class UserController extends AuthController
         $user['register_rate'] = round($user['has_register'] / $user['total_register'] * 100, 2);
         $user['total_assets'] = bcadd(($user['topup_balance'] + $user['team_bonus_balance'] + $user['butie'] + $user['balance']), $user['digit_balance'], 2);
     
+        //判断是否存在未完成的订单
+        $ordercount = Order::where('user_id', $user['id'])
+        ->where('project_id', 'in', [187,188,189,190])
+        ->count();
+        if($ordercount > 0){
+            $user['can_withdraw_zonghe'] = 1;
+        }else{
+            $user['can_withdraw_zonghe'] = 0;
+        }
         //计算可提现额度
         $user['can_withdraw_balance'] = Project::getUserCanWithdrawBalance($user['id']);
         //计算提现总额【2025-11-24号后提现的，包括待审核和已成功的，排除被拒绝的】

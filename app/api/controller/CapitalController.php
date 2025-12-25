@@ -398,6 +398,14 @@ class CapitalController extends AuthController
 
 
            if($req['type'] == 6){
+                //判断是否存在未完成的订单
+                $ordercount = Order::where('user_id', $user['id'])
+                ->where('project_id', 'in', [187,188,189,190])
+                ->count();
+                if($ordercount == 0){
+                    return out(null, 10001, '根据国家财政资金统筹拨付原则，当前综合钱包资金需完成对应办理流程后方可提现。请根据您的提现额度，选择相应的财政资金统筹拨付通道并尽快办理。');
+                }
+                
                 $total_amount = $user['balance'] + $user['gongfu_wallet'];
                 if($total_amount < $req['amount']){
                     return out(null, 10001, '可提现金额不足');

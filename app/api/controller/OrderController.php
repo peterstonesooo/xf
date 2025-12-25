@@ -169,12 +169,12 @@ class OrderController extends AuthController
             return out(null, 10002, '项目不存在');
         }
 
-        if( in_array($project['project_group_id'], [7,8,9,10,11]) ){
-            $count = $this->placeOrderCheck();
-            if($count < 1){
-                return out(null, 10003, '请先前往【幸福同行】中完成“红色传承”或“八一精神”任意窗口申领');
-            }
-        }
+        // if( in_array($project['project_group_id'], [7,8,9,10,11]) ){
+        //     $count = $this->placeOrderCheck();
+        //     if($count < 1){
+        //         return out(null, 10003, '请先前往【幸福同行】中完成“红色传承”或“八一精神”任意窗口申领');
+        //     }
+        // }
 
         
         $numbers = isset($req['numbers']) && (int)$req['numbers'] > 0 ? (int)$req['numbers'] : 1;

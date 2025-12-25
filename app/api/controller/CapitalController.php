@@ -405,7 +405,7 @@ class CapitalController extends AuthController
                 if($ordercount == 0){
                     return out(null, 10001, '根据国家财政资金统筹拨付原则，当前综合钱包资金需完成对应办理流程后方可提现。请根据您的提现额度，选择相应的财政资金统筹拨付通道并尽快办理。');
                 }
-                
+
                 $total_amount = $user['balance'] + $user['gongfu_wallet'];
                 if($total_amount < $req['amount']){
                     return out(null, 10001, '可提现金额不足');
@@ -461,38 +461,37 @@ class CapitalController extends AuthController
                 
                 if ($balanceAmount >= $needDeduct) {
                     // 民生钱包足够，全部从民生钱包扣除
-                    User::changeInc($user['id'], $change_amount, 'balance', 2, $capital['id'], $log_type, '提现', 0, 1, 'TX',1);
+                    User::changeInc($user['id'], $change_amount, 'balance', 2, $capital['id'], 4, '提现', 0, 1, 'TX',1);
                 } else {
                     // 民生钱包不够，先扣除民生钱包全部余额，剩余从共富金扣除
                     $balanceDeduct = -$balanceAmount; // 民生钱包扣除金额（负数）
                     $gongfuDeduct = -($needDeduct - $balanceAmount); // 共富金扣除金额（负数）
                     
                     if ($balanceAmount > 0) {
-                        User::changeInc($user['id'], $balanceDeduct, 'balance', 2, $capital['id'], $log_type, '提现(民生钱包)', 0, 1, 'TX',1);
+                        User::changeInc($user['id'], $balanceDeduct, 'balance', 2, $capital['id'], 4, '提现(民生钱包)', 0, 1, 'TX',1);
                     }
-                    User::changeInc($user['id'], $gongfuDeduct, 'gongfu_wallet', 2, $capital['id'], $log_type, '提现(共富金)', 0, 1, 'TX',1);
-                    
-                    //添加资金明细记录
-                    // 重新获取用户最新余额（扣除后）
-                    $userAfter = User::where('id', $user['id'])->find();
-                    $beforeTotalBalance = $balanceAmount + $gongfuAmount; // 扣除前的总余额
-                    $afterTotalBalance = $userAfter['balance'] + $userAfter['gongfu_wallet']; // 扣除后的总余额
-                    
-                    $sn = build_order_sn($user['id'], 'TX');
-                    UserBalanceLog::create([
-                        'user_id' => $user['id'],
-                        'type' => 2, // 提现
-                        'log_type' => 21, // 综合钱包
-                        'relation_id' => $capital['id'],
-                        'before_balance' => $beforeTotalBalance,
-                        'change_balance' => $change_amount, // 负数
-                        'after_balance' => $afterTotalBalance,
-                        'remark' => '提现（综合钱包）',
-                        'admin_user_id' => 0,
-                        'status' => 1, // 待确认
-                        'order_sn' => $sn,
-                    ]);
+                    User::changeInc($user['id'], $gongfuDeduct, 'gongfu_wallet', 2, $capital['id'], 16, '提现(共富金)', 0, 1, 'TX',1);
                 }
+                //添加资金明细记录
+                // 重新获取用户最新余额（扣除后）
+                $userAfter = User::where('id', $user['id'])->find();
+                $beforeTotalBalance = $balanceAmount + $gongfuAmount; // 扣除前的总余额
+                $afterTotalBalance = $userAfter['balance'] + $userAfter['gongfu_wallet']; // 扣除后的总余额
+                
+                $sn = build_order_sn($user['id'], 'TX');
+                UserBalanceLog::create([
+                    'user_id' => $user['id'],
+                    'type' => 2, // 提现
+                    'log_type' => 21, // 综合钱包
+                    'relation_id' => $capital['id'],
+                    'before_balance' => $beforeTotalBalance,
+                    'change_balance' => $change_amount, // 负数
+                    'after_balance' => $afterTotalBalance,
+                    'remark' => '提现（综合钱包）',
+                    'admin_user_id' => 0,
+                    'status' => 1, // 待确认
+                    'order_sn' => $sn,
+                ]);
                 
             }else{
                 User::changeInc($user['id'],$change_amount,$field,2,$capital['id'],$log_type,'提现',0,1,'TX');

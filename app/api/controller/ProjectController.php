@@ -216,7 +216,7 @@ class ProjectController extends AuthController
 
             $item['yuding_amount'] = intval($item['yuding_amount']);
             $item['huimin_days_return'] = is_string($item['huimin_days_return']) ? json_decode($item['huimin_days_return'], true) : $item['huimin_days_return'];
-            $item['sum_amount'] = intval($item['sum_amount'])+intval($item['minsheng_amount']);
+            // $item['sum_amount'] = intval($item['sum_amount'])+intval($item['minsheng_amount']);
             $item['monday'] = $monday;
             $item['friday'] = $friday;
             $item['huimin_amount'] = intval($item['huimin_amount']);

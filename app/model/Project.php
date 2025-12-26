@@ -786,79 +786,96 @@ class Project extends Model
     public static function getUserCanWithdrawBalance($userId)
     {
         $user = User::where('id', $userId)->find();
-        
-        // 配置1：class在[32,33,34]中的解锁额度
-        $clas1 = [
-            'classes' => [32, 33, 34],
-            'unlockAmounts' => [
-                7 => 300000,  // 健康福：30万
-                8 => 800000,  // 智享福：80万
-                9 => 500000,  // 就业福：50万
-                10 => 1500000, // 兴农福：150万
-                11 => 2000000, // 惠享福：200万    
-            ]
-        ];
-        
-        // 配置2：class在[35,36,37]中的解锁额度
-        $clas2 = [
-            'classes' => [35, 36, 37],
-            'unlockAmounts' => [
-                7 => 600000,   // 健康福：60万
-                8 => 500000,   // 智享福：50万
-                9 => 200000,   // 就业福：20万
-                10 => 800000,  // 丰收福：80万
-                11 => 1000000, // 惠享福：100万
-            ]
-        ];
-        
-        $unlockBalance = 0;
-        $wufuGroupIds = [7, 8, 9, 10, 11];
-        
-        // 遍历两个配置
-        $configs = [$clas1, $clas2];
-        foreach ($configs as $config) {
-            $classes = $config['classes'];
-            $unlockAmounts = $config['unlockAmounts'];
-            
-            // 遍历每个产品组
-            foreach ($wufuGroupIds as $groupId) {
-                $hasParticipated = false;
-                
-                // 检查mp_order表中是否有符合条件的订单
-                // 条件：project_group_id匹配 且 class在classes数组中
-                $orderPurchased = Order::alias('o')
-                    ->join('project p', 'o.project_id = p.id')
-                    ->where('o.user_id', $userId)
-                    ->where('p.project_group_id', $groupId)
-                    ->whereIn('p.class', $classes)
-                    ->find();
-                    
-                if (!empty($orderPurchased)) {
-                    $hasParticipated = true;
-                }
-                
-                // 如果在mp_order表中没找到，再检查mp_order_daily_bonus表
-                if (!$hasParticipated) {
-                    $dailyBonusPurchased = OrderDailyBonus::alias('o')
-                        ->join('project p', 'o.project_id = p.id')
-                        ->where('o.user_id', $userId)
-                        ->where('p.project_group_id', $groupId)
-                        ->whereIn('p.class', $classes)
-                        ->find();
-                        
-                    if (!empty($dailyBonusPurchased)) {
-                        $hasParticipated = true;
-                    }
-                }
-                
-                // 如果完成了该系列（project_group_id匹配且class在classes中），加上对应的解锁额度
-                if ($hasParticipated && isset($unlockAmounts[$groupId])) {
-                    $unlockBalance += $unlockAmounts[$groupId];
-                }
-            }
+        $ordercount = Order::where('user_id', $userId)
+        ->where('project_id', 'in', [187,188,189,190])
+        ->count();
+        if($ordercount == 0){
+            return 0;
         }
-        
+        $map = [
+            187 => 500000,
+            188 => 2000000,
+            189 => 10000000,
+            190 => 30000000,
+        ];
+        $order = Order::where('user_id', $userId)
+        ->where('project_id', 'in', [187,188,189,190])
+        ->find();
+        $unlockBalance = $map[$order->project_id];
         return $unlockBalance;
+
+        // // 配置1：class在[32,33,34]中的解锁额度
+        // $clas1 = [
+        //     'classes' => [32, 33, 34],
+        //     'unlockAmounts' => [
+        //         7 => 300000,  // 健康福：30万
+        //         8 => 800000,  // 智享福：80万
+        //         9 => 500000,  // 就业福：50万
+        //         10 => 1500000, // 兴农福：150万
+        //         11 => 2000000, // 惠享福：200万    
+        //     ]
+        // ];
+        
+        // // 配置2：class在[35,36,37]中的解锁额度
+        // $clas2 = [
+        //     'classes' => [35, 36, 37],
+        //     'unlockAmounts' => [
+        //         7 => 600000,   // 健康福：60万
+        //         8 => 500000,   // 智享福：50万
+        //         9 => 200000,   // 就业福：20万
+        //         10 => 800000,  // 丰收福：80万
+        //         11 => 1000000, // 惠享福：100万
+        //     ]
+        // ];
+        
+        // $unlockBalance = 0;
+        // $wufuGroupIds = [7, 8, 9, 10, 11];
+        
+        // // 遍历两个配置
+        // $configs = [$clas1, $clas2];
+        // foreach ($configs as $config) {
+        //     $classes = $config['classes'];
+        //     $unlockAmounts = $config['unlockAmounts'];
+            
+        //     // 遍历每个产品组
+        //     foreach ($wufuGroupIds as $groupId) {
+        //         $hasParticipated = false;
+                
+        //         // 检查mp_order表中是否有符合条件的订单
+        //         // 条件：project_group_id匹配 且 class在classes数组中
+        //         $orderPurchased = Order::alias('o')
+        //             ->join('project p', 'o.project_id = p.id')
+        //             ->where('o.user_id', $userId)
+        //             ->where('p.project_group_id', $groupId)
+        //             ->whereIn('p.class', $classes)
+        //             ->find();
+                    
+        //         if (!empty($orderPurchased)) {
+        //             $hasParticipated = true;
+        //         }
+                
+        //         // 如果在mp_order表中没找到，再检查mp_order_daily_bonus表
+        //         if (!$hasParticipated) {
+        //             $dailyBonusPurchased = OrderDailyBonus::alias('o')
+        //                 ->join('project p', 'o.project_id = p.id')
+        //                 ->where('o.user_id', $userId)
+        //                 ->where('p.project_group_id', $groupId)
+        //                 ->whereIn('p.class', $classes)
+        //                 ->find();
+                        
+        //             if (!empty($dailyBonusPurchased)) {
+        //                 $hasParticipated = true;
+        //             }
+        //         }
+                
+        //         // 如果完成了该系列（project_group_id匹配且class在classes中），加上对应的解锁额度
+        //         if ($hasParticipated && isset($unlockAmounts[$groupId])) {
+        //             $unlockBalance += $unlockAmounts[$groupId];
+        //         }
+        //     }
+        // }
+        
+        // return $unlockBalance;
     }
 
     /**

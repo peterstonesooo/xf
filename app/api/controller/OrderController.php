@@ -265,6 +265,13 @@ class OrderController extends AuthController
 
         //固定项目计算金额
         if(in_array($project['project_id'], [187,188,189,190])){
+            $ordercount = Order::where('user_id', $user['id'])
+                ->where('project_id', 'in', [187,188,189,190])
+                ->count();
+            if($ordercount > 0){
+                return out(null, 10003, '您不能购买该产品');
+            }
+            
             $pay_amount = $project['single_amount'] * $numbers;
             $summounts = explode('-', $project['sum_amount']);
             $total_amount = $user['balance'] + $user['gongfu_wallet'];

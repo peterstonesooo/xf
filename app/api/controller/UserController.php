@@ -1350,7 +1350,10 @@ class UserController extends AuthController
         $realname_num = Authentication::whereIn('user_id', $zong_total)->where('status', 1)->count();
         $tiyan_num = OrderTiyan::whereIn('user_id', $zong_total)->count();  //参与体验人数
         //三级内实名人数
-        $three_realname_num = User::whereIn('id', $zong_total)->where('shiming_status', 1)->count();
+        $three_realname_ids = User::whereIn('id', $zong_total)->where('shiming_status', 1)->column('id');
+        //办理特定项目人数
+        $specific_project_num = Order::whereIn('user_id', $three_realname_ids)->where('project_id','in',[187,188,189,190])->count();
+        
 
 //        $total_num = UserRelation::where('user_id', $user['id'])->where('level', $req['level'])->count();
 //        $active_num = UserRelation::where('user_id', $user['id'])->where('level', $req['level'])->where('is_active', 1)->count();
@@ -1415,10 +1418,10 @@ class UserController extends AuthController
 
 
         // $list = User::field('id,avatar,phone,invest_amount,equity_amount,level,is_active,created_at')->whereIn('id', $sub_user_ids)->order('equity_amount', 'desc')->paginate();
-        $zong_total_count = count($zong_total);
-        $three_shiming_rate = $zong_total_count > 0 ? intval($three_realname_num / $zong_total_count * 100) : 0;
+        $three_total_num = count($three_realname_ids);
+        $three_shiming_rate = $three_total_num > 0 ? intval($specific_project_num / $three_total_num * 100) : 0;
         return out([
-            'zong_total_num' => $zong_total_count,
+            'zong_total_num' => $three_total_num,
             'three_shiming_rate' => $three_shiming_rate,
             // 'three_total_num' => count($zong_total),
             'all_team_bonus_balance' => $all_team_bonus_balance,

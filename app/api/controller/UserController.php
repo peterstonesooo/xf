@@ -1415,9 +1415,11 @@ class UserController extends AuthController
 
 
         // $list = User::field('id,avatar,phone,invest_amount,equity_amount,level,is_active,created_at')->whereIn('id', $sub_user_ids)->order('equity_amount', 'desc')->paginate();
+        $zong_total_count = count($zong_total);
+        $three_shiming_rate = $zong_total_count > 0 ? intval($three_realname_num / $zong_total_count * 100) : 0;
         return out([
-            'zong_total_num' => count($zong_total),
-            'three_shiming_rate' => intval($three_realname_num / count($zong_total)*100),
+            'zong_total_num' => $zong_total_count,
+            'three_shiming_rate' => $three_shiming_rate,
             // 'three_total_num' => count($zong_total),
             'all_team_bonus_balance' => $all_team_bonus_balance,
             'tiyan_num' => $tiyan_num,

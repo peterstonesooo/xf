@@ -1342,14 +1342,15 @@ class UserController extends AuthController
        ]);
         $user = $this->user;
         $today = date("Y-m-d 00:00:00", time());
-        $zong_total = UserRelation::where('user_id', $user['id'])->column('sub_user_id'); //总团三级s
+        $zong_total = UserRelation::where('user_id', $user['id'])->where('level','in',[1,2,3])->column('sub_user_id'); //总团三级s
         // $all_team_bonus_balance = round(User::whereIn('id',array_merge($zong_total,[$user['id']]))->sum('team_bonus_balance'),2);
         $all_team_bonus_balance = round(UserBalanceLog::whereIn('type',[8,66])->where('log_type',2)->where('user_id',$user['id'])->sum('change_balance'),2);
         
         $todya_total_num = UserRelation::where('user_id', $user['id'])->where('created_at', '>=', $today)->count();
         $realname_num = Authentication::whereIn('user_id', $zong_total)->where('status', 1)->count();
         $tiyan_num = OrderTiyan::whereIn('user_id', $zong_total)->count();  //参与体验人数
-        
+        //三级内实名人数
+        $three_realname_num = User::whereIn('id', $zong_total)->where('shiming_status', 1)->count();
 
 //        $total_num = UserRelation::where('user_id', $user['id'])->where('level', $req['level'])->count();
 //        $active_num = UserRelation::where('user_id', $user['id'])->where('level', $req['level'])->where('is_active', 1)->count();
@@ -1416,6 +1417,7 @@ class UserController extends AuthController
         // $list = User::field('id,avatar,phone,invest_amount,equity_amount,level,is_active,created_at')->whereIn('id', $sub_user_ids)->order('equity_amount', 'desc')->paginate();
         return out([
             'zong_total_num' => count($zong_total),
+            'three_shiming_rate' => intval($three_realname_num / count($zong_total)*100),
             // 'three_total_num' => count($zong_total),
             'all_team_bonus_balance' => $all_team_bonus_balance,
             'tiyan_num' => $tiyan_num,

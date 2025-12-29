@@ -851,3 +851,34 @@ function getRealIp(){
     }
     return $ip;
 }
+
+// 格式化数字：整数返回整数，小数保留2位并去掉末尾0
+if (!function_exists('format_number')) {
+    /**
+     * 格式化数字
+     * 12.00 → 12
+     * 12.22 → 12.22
+     * 12.222 → 12.22
+     * 12.20 → 12.2
+     * 
+     * @param mixed $value 数值
+     * @return int|float 格式化后的数值
+     */
+    function format_number($value)
+    {
+        // 先四舍五入到2位小数
+        $rounded = round((float)$value, 2);
+        
+        // 如果是整数，返回整数类型
+        if ($rounded == (int)$rounded) {
+            return (int)$rounded;
+        }
+        
+        // 否则去掉末尾的0（如 12.20 → 12.2）
+        // 使用 rtrim 去掉末尾的0和小数点（如果有）
+        $formatted = rtrim(rtrim(sprintf('%.2f', $rounded), '0'), '.');
+        
+        // 转换回数值类型
+        return (float)$formatted;
+    }
+}

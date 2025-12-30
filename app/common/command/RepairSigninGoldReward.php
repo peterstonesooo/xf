@@ -58,7 +58,6 @@ class RepairSigninGoldReward extends Command
                 ->where('l.type', 100)
                 ->where('l.log_type', 18)
                 ->where('l.remark', '签到奖励')
-                ->where('l.order_sn', 'like', 'SR%')
                 ->where('l.change_balance', 100)
                 ->field('l.*, u.phone')
                 ->order('l.created_at', 'asc')
@@ -86,7 +85,6 @@ class RepairSigninGoldReward extends Command
                            $record['phone'],
                            $record['relation_id'],
                            $record['change_balance'],
-                           $record['order_sn'],
                            $record['created_at']));
             }
             $output->writeln(str_repeat('-', 160));

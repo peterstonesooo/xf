@@ -57,6 +57,7 @@ return [
         'fix:investment_interest_data' => 'app\common\command\FixInvestmentInterestData',
         'repair:balance-log' => 'app\common\command\RepairBalanceLog',
         'repair:balance-log-error' => 'app\common\command\RepairBalanceLogError',
+        'repair:signin-gold-reward' => 'app\common\command\RepairSigninGoldReward',
         'correct:balance-log' => 'app\common\command\CorrectBalanceLog',
         'rollback:gongfu-bonus' => 'app\common\command\RollbackGongfuBonus',
         'rollback:happiness-team-reward' => 'app\common\command\RollbackHappinessTeamReward',

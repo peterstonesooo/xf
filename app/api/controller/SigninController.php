@@ -14,7 +14,6 @@ use app\model\UserBalanceLog;
 use think\db\Query;
 use think\facade\Cache;
 use app\model\User;
-use app\model\Project;
 use app\model\TurntableUserLog;
 use app\model\UserSignin;
 use app\model\UserSigninRewardLog;
@@ -855,13 +854,7 @@ class SigninController extends AuthController
                 User::changeInc($userId,1,'lucky_tickets',100,$rewardLog->id,19, '连续签到','',1,'SR');
             }
             if($req['type'] == 3){
-                // 使用公共方法发放黄金（100克）
-                Project::rewardGold($userId, 100, '签到奖励', [
-                    'related_id' => $rewardLog->id,
-                    'change_type' => 100,
-                    'change_status' => 2,
-                    'change_order_prefix' => 'SR',
-                ]);
+                User::changeInc($userId,100,'gold_wallet',100,$rewardLog->id,18, '签到奖励','',1,'SR');
             }
             Db::commit();
             

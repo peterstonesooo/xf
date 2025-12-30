@@ -74,12 +74,12 @@ class RepairSigninGoldReward extends Command
             $output->writeln('');
             $output->writeln('<comment>错误记录详情：</comment>');
             $output->writeln(str_repeat('-', 160));
-            $output->writeln(sprintf('%-10s %-15s %-20s %-15s %-15s %-20s %-30s',
-                       'ID', '用户ID', '手机号', '关联ID', '金额', '订单号', '创建时间'));
-            $output->writeln(str_repeat('-', 160));
+            $output->writeln(sprintf('%-10s %-15s %-20s %-15s %-15s %-30s',
+                       'ID', '用户ID', '手机号', '关联ID', '金额', '创建时间'));
+            $output->writeln(str_repeat('-', 120));
 
             foreach ($errorRecords as $record) {
-                $output->writeln(sprintf('%-10s %-15s %-20s %-15s %-15s %-20s %-30s',
+                $output->writeln(sprintf('%-10s %-15s %-20s %-15s %-15s %-30s',
                            $record['id'],
                            $record['user_id'],
                            $record['phone'],

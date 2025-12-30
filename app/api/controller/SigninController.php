@@ -46,29 +46,14 @@ class SigninController extends AuthController
             }
 
             $last_sign = UserSignin::where('user_id', $user['id'])->order('signin_date', 'desc')->find();
-            // if(!$last_sign) {
-            //     $signin = UserSignin::create([
-            //         'user_id' => $user['id'],
-            //         'signin_date' => $signin_date,
-            //     ]);
-            // } else {
+  
             $signin_1_amount = dbconfig('signin_1_amount');
             $signin_1_jifen = dbconfig('signin_1_jifen');
-            $signin_15_amount = dbconfig('signin_15_amount');
-            $signin_15_jifen = dbconfig('signin_15_jifen');
-            $asignin_30_amount = dbconfig('signin_30_amount');
-            $signin_30_jifen = dbconfig('signin_30_jifen');
-            $signin_30_gold = dbconfig('signin_30_gold');
             $vote_tickets = 1;
             //vip签到奖励翻倍
             if($user['vip_status'] == 1){
                 $signin_1_amount = $signin_1_amount*2;
                 $signin_1_jifen = $signin_1_jifen*2;
-                $signin_15_amount = $signin_15_amount*2;
-                $signin_15_jifen = $signin_15_jifen*2;
-                $asignin_30_amount = $asignin_30_amount*2;
-                $signin_30_jifen = $signin_30_jifen*2;
-                $signin_30_gold = $signin_30_gold*2;
                 $vote_tickets = 2;
             }
             $date['return_amount'] = $signin_1_amount;
@@ -86,36 +71,6 @@ class SigninController extends AuthController
                         $continue_days = date('d');
                     }
 
-                    //连续签到30天
-                    if($continue_days % 30 == 0) {
-                        User::changeInc($user['id'],$asignin_30_amount,'balance',100,$user['id'],4,'连续签到30天奖励');
-                        User::changeInc($user['id'],$signin_30_jifen,'integral',100,$user['id'],6,'连续签到30天奖励');
-                        if($signin_30_gold > 0){
-                            // User::changeInc($user['id'],$signin_30_gold,'gold_wallet',100,$user['id'],18,'连续签到30天奖励');
-                            // $date['return_gold'] = $signin_30_gold;
-                        }
-                        $date['return_amount'] = $asignin_30_amount;
-                        $date['return_jifen'] = $signin_30_jifen;
-                    }
-                    //连续签到15天
-                    if($continue_days % 30 != 0 && $continue_days % 15 == 0) {
-                        User::changeInc($user['id'],$signin_15_amount,'balance',101,$user['id'],4,'连续签到15天奖励');
-                        User::changeInc($user['id'],$signin_15_jifen,'integral',101,$user['id'],6,'连续签到15天奖励');
-                        $date['return_amount'] = $signin_15_amount;
-                        $date['return_jifen'] = $signin_15_jifen;
-                    }
-//                    if($continue_days > 30) {
-//                        $amount = $continue_days % 30;
-//                    } else {
-//                        $amount = $continue_days;
-//                    }
-//                    if($amount == 0) {
-//                        $amount = 30;
-//                    }
-//
-//                    if($continue_days % 7 == 0) {
-//                        $amount = $amount * 2;
-//                    }
                 } else {
                     $continue_days = 1;
                 }
@@ -129,6 +84,7 @@ class SigninController extends AuthController
                 User::changeInc($user['id'], $signin_1_jifen, 'integral', 17 ,$signin['id'] , 6,'签到积分');
                 //投票奖励
                 User::changeInc($user['id'],$vote_tickets,'vote_tickets',17,$signin['id'],15,'签到投票奖励');
+                
                 $date['continue_days']  = $continue_days;
                 //User::changeInc($user['id'],100,'yixiaoduizijin',17,$signin['id'],7);
           //  }
@@ -138,6 +94,18 @@ class SigninController extends AuthController
             Db::rollback();
             throw $e;
         }
+        
+        // 判断并发放连续签到15天或30天奖励（事务提交后执行）
+        $rewardInfo = $this->checkAndRewardContinueSignin(
+            $user['id'],
+            $user['vip_status'] == 1,
+            '签到'
+        );
+        if ($rewardInfo['return_amount'] > 0 || $rewardInfo['return_jifen'] > 0) {
+            $date['return_amount'] = $rewardInfo['return_amount'];
+            $date['return_jifen'] = $rewardInfo['return_jifen'];
+        }
+        
         $jDdays = $date['continue_days'] % 30;
         if($jDdays < 15 ){
             $surprises_days = 15-$jDdays;
@@ -250,24 +218,7 @@ class SigninController extends AuthController
                 ->order('signin_date', 'asc')
                 ->select()
                 ->toArray();
-            //获取这个月发放奖励记录
-            $signin_reward_log15 = UserBalanceLog::where('user_id', $user['id'])->where('type', 101)->where('created_at', '>=', $month_start)->count();
-            $signin_reward_log30 = UserBalanceLog::where('user_id', $user['id'])->where('type', 100)->where('created_at', '>=', $month_start)->count();
-            $signin_15_amount = dbconfig('signin_15_amount');
-            $signin_15_jifen = dbconfig('signin_15_jifen');
-            $signin_30_amount = dbconfig('signin_30_amount');
-            $signin_30_jifen = dbconfig('signin_30_jifen');
-
-            //如果连续签到天数是15的倍数，则发放奖励
-            if($continue_days % 15 == 0 && $signin_reward_log15 == 0){
-                User::changeInc($user['id'], $signin_15_amount, 'balance', 101 ,$signin['id'] , 4,'补签15天奖励');
-                User::changeInc($user['id'], $signin_15_jifen, 'integral', 101 ,$signin['id'] , 6,'补签15天奖励');
-            }
-            //如果连续签到天数是30的倍数，则发放奖励
-            if($continue_days % 30 == 0 && $signin_reward_log30 == 0){
-                User::changeInc($user['id'],$signin_30_amount,'balance',100,$signin['id'],4,'补签30天奖励');
-                User::changeInc($user['id'],$signin_30_jifen,'integral',100,$signin['id'],6,'补签30天奖励');
-            }
+            
             // 初始化连续签到天数
             $continueDays = $continue_days;
             $lastDate = strtotime($signin_date);
@@ -285,17 +236,7 @@ class SigninController extends AuthController
                 // 更新数据库中的连续签到天数
                 UserSignin::where('id', $record['id'])
                     ->update(['continue_days' => $continueDays]);
-                //如果是第15天，则发放奖励
                 
-                if($continueDays % 15 == 0 && $signin_reward_log15 == 0){
-                    User::changeInc($user['id'], $signin_15_amount, 'balance', 101 ,$record['id'] , 4,'补签15天奖励');
-                    User::changeInc($user['id'], $signin_15_jifen, 'integral', 101 ,$record['id'] , 6,'补签15天奖励');
-                }
-                //如果是第30天，则发放奖励
-                if($continueDays % 30 == 0 && $signin_reward_log30 == 0){
-                    User::changeInc($user['id'],$signin_30_amount,'balance',100,$record['id'],4,'补签30天奖励');
-                    User::changeInc($user['id'],$signin_30_jifen,'integral',100,$record['id'],6,'补签30天奖励');
-                }
                 $lastDate = $currentDate;
             }
 
@@ -304,8 +245,116 @@ class SigninController extends AuthController
             Db::rollback();
             throw $e;
         }
+        
+        // 判断并发放连续签到15天或30天奖励（事务提交后执行）
+        $this->checkAndRewardContinueSignin(
+            $user['id'],
+            $user['vip_status'] == 1,
+            '补签'
+        );
 
         return out($date);
+    }
+
+    /**
+     * 判断并发放连续签到15天或30天奖励
+     * 循环本月所有签到记录，检查是否有15天或30天的记录，如果本月未发放奖励则发放
+     * 
+     * @param int $userId 用户ID
+     * @param bool $isVip 是否VIP用户
+     * @param string $rewardType 奖励类型（'签到' 或 '补签'）
+     * @return array 返回奖励信息 ['return_amount' => 金额, 'return_jifen' => 积分]
+     */
+    private function checkAndRewardContinueSignin($userId, $isVip = false, $rewardType = '签到')
+    {
+        $result = [
+            'return_amount' => 0,
+            'return_jifen' => 0,
+        ];
+
+        // 获取本月开始时间
+        $monthStart = date('Y-m-01 00:00:00');
+        $monthEnd = date('Y-m-t 23:59:59');
+
+        // 获取奖励配置
+        $signin_15_amount = dbconfig('signin_15_amount');
+        $signin_15_jifen = dbconfig('signin_15_jifen');
+        $signin_30_amount = dbconfig('signin_30_amount');
+        $signin_30_jifen = dbconfig('signin_30_jifen');
+
+        // VIP签到奖励翻倍
+        if ($isVip) {
+            $signin_15_amount = $signin_15_amount * 2;
+            $signin_15_jifen = $signin_15_jifen * 2;
+            $signin_30_amount = $signin_30_amount * 2;
+            $signin_30_jifen = $signin_30_jifen * 2;
+        }
+
+        // 查询本月所有签到记录
+        $signinRecords = UserSignin::where('user_id', $userId)
+            ->where('signin_date', '>=', date('Y-m-d', strtotime($monthStart)))
+            ->where('signin_date', '<=', date('Y-m-d', strtotime($monthEnd)))
+            ->order('continue_days', 'desc')
+            ->select();
+
+        if (empty($signinRecords)) {
+            return $result;
+        }
+
+        // 检查本月是否已发放过连续签到奖励（通过remark判断）
+        $signin_reward_log30 = UserBalanceLog::where('user_id', $userId)
+            ->where('type', 100)
+            ->where('remark', 'like', '%30天奖励')
+            ->where('created_at', '>=', $monthStart)
+            ->count();
+        
+        $signin_reward_log15 = UserBalanceLog::where('user_id', $userId)
+            ->where('type', 101)
+            ->where('remark', 'like', '%15天奖励')
+            ->where('created_at', '>=', $monthStart)
+            ->count();
+
+        // 遍历签到记录，找到 continue_days 等于 15 或 30 的记录
+        $rewardSigninId30 = 0;
+        $rewardSigninId15 = 0;
+
+        foreach ($signinRecords as $record) {
+            $continueDays = $record['continue_days'];
+            
+            // 检查是否等于30天
+            if ($continueDays == 30 && $rewardSigninId30 == 0) {
+                $rewardSigninId30 = $record['id'];
+            }
+            // 检查是否等于15天
+            elseif ($continueDays == 15 && $rewardSigninId15 == 0) {
+                $rewardSigninId15 = $record['id'];
+            }
+        }
+
+        // 发放30天奖励
+        if ($rewardSigninId30 > 0 && $signin_reward_log30 == 0) {
+            User::changeInc($userId, $signin_30_amount, 'balance', 100, $rewardSigninId30, 4, $rewardType . '30天奖励');
+            User::changeInc($userId, $signin_30_jifen, 'integral', 100, $rewardSigninId30, 6, $rewardType . '30天奖励');
+            
+            $result['return_amount'] = $signin_30_amount;
+            $result['return_jifen'] = $signin_30_jifen;
+        }
+        // 发放15天奖励
+        if ($rewardSigninId15 > 0 && $signin_reward_log15 == 0) {
+            User::changeInc($userId, $signin_15_amount, 'balance', 101, $rewardSigninId15, 4, $rewardType . '15天奖励');
+            User::changeInc($userId, $signin_15_jifen, 'integral', 101, $rewardSigninId15, 6, $rewardType . '15天奖励');
+            
+            // 如果已经设置了30天奖励，则累加15天奖励
+            if ($result['return_amount'] > 0) {
+                $result['return_amount'] += $signin_15_amount;
+                $result['return_jifen'] += $signin_15_jifen;
+            } else {
+                $result['return_amount'] = $signin_15_amount;
+                $result['return_jifen'] = $signin_15_jifen;
+            }
+        }
+
+        return $result;
     }
 
     public function userSigninList()

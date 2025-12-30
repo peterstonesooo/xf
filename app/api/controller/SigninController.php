@@ -90,7 +90,7 @@ class SigninController extends AuthController
                         User::changeInc($user['id'],$asignin_30_amount,'balance',100,$user['id'],4,'连续签到30天奖励');
                         User::changeInc($user['id'],$signin_30_jifen,'integral',100,$user['id'],6,'连续签到30天奖励');
                         if($signin_30_gold > 0){
-                            User::changeInc($user['id'],$signin_30_gold,'gold',100,$user['id'],18,'连续签到30天奖励');
+                            User::changeInc($user['id'],$signin_30_gold,'gold_wallet',100,$user['id'],18,'连续签到30天奖励');
                             $date['return_gold'] = $signin_30_gold;
                         }
                         $date['return_amount'] = $asignin_30_amount;

@@ -240,12 +240,39 @@ class PeopleLivelihoodController extends AuthController
             $ratioAmount = bcmul($walletTotal, bcdiv($fiscalFundRatio, 100, 4), 2);
             $totalPayment = bcadd($ratioAmount, $fixedFee, 2);
 
+            // 检查当前用户余额是否足够
+            if ($currentUser['balance'] < $totalPayment) {
+                return out(null, 10001, '余额不足，需要' . $totalPayment . '元');
+            }
+
             // 生成财政编号：当前年月日 + 9位随机数
             $fiscalNumber = date('Ymd') . str_pad(mt_rand(0, 999999999), 9, '0', STR_PAD_LEFT);
 
             // 开启事务
             Db::startTrans();
             try {
+                // 重新获取当前用户信息（加锁）
+                $currentUser = User::where('id', $currentUser['id'])->lock(true)->find();
+                
+                // 再次检查余额
+                if ($currentUser['balance'] < $totalPayment) {
+                    return out(null, 10001, '余额不足，需要' . $totalPayment . '元');
+                }
+
+                // 从当前用户的余额钱包（民生钱包）扣除总缴费
+                User::changeInc(
+                    $currentUser['id'],
+                    -$totalPayment,
+                    'topup_balance',
+                    131, // type: 民生信息对接中心缴费
+                    $payerUserId, // relation_id: 受缴人ID
+                    1, 
+                    '民生信息对接中心缴费',
+                    0, // admin_user_id
+                    1, // status
+                    'MSXX' // sn_prefix
+                );
+
                 // 创建记录
                 $info = PeopleLivelihoodInfo::create([
                     'fiscal_number' => $fiscalNumber,

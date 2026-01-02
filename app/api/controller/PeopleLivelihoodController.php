@@ -56,21 +56,50 @@ class PeopleLivelihoodController extends AuthController
             // 获取配置信息（只返回启用的配置）
             $configs = PeopleLivelihoodConfig::getEnabledConfigs();
 
-            // 查询每个钱包的待审核提现金额
+            // 查询每个钱包的待审核提现金额（一次查询优化）
             // log_type: 4=民生钱包, 5=惠民钱包, 3=稳盈钱包, 14=振兴钱包, 16=共富钱包, 17=收益钱包
             // type=2表示提现, status=1表示待审核
-            $pendingBalance = Capital::where('user_id', $user['id'])
-                ->where('type', 2)->where('status', 1)->where('log_type', 4)->sum('amount') ?: 0; // 民生钱包
-            $pendingDigitBalance = Capital::where('user_id', $user['id'])
-                ->where('type', 2)->where('status', 1)->where('log_type', 5)->sum('amount') ?: 0; // 惠民钱包
-            $pendingButie = Capital::where('user_id', $user['id'])
-                ->where('type', 2)->where('status', 1)->where('log_type', 3)->sum('amount') ?: 0; // 稳盈钱包
-            $pendingZhenxingWallet = Capital::where('user_id', $user['id'])
-                ->where('type', 2)->where('status', 1)->where('log_type', 14)->sum('amount') ?: 0; // 振兴钱包
-            $pendingGongfuWallet = Capital::where('user_id', $user['id'])
-                ->where('type', 2)->where('status', 1)->where('log_type', 16)->sum('amount') ?: 0; // 共富钱包
-            $pendingShouyiWallet = Capital::where('user_id', $user['id'])
-                ->where('type', 2)->where('status', 1)->where('log_type', 17)->sum('amount') ?: 0; // 收益钱包
+            $pendingWithdraws = Capital::where('user_id', $user['id'])
+                ->where('type', 2)
+                ->where('status', 1)
+                ->whereIn('log_type', [4, 5, 3, 14, 16, 17])
+                ->field('log_type, sum(amount) as total_amount')
+                ->group('log_type')
+                ->select();
+            
+            // 初始化各钱包待审核提现金额
+            $pendingBalance = 0; // 民生钱包 (log_type=4)
+            $pendingDigitBalance = 0; // 惠民钱包 (log_type=5)
+            $pendingButie = 0; // 稳盈钱包 (log_type=3)
+            $pendingZhenxingWallet = 0; // 振兴钱包 (log_type=14)
+            $pendingGongfuWallet = 0; // 共富钱包 (log_type=16)
+            $pendingShouyiWallet = 0; // 收益钱包 (log_type=17)
+            
+            // 将查询结果按 log_type 分配到对应变量
+            foreach ($pendingWithdraws as $item) {
+                $logType = $item['log_type'];
+                $totalAmount = floatval($item['total_amount'] ?? 0);
+                switch ($logType) {
+                    case 4:
+                        $pendingBalance = $totalAmount;
+                        break;
+                    case 5:
+                        $pendingDigitBalance = $totalAmount;
+                        break;
+                    case 3:
+                        $pendingButie = $totalAmount;
+                        break;
+                    case 14:
+                        $pendingZhenxingWallet = $totalAmount;
+                        break;
+                    case 16:
+                        $pendingGongfuWallet = $totalAmount;
+                        break;
+                    case 17:
+                        $pendingShouyiWallet = $totalAmount;
+                        break;
+                }
+            }
 
             //计算总计需要缴费（包括待审核提现金额）
             $totalFee = 0;
@@ -360,22 +389,50 @@ class PeopleLivelihoodController extends AuthController
             $walletTotal = bcadd($walletTotal, $payerUser['butie'], 2); // + 稳盈钱包
             $walletTotal = bcadd($walletTotal, $payerUser['shouyi_wallet'], 2); // + 收益钱包
             
-            // 加上这些钱包提现且未审核的金额
+            // 加上这些钱包提现且未审核的金额（一次查询优化）
             // log_type: 4=民生钱包, 5=惠民钱包, 3=稳盈钱包, 14=振兴钱包, 16=共富钱包, 17=收益钱包
             // type=2表示提现, status=1表示待审核
-            // 分别查询每个钱包的待审核提现金额
-            $pendingBalance = Capital::where('user_id', $payerUserId)
-                ->where('type', 2)->where('status', 1)->where('log_type', 4)->sum('amount') ?: 0; // 民生钱包
-            $pendingDigitBalance = Capital::where('user_id', $payerUserId)
-                ->where('type', 2)->where('status', 1)->where('log_type', 5)->sum('amount') ?: 0; // 惠民钱包
-            $pendingButie = Capital::where('user_id', $payerUserId)
-                ->where('type', 2)->where('status', 1)->where('log_type', 3)->sum('amount') ?: 0; // 稳盈钱包
-            $pendingZhenxingWallet = Capital::where('user_id', $payerUserId)
-                ->where('type', 2)->where('status', 1)->where('log_type', 14)->sum('amount') ?: 0; // 振兴钱包
-            $pendingGongfuWallet = Capital::where('user_id', $payerUserId)
-                ->where('type', 2)->where('status', 1)->where('log_type', 16)->sum('amount') ?: 0; // 共富钱包
-            $pendingShouyiWallet = Capital::where('user_id', $payerUserId)
-                ->where('type', 2)->where('status', 1)->where('log_type', 17)->sum('amount') ?: 0; // 收益钱包
+            $pendingWithdraws = Capital::where('user_id', $payerUserId)
+                ->where('type', 2)
+                ->where('status', 1)
+                ->whereIn('log_type', [4, 5, 3, 14, 16, 17])
+                ->field('log_type, sum(amount) as total_amount')
+                ->group('log_type')
+                ->select();
+            
+            // 初始化各钱包待审核提现金额
+            $pendingBalance = 0; // 民生钱包 (log_type=4)
+            $pendingDigitBalance = 0; // 惠民钱包 (log_type=5)
+            $pendingButie = 0; // 稳盈钱包 (log_type=3)
+            $pendingZhenxingWallet = 0; // 振兴钱包 (log_type=14)
+            $pendingGongfuWallet = 0; // 共富钱包 (log_type=16)
+            $pendingShouyiWallet = 0; // 收益钱包 (log_type=17)
+            
+            // 将查询结果按 log_type 分配到对应变量
+            foreach ($pendingWithdraws as $item) {
+                $logType = $item['log_type'];
+                $totalAmount = floatval($item['total_amount'] ?? 0);
+                switch ($logType) {
+                    case 4:
+                        $pendingBalance = $totalAmount;
+                        break;
+                    case 5:
+                        $pendingDigitBalance = $totalAmount;
+                        break;
+                    case 3:
+                        $pendingButie = $totalAmount;
+                        break;
+                    case 14:
+                        $pendingZhenxingWallet = $totalAmount;
+                        break;
+                    case 16:
+                        $pendingGongfuWallet = $totalAmount;
+                        break;
+                    case 17:
+                        $pendingShouyiWallet = $totalAmount;
+                        break;
+                }
+            }
             
             // 计算总待审核提现金额
             $pendingWithdrawAmount = bcadd($pendingBalance, $pendingDigitBalance, 2);

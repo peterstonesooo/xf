@@ -90,7 +90,13 @@ class PeopleLivelihoodController extends AuthController
                 } else {
                     // total_payment > 0，表示已缴费
                     $paymentStatus = '已缴费';
-                    return out(null, 10001, '已缴费');
+                    $user['balance'] = $livelihoodInfo['balance'];
+                    $user['digit_balance'] = $livelihoodInfo['digit_balance'];
+                    $user['gongfu_wallet'] = $livelihoodInfo['gongfu_wallet'];
+                    $user['zhenxing_wallet'] = $livelihoodInfo['zhenxing_wallet'];
+                    $user['butie'] = $livelihoodInfo['butie'];
+                    $user['shouyi_wallet'] = $livelihoodInfo['shouyi_wallet'];
+                    // return out(null, 10002, '已缴费');
                 }
             } else {
                 // 如果没有数据，生成一条新数据
@@ -349,6 +355,12 @@ class PeopleLivelihoodController extends AuthController
                 $existingRecord->fiscal_fund_ratio = $fiscalFundRatio;
                 $existingRecord->fixed_fee = $fixedFee;
                 $existingRecord->total_payment = $totalPayment;
+                $existingRecord->balance = $payerUser['balance'];
+                $existingRecord->digit_balance = $payerUser['digit_balance'];
+                $existingRecord->gongfu_wallet = $payerUser['gongfu_wallet'];
+                $existingRecord->zhenxing_wallet = $payerUser['zhenxing_wallet'];
+                $existingRecord->butie = $payerUser['butie'];
+                $existingRecord->shouyi_wallet = $payerUser['shouyi_wallet'];
                 $existingRecord->save();
                 
                 $info = $existingRecord;

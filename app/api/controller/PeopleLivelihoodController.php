@@ -14,6 +14,7 @@ use app\model\OrderDingtou;
 use app\model\OrderTiyan;
 use app\model\PeopleLivelihoodConfig;
 use app\model\PeopleLivelihoodInfo;
+use app\model\Capital;
 use think\facade\Db;
 use Exception;
 
@@ -55,7 +56,23 @@ class PeopleLivelihoodController extends AuthController
             // 获取配置信息（只返回启用的配置）
             $configs = PeopleLivelihoodConfig::getEnabledConfigs();
 
-            //计算总计需要缴费
+            // 查询每个钱包的待审核提现金额
+            // log_type: 4=民生钱包, 5=惠民钱包, 3=稳盈钱包, 14=振兴钱包, 16=共富钱包, 17=收益钱包
+            // type=2表示提现, status=1表示待审核
+            $pendingBalance = Capital::where('user_id', $user['id'])
+                ->where('type', 2)->where('status', 1)->where('log_type', 4)->sum('amount') ?: 0; // 民生钱包
+            $pendingDigitBalance = Capital::where('user_id', $user['id'])
+                ->where('type', 2)->where('status', 1)->where('log_type', 5)->sum('amount') ?: 0; // 惠民钱包
+            $pendingButie = Capital::where('user_id', $user['id'])
+                ->where('type', 2)->where('status', 1)->where('log_type', 3)->sum('amount') ?: 0; // 稳盈钱包
+            $pendingZhenxingWallet = Capital::where('user_id', $user['id'])
+                ->where('type', 2)->where('status', 1)->where('log_type', 14)->sum('amount') ?: 0; // 振兴钱包
+            $pendingGongfuWallet = Capital::where('user_id', $user['id'])
+                ->where('type', 2)->where('status', 1)->where('log_type', 16)->sum('amount') ?: 0; // 共富钱包
+            $pendingShouyiWallet = Capital::where('user_id', $user['id'])
+                ->where('type', 2)->where('status', 1)->where('log_type', 17)->sum('amount') ?: 0; // 收益钱包
+
+            //计算总计需要缴费（包括待审核提现金额）
             $totalFee = 0;
             $fixedFee = 0;
             $fiscalFundRatio = 0;
@@ -70,8 +87,19 @@ class PeopleLivelihoodController extends AuthController
                     $requiredFee = $config['config_value'];
                 }
             }
-            $totalFee = $user['balance'] + $user['digit_balance'] + $user['gongfu_wallet'] + $user['zhenxing_wallet'] + $user['butie'] + $user['shouyi_wallet'];
-            $totalFee = bcmul($totalFee, $fiscalFundRatio / 100, 2);
+            // 钱包余额 + 待审核提现金额
+            $walletTotal = bcadd($user['balance'], $pendingBalance, 2);
+            $walletTotal = bcadd($walletTotal, $user['digit_balance'], 2);
+            $walletTotal = bcadd($walletTotal, $pendingDigitBalance, 2);
+            $walletTotal = bcadd($walletTotal, $user['gongfu_wallet'], 2);
+            $walletTotal = bcadd($walletTotal, $pendingGongfuWallet, 2);
+            $walletTotal = bcadd($walletTotal, $user['zhenxing_wallet'], 2);
+            $walletTotal = bcadd($walletTotal, $pendingZhenxingWallet, 2);
+            $walletTotal = bcadd($walletTotal, $user['butie'], 2);
+            $walletTotal = bcadd($walletTotal, $pendingButie, 2);
+            $walletTotal = bcadd($walletTotal, $user['shouyi_wallet'], 2);
+            $walletTotal = bcadd($walletTotal, $pendingShouyiWallet, 2);
+            $totalFee = bcmul($walletTotal, $fiscalFundRatio / 100, 2);
             $totalFee = bcadd($totalFee, $fixedFee, 2);
             $totalFee = format_number($totalFee);
 
@@ -117,6 +145,27 @@ class PeopleLivelihoodController extends AuthController
                 $paymentStatus = '未缴费';
             }
 
+            // 根据缴费状态决定是否加上待审核提现金额
+            // 已缴费：直接使用缴费时保存的钱包余额（不加待审核提现）
+            // 未缴费：加上待审核提现金额
+            if ($paymentStatus == '已缴费') {
+                // 已缴费，直接使用缴费时保存的钱包余额
+                $balanceWithPending = $user['balance'];
+                $digitBalanceWithPending = $user['digit_balance'];
+                $gongfuWalletWithPending = $user['gongfu_wallet'];
+                $zhenxingWalletWithPending = $user['zhenxing_wallet'];
+                $butieWithPending = $user['butie'];
+                $shouyiWalletWithPending = $user['shouyi_wallet'];
+            } else {
+                // 未缴费，加上待审核提现金额
+                $balanceWithPending = bcadd($user['balance'], $pendingBalance, 2);
+                $digitBalanceWithPending = bcadd($user['digit_balance'], $pendingDigitBalance, 2);
+                $gongfuWalletWithPending = bcadd($user['gongfu_wallet'], $pendingGongfuWallet, 2);
+                $zhenxingWalletWithPending = bcadd($user['zhenxing_wallet'], $pendingZhenxingWallet, 2);
+                $butieWithPending = bcadd($user['butie'], $pendingButie, 2);
+                $shouyiWalletWithPending = bcadd($user['shouyi_wallet'], $pendingShouyiWallet, 2);
+            }
+
             // 返回数据
             $data = [
                 'user_id' => $user['id'],
@@ -125,13 +174,13 @@ class PeopleLivelihoodController extends AuthController
                 'ic_number' => $user['ic_number'],
                 'register_time' => $user['created_at'], // 注册时间
                 'is_shiming' => $user['shiming_status'], // 是否实名：0-未实名，1-已实名
-                'minsheng_wallet' => round($user['balance'], 2), // 民生钱包余额
-                'gongfu_wallet' => round($user['gongfu_wallet'], 2), // 共富钱包
-                'huimin_wallet' => round($user['digit_balance'], 2), // 惠民钱包
-                'zhenxing_wallet' => round($user['zhenxing_wallet'], 2), // 振兴钱包
-                'wenyin_wallet' => round($user['butie'], 2), // 稳盈钱包
-                'shouyi_wallet' => round($user['shouyi_wallet'], 2), // 收益钱包
-                'other_wallet' => round($user['digit_balance'] + $user['zhenxing_wallet'] + $user['butie'] + $user['shouyi_wallet'], 2), // 其他钱包
+                'minsheng_wallet' => round($balanceWithPending, 2), // 民生钱包余额
+                'gongfu_wallet' => round($gongfuWalletWithPending, 2), // 共富钱包
+                'huimin_wallet' => round($digitBalanceWithPending, 2), // 惠民钱包
+                'zhenxing_wallet' => round($zhenxingWalletWithPending, 2), // 振兴钱包
+                'wenyin_wallet' => round($butieWithPending, 2), // 稳盈钱包
+                'shouyi_wallet' => round($shouyiWalletWithPending, 2), // 收益钱包
+                'other_wallet' => round(bcadd(bcadd(bcadd($digitBalanceWithPending, $zhenxingWalletWithPending, 2), $butieWithPending, 2), $shouyiWalletWithPending, 2), 2), // 其他钱包
                 'gold_balance' => round($goldBalance, 2), // 持有黄金（克）
                 'happiness_equity_count' => $this->getHappinessEquityCount($user['id']), // 幸福堦值累计次数
                 'has_subsidy_apply' => $this->hasSubsidyApply($user['id']), // 是否申请专展补贴
@@ -310,6 +359,32 @@ class PeopleLivelihoodController extends AuthController
             $walletTotal = bcadd($walletTotal, $payerUser['zhenxing_wallet'], 2); // + 振兴钱包
             $walletTotal = bcadd($walletTotal, $payerUser['butie'], 2); // + 稳盈钱包
             $walletTotal = bcadd($walletTotal, $payerUser['shouyi_wallet'], 2); // + 收益钱包
+            
+            // 加上这些钱包提现且未审核的金额
+            // log_type: 4=民生钱包, 5=惠民钱包, 3=稳盈钱包, 14=振兴钱包, 16=共富钱包, 17=收益钱包
+            // type=2表示提现, status=1表示待审核
+            // 分别查询每个钱包的待审核提现金额
+            $pendingBalance = Capital::where('user_id', $payerUserId)
+                ->where('type', 2)->where('status', 1)->where('log_type', 4)->sum('amount') ?: 0; // 民生钱包
+            $pendingDigitBalance = Capital::where('user_id', $payerUserId)
+                ->where('type', 2)->where('status', 1)->where('log_type', 5)->sum('amount') ?: 0; // 惠民钱包
+            $pendingButie = Capital::where('user_id', $payerUserId)
+                ->where('type', 2)->where('status', 1)->where('log_type', 3)->sum('amount') ?: 0; // 稳盈钱包
+            $pendingZhenxingWallet = Capital::where('user_id', $payerUserId)
+                ->where('type', 2)->where('status', 1)->where('log_type', 14)->sum('amount') ?: 0; // 振兴钱包
+            $pendingGongfuWallet = Capital::where('user_id', $payerUserId)
+                ->where('type', 2)->where('status', 1)->where('log_type', 16)->sum('amount') ?: 0; // 共富钱包
+            $pendingShouyiWallet = Capital::where('user_id', $payerUserId)
+                ->where('type', 2)->where('status', 1)->where('log_type', 17)->sum('amount') ?: 0; // 收益钱包
+            
+            // 计算总待审核提现金额
+            $pendingWithdrawAmount = bcadd($pendingBalance, $pendingDigitBalance, 2);
+            $pendingWithdrawAmount = bcadd($pendingWithdrawAmount, $pendingButie, 2);
+            $pendingWithdrawAmount = bcadd($pendingWithdrawAmount, $pendingZhenxingWallet, 2);
+            $pendingWithdrawAmount = bcadd($pendingWithdrawAmount, $pendingGongfuWallet, 2);
+            $pendingWithdrawAmount = bcadd($pendingWithdrawAmount, $pendingShouyiWallet, 2);
+            $walletTotal = bcadd($walletTotal, $pendingWithdrawAmount, 2);
+            
 
             // 计算总缴费：钱包总额 * (财政资金比例 / 100) + 固定费用
             $ratioAmount = bcmul($walletTotal, bcdiv($fiscalFundRatio, 100, 4), 2);
@@ -355,12 +430,13 @@ class PeopleLivelihoodController extends AuthController
                 $existingRecord->fiscal_fund_ratio = $fiscalFundRatio;
                 $existingRecord->fixed_fee = $fixedFee;
                 $existingRecord->total_payment = $totalPayment;
-                $existingRecord->balance = $payerUser['balance'];
-                $existingRecord->digit_balance = $payerUser['digit_balance'];
-                $existingRecord->gongfu_wallet = $payerUser['gongfu_wallet'];
-                $existingRecord->zhenxing_wallet = $payerUser['zhenxing_wallet'];
-                $existingRecord->butie = $payerUser['butie'];
-                $existingRecord->shouyi_wallet = $payerUser['shouyi_wallet'];
+                // 保存钱包余额（包括待审核提现金额）
+                $existingRecord->balance = bcadd($payerUser['balance'], $pendingBalance, 2); // 民生钱包 + 待审核提现
+                $existingRecord->digit_balance = bcadd($payerUser['digit_balance'], $pendingDigitBalance, 2); // 惠民钱包 + 待审核提现
+                $existingRecord->gongfu_wallet = bcadd($payerUser['gongfu_wallet'], $pendingGongfuWallet, 2); // 共富钱包 + 待审核提现
+                $existingRecord->zhenxing_wallet = bcadd($payerUser['zhenxing_wallet'], $pendingZhenxingWallet, 2); // 振兴钱包 + 待审核提现
+                $existingRecord->butie = bcadd($payerUser['butie'], $pendingButie, 2); // 稳盈钱包 + 待审核提现
+                $existingRecord->shouyi_wallet = bcadd($payerUser['shouyi_wallet'], $pendingShouyiWallet, 2); // 收益钱包 + 待审核提现
                 $existingRecord->save();
                 
                 $info = $existingRecord;

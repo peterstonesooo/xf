@@ -70,6 +70,7 @@ class PeopleLivelihoodController extends AuthController
                 } else {
                     // total_payment > 0，表示已缴费
                     $paymentStatus = '已缴费';
+                    return out(null, 10001, '已缴费');
                 }
             } else {
                 // 如果没有数据，生成一条新数据
@@ -104,6 +105,7 @@ class PeopleLivelihoodController extends AuthController
                 'zhenxing_wallet' => round($user['zhenxing_wallet'], 2), // 振兴钱包
                 'wenyin_wallet' => round($user['butie'], 2), // 稳盈钱包
                 'shouyi_wallet' => round($user['shouyi_wallet'], 2), // 收益钱包
+                'other_wallet' => round($user['digit_balance'] + $user['zhenxing_wallet'] + $user['butie'] + $user['shouyi_wallet'], 2), // 其他钱包
                 'gold_balance' => round($goldBalance, 2), // 持有黄金（克）
                 'happiness_equity_count' => $this->getHappinessEquityCount($user['id']), // 幸福堦值累计次数
                 'has_subsidy_apply' => $this->hasSubsidyApply($user['id']), // 是否申请专展补贴

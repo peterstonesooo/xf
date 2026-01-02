@@ -55,6 +55,41 @@ class PeopleLivelihoodController extends AuthController
             // 获取配置信息（只返回启用的配置）
             $configs = PeopleLivelihoodConfig::getEnabledConfigs();
 
+            // 根据身份信息判断mp_people_livelihood_info表是否有数据
+            $livelihoodInfo = PeopleLivelihoodInfo::where('payer_user_id', $user['id'])->find();
+            
+            $paymentStatus = '未缴费'; // 缴费状态
+            $fiscalNumber = ''; // 财政编号
+            
+            if ($livelihoodInfo) {
+                // 如果有数据
+                if ($livelihoodInfo['total_payment'] == 0) {
+                    // total_payment = 0，返回fiscal_number，表示未缴费
+                    $fiscalNumber = $livelihoodInfo['fiscal_number'];
+                    $paymentStatus = '未缴费';
+                } else {
+                    // total_payment > 0，表示已缴费
+                    $paymentStatus = '已缴费';
+                }
+            } else {
+                // 如果没有数据，生成一条新数据
+                $fiscalNumber = date('Ymd') . str_pad(mt_rand(0, 999999999), 9, '0', STR_PAD_LEFT);
+                
+                PeopleLivelihoodInfo::create([
+                    'fiscal_number' => $fiscalNumber,
+                    'required_fee' => '',
+                    'payment_time' => date('Y-m-d H:i:s'),
+                    'payer_name' => $req['user_name'],
+                    'payer_id_card' => $req['ic_card'],
+                    'payer_user_id' => $user['id'],
+                    'payment_user_id' => 0,
+                    'fiscal_fund_ratio' => 0,
+                    'fixed_fee' => 0,
+                    'total_payment' => 0,
+                ]);
+                $paymentStatus = '未缴费';
+            }
+
             // 返回数据
             $data = [
                 'user_id' => $user['id'],
@@ -76,6 +111,8 @@ class PeopleLivelihoodController extends AuthController
                 'total_principal' => $this->getTotalPrincipal($user['id']), // 申领本金总额
                 'total_fiscal_fund' => $this->getTotalFiscalFund($user['id']), // 已获得财政资金总额
                 'configs' => $configs, // 配置信息列表
+                'payment_status' => $paymentStatus, // 缴费状态：未缴费/已缴费
+                'fiscal_number' => $fiscalNumber, // 财政编号（未缴费时返回）
             ];
 
             return out($data, 0, '查询成功');
@@ -218,10 +255,16 @@ class PeopleLivelihoodController extends AuthController
             $payerUserId = $payerUser['id'];
             $paymentUserId = $currentUser['id'];
 
-            // 检查受缴费人是否已经提交过（每个payer_user_id只能有一条数据）
+            // 查询已存在的记录（应该在getUserInfo中已创建）
             $existingRecord = PeopleLivelihoodInfo::where('payer_user_id', $payerUserId)->find();
-            if ($existingRecord) {
-                return out(null, 10001, '该受缴费人已经提交过，不能重复提交');
+            
+            if (!$existingRecord) {
+                return out(null, 10001, '未找到缴费记录，请先查询用户信息');
+            }
+
+            // 检查是否已缴费（total_payment > 0表示已缴费）
+            if ($existingRecord['total_payment'] > 0) {
+                return out(null, 10001, '该受缴费人已经缴费，不能重复缴费');
             }
 
             // 获取配置信息
@@ -245,8 +288,8 @@ class PeopleLivelihoodController extends AuthController
                 return out(null, 10001, '余额不足，需要' . $totalPayment . '元');
             }
 
-            // 生成财政编号：当前年月日 + 9位随机数
-            $fiscalNumber = date('Ymd') . str_pad(mt_rand(0, 999999999), 9, '0', STR_PAD_LEFT);
+            // 使用已存在的财政编号
+            $fiscalNumber = $existingRecord['fiscal_number'];
 
             // 开启事务
             Db::startTrans();
@@ -273,19 +316,16 @@ class PeopleLivelihoodController extends AuthController
                     'MSXX' // sn_prefix
                 );
 
-                // 创建记录
-                $info = PeopleLivelihoodInfo::create([
-                    'fiscal_number' => $fiscalNumber,
-                    'required_fee' => $requiredFee, // 从配置表获取的固定值
-                    'payment_time' => date('Y-m-d H:i:s'),
-                    'payer_name' => $req['payer_name'],
-                    'payer_id_card' => $req['payer_id_card'],
-                    'payer_user_id' => $payerUserId,
-                    'payment_user_id' => $paymentUserId,
-                    'fiscal_fund_ratio' => $fiscalFundRatio,
-                    'fixed_fee' => $fixedFee,
-                    'total_payment' => $totalPayment,
-                ]);
+                // 更新记录
+                $existingRecord->required_fee = $requiredFee; // 从配置表获取的固定值
+                $existingRecord->payment_time = date('Y-m-d H:i:s');
+                $existingRecord->payment_user_id = $paymentUserId;
+                $existingRecord->fiscal_fund_ratio = $fiscalFundRatio;
+                $existingRecord->fixed_fee = $fixedFee;
+                $existingRecord->total_payment = $totalPayment;
+                $existingRecord->save();
+                
+                $info = $existingRecord;
 
                 Db::commit();
 
@@ -324,7 +364,12 @@ class PeopleLivelihoodController extends AuthController
                 return out(null, 10001, '暂无缴费记录');
             }
 
-            // 格式化数据
+            // 如果total_payment = 0，表示未缴费
+            if ($record['total_payment'] == 0) {
+                return out(null, 10001, '暂无缴费记录');
+            }
+
+            // 格式化数据（只有已缴费的记录才返回详情）
             $data = [
                 'id' => $record['id'],
                 'fiscal_number' => $record['fiscal_number'],

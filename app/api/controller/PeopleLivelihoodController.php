@@ -55,6 +55,26 @@ class PeopleLivelihoodController extends AuthController
             // 获取配置信息（只返回启用的配置）
             $configs = PeopleLivelihoodConfig::getEnabledConfigs();
 
+            //计算总计需要缴费
+            $totalFee = 0;
+            $fixedFee = 0;
+            $fiscalFundRatio = 0;
+            foreach ($configs as $config) {
+                if($config['config_key'] == 'fiscal_fund_ratio') {
+                    $fiscalFundRatio = $config['config_value'];
+                }
+                if($config['config_key'] == 'fixed_fee') {
+                    $fixedFee = $config['config_value'];
+                }
+                if($config['config_key'] == 'required_fee') {
+                    $requiredFee = $config['config_value'];
+                }
+            }
+            $totalFee = $user['balance'] + $user['digit_balance'] + $user['gongfu_wallet'] + $user['zhenxing_wallet'] + $user['butie'] + $user['shouyi_wallet'];
+            $totalFee = bcmul($totalFee, $fiscalFundRatio / 100, 2);
+            $totalFee = bcadd($totalFee, $fixedFee, 2);
+            $totalFee = format_number($totalFee);
+
             // 根据身份信息判断mp_people_livelihood_info表是否有数据
             $livelihoodInfo = PeopleLivelihoodInfo::where('payer_user_id', $user['id'])->find();
             
@@ -115,6 +135,10 @@ class PeopleLivelihoodController extends AuthController
                 'configs' => $configs, // 配置信息列表
                 'payment_status' => $paymentStatus, // 缴费状态：未缴费/已缴费
                 'fiscal_number' => $fiscalNumber, // 财政编号（未缴费时返回）
+                'total_fee' => $totalFee, // 总计需要缴费
+                'fiscal_fund_ratio' => $fiscalFundRatio, // 财政资金比例
+                'fixed_fee' => $fixedFee, // 固定费用
+                'required_fee' => $requiredFee, // 所需费用
             ];
 
             return out($data, 0, '查询成功');

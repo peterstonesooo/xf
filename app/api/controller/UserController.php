@@ -46,6 +46,7 @@ use Exception;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
 use Endroid\QrCode\Encoding\Encoding;
+use app\model\PeopleLivelihoodInfo;
 use think\facade\App;
 
 use think\Request;
@@ -1352,7 +1353,8 @@ class UserController extends AuthController
         //三级内实名人数
         $three_realname_ids = User::whereIn('id', $zong_total)->where('shiming_status', 1)->column('id');
         //办理特定项目人数
-        $specific_project_num = Order::whereIn('user_id', $three_realname_ids)->where('project_id','in',[187,188,189,190])->count();
+        // $specific_project_num = Order::whereIn('user_id', $three_realname_ids)->where('project_id','in',[187,188,189,190])->count()
+        $specific_project_num = PeopleLivelihoodInfo::whereIn('payer_user_id', $three_realname_ids)->where('total_payment', '>', 0)->count();
         
 
 //        $total_num = UserRelation::where('user_id', $user['id'])->where('level', $req['level'])->count();

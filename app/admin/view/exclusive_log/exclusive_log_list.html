@@ -26,6 +26,10 @@
         ～
         <input placeholder="结束时间" autocomplete="off" value="{$req['end_date']??''}" name="end_date" class="form-control layer-date" id="end">
         <input class="btn btn-flat btn-primary m_10" type="submit" value="搜索">
+        <div class="btn-group m_10_l_0">
+            <button type="button" class="btn btn-flat btn-success" onclick="batchAuditPass()">批量审核通过</button>
+            <button type="button" class="btn btn-flat btn-danger" onclick="batchAuditReject()">批量审核拒绝</button>
+        </div>
     </form>
 </div>
 
@@ -39,6 +43,7 @@
                 <table class="table table-bordered table-hover table-striped">
                     <tbody>
                     <tr>
+                        <th><input type="checkbox" id="checkAll"></th>
                         <th>ID</th>
                         <th>用户ID</th>
                         <th>用户手机号</th>
@@ -51,6 +56,13 @@
                     </tr>
                                             <?php foreach ($data as $k => $v) { ?>
                             <tr>
+                                <td>
+                                    <?php if ($v['status'] == 0) { ?>
+                                        <input type="checkbox" class="checkItem" value="{$v['id']}">
+                                    <?php } else { ?>
+                                        <span class="text-muted">-</span>
+                                    <?php } ?>
+                                </td>
                                 <td>{$v['id']}</td>
                             <td>{$v['user_id']}</td>
                             <td>{$v['phone']}</td>
@@ -85,7 +97,18 @@
                 </table>
             </div>
             <div class="box-footer clearfix">
-                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+                <div style="text-align:center;font-size: 14px;">
+                    <div class="pull-left" style="margin: 20px 0;">
+                        <select class="form-control" id="pageSize" onchange="changePageSize(this.value)">
+                            <option value="10" <?php if(isset($req['limit']) && $req['limit'] == 10) echo 'selected'; ?>>10条/页</option>
+                            <option value="15" <?php if(!isset($req['limit']) || $req['limit'] == 15) echo 'selected'; ?>>15条/页</option>
+                            <option value="20" <?php if(isset($req['limit']) && $req['limit'] == 20) echo 'selected'; ?>>20条/页</option>
+                            <option value="50" <?php if(isset($req['limit']) && $req['limit'] == 50) echo 'selected'; ?>>50条/页</option>
+                            <option value="100" <?php if(isset($req['limit']) && $req['limit'] == 100) echo 'selected'; ?>>100条/页</option>
+                        </select>
+                    </div>
+                    <?php echo $data->render(); ?>
+                </div>
             </div>
         </div>
     </div>
@@ -149,6 +172,28 @@
 
 
 <script>
+$(function(){
+    // 全选/取消全选
+    $("#checkAll").click(function(){
+        $(".checkItem").prop("checked", $(this).prop("checked"));
+    });
+    
+    // 监听分页链接点击
+    $('.pagination a').click(function(e) {
+        // 清除所有选择
+        $(".checkItem").prop("checked", false);
+        $("#checkAll").prop("checked", false);
+    });
+});
+
+// 改变每页显示数量
+function changePageSize(size) {
+    var url = new URL(window.location.href);
+    url.searchParams.set('limit', size);
+    url.searchParams.set('page', 1); // 切换每页数量时重置到第一页
+    window.location.href = url.toString();
+}
+
 // 审核通过
 function auditPass(id) {
     $('#pass_id').val(id);
@@ -161,6 +206,82 @@ function auditReject(id) {
     $('#reject_id').val(id);
     $('#reject_reason').val('');
     $('#rejectModal').modal('show');
+}
+
+// 批量审核通过
+function batchAuditPass() {
+    var ids = [];
+    $(".checkItem:checked").each(function(){
+        ids.push($(this).val());
+    });
+    if(ids.length == 0){
+        layer.msg('请选择要审核的记录', {icon: 5, time: 2000});
+        return;
+    }
+    
+    layer.prompt({
+        formType: 0,
+        title: '请输入收益金金额',
+        area: ['300px', '150px']
+    }, function(minsheng_amount, index){
+        if(!minsheng_amount || minsheng_amount <= 0) {
+            layer.msg('收益金金额必须大于0', {icon: 5, time: 2000});
+            return;
+        }
+        
+        layer.confirm('确定要通过选中的 ' + ids.length + ' 条记录吗？', {
+            btn: ['确定','取消']
+        }, function(){
+            $.post('{:url("admin/ExclusiveLog/batchAuditPass")}', {ids: ids, minsheng_amount: minsheng_amount}, function (res) {
+                if (res.code == 200) {
+                    layer.msg('批量审核通过成功', {icon: 1, time: 2000}, function(){
+                        window.location.reload();
+                    });
+                } else {
+                    layer.msg(res.msg || '操作失败', {icon: 5, time: 3000});
+                }
+            });
+            layer.close(index);
+        });
+    });
+}
+
+// 批量审核拒绝
+function batchAuditReject() {
+    var ids = [];
+    $(".checkItem:checked").each(function(){
+        ids.push($(this).val());
+    });
+    if(ids.length == 0){
+        layer.msg('请选择要审核的记录', {icon: 5, time: 2000});
+        return;
+    }
+    
+    layer.prompt({
+        formType: 2,
+        title: '请输入拒绝原因',
+        area: ['300px', '150px']
+    }, function(reason, index){
+        if(!reason.trim()) {
+            layer.msg('拒绝原因不能为空', {icon: 5, time: 2000});
+            return;
+        }
+        
+        layer.confirm('确定要拒绝选中的 ' + ids.length + ' 条记录吗？', {
+            btn: ['确定','取消']
+        }, function(){
+            $.post('{:url("admin/ExclusiveLog/batchAuditReject")}', {ids: ids, reason: reason}, function (res) {
+                if (res.code == 200) {
+                    layer.msg('批量审核拒绝成功', {icon: 1, time: 2000}, function(){
+                        window.location.reload();
+                    });
+                } else {
+                    layer.msg(res.msg || '操作失败', {icon: 5, time: 3000});
+                }
+            });
+            layer.close(index);
+        });
+    });
 }
 
 // 审核通过表单提交

@@ -45,7 +45,9 @@ class ExclusiveLogController extends AuthController
             $builder->where('el.creat_time', '<=', $req['end_date'] . ' 23:59:59');
         }
 
-        $data = $builder->paginate(['query' => $req]);
+        // 每页数量，默认15条
+        $limit = isset($req['limit']) && is_numeric($req['limit']) ? intval($req['limit']) : 15;
+        $data = $builder->paginate(['list_rows' => $limit, 'query' => $req]);
         
         // 获取专属补贴设置列表（简化版本）
         $exclusiveSettings = [
@@ -137,6 +139,91 @@ class ExclusiveLogController extends AuthController
         ]);
         
         return out();
+    }
+    
+    /**
+     * 批量审核通过
+     */
+    public function batchAuditPass()
+    {
+        $req = request()->post();
+        
+        $this->validate($req, [
+            'ids' => 'require|array',
+            'minsheng_amount' => 'require|float|gt:0'
+        ]);
+        
+        $exclusiveLogs = ExclusiveLog::whereIn('id', $req['ids'])
+            ->where('status', 0)
+            ->select();
+        
+        if ($exclusiveLogs->isEmpty()) {
+            return out(null, 10001, '没有可审核的记录');
+        }
+        
+        Db::startTrans();
+        try {
+            foreach ($exclusiveLogs as $exclusiveLog) {
+                // 更新审核状态和民生金金额
+                ExclusiveLog::where('id', $exclusiveLog['id'])->update([
+                    'status' => 1,
+                    'minsheng_amount' => $req['minsheng_amount'],
+                    'creat_time' => date('Y-m-d H:i:s')
+                ]);
+                
+                // 给用户增加收益金
+                $user = User::find($exclusiveLog['user_id']);
+                if ($user) {
+                    // 增加收益金到用户惠民钱包
+                    User::changeInc($exclusiveLog['user_id'], $req['minsheng_amount'], 'gongfu_wallet', 63, $exclusiveLog['id'], 16, '专属补贴', 0, 1);
+                }
+            }
+            
+            Db::commit();
+            return out(null, 200, '批量审核通过成功');
+        } catch (\Exception $e) {
+            Db::rollback();
+            return out(null, 10001, '批量审核失败：' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 批量审核拒绝
+     */
+    public function batchAuditReject()
+    {
+        $req = request()->post();
+        
+        $this->validate($req, [
+            'ids' => 'require|array',
+            'reason' => 'require|max:500'
+        ]);
+        
+        $exclusiveLogs = ExclusiveLog::whereIn('id', $req['ids'])
+            ->where('status', 0)
+            ->select();
+        
+        if ($exclusiveLogs->isEmpty()) {
+            return out(null, 10001, '没有可审核的记录');
+        }
+        
+        Db::startTrans();
+        try {
+            foreach ($exclusiveLogs as $exclusiveLog) {
+                // 更新审核状态为拒绝
+                ExclusiveLog::where('id', $exclusiveLog['id'])->update([
+                    'status' => 2,
+                    'reason' => $req['reason'],
+                    'creat_time' => date('Y-m-d H:i:s')
+                ]);
+            }
+            
+            Db::commit();
+            return out(null, 200, '批量审核拒绝成功');
+        } catch (\Exception $e) {
+            Db::rollback();
+            return out(null, 10001, '批量审核失败：' . $e->getMessage());
+        }
     }
     
 

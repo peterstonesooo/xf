@@ -23,6 +23,7 @@ use app\model\HongliOrder;
 use app\model\UserBank;
 use app\model\UserDelivery;
 use app\model\UserBalanceLog;
+use app\model\PeopleLivelihoodInfo;
 use Exception;
 use think\facade\Db;
 

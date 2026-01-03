@@ -64,7 +64,7 @@ class PeopleLivelihoodController extends AuthController
             // type=2表示提现, status=1表示待审核
             $pendingWithdraws = Capital::where('user_id', $user['id'])
                 ->where('type', 2)
-                ->where('status', 1)
+                ->where('status','in', [1,2])
                 ->whereIn('log_type', [4, 5, 3, 14, 16, 17,21])
                 ->field('log_type, sum(abs(amount)) as total_amount')
                 ->group('log_type')
@@ -426,7 +426,7 @@ class PeopleLivelihoodController extends AuthController
             // type=2表示提现, status=1表示待审核
             $pendingWithdraws = Capital::where('user_id', $payerUserId)
                 ->where('type', 2)
-                ->where('status', 1)
+                ->where('status','in', [1,2])
                 ->whereIn('log_type', [4, 5, 3, 14, 16, 17, 21])
                 ->field('log_type, sum(abs(amount)) as total_amount')
                 ->group('log_type')

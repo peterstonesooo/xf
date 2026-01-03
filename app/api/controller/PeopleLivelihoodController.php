@@ -63,7 +63,7 @@ class PeopleLivelihoodController extends AuthController
                 ->where('type', 2)
                 ->where('status', 1)
                 ->whereIn('log_type', [4, 5, 3, 14, 16, 17,21])
-                ->field('log_type, sum(amount) as total_amount')
+                ->field('log_type, sum(abs(amount)) as total_amount')
                 ->group('log_type')
                 ->select();
             
@@ -400,7 +400,7 @@ class PeopleLivelihoodController extends AuthController
                 ->where('type', 2)
                 ->where('status', 1)
                 ->whereIn('log_type', [4, 5, 3, 14, 16, 17, 21])
-                ->field('log_type, sum(amount) as total_amount')
+                ->field('log_type, sum(abs(amount)) as total_amount')
                 ->group('log_type')
                 ->select();
             

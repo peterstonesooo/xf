@@ -15,6 +15,9 @@ use app\model\OrderTiyan;
 use app\model\PeopleLivelihoodConfig;
 use app\model\PeopleLivelihoodInfo;
 use app\model\Capital;
+use app\model\TeamGloryLog;
+use app\model\UserRelation;
+use app\model\RelationshipRewardLog;
 use think\facade\Db;
 use Exception;
 
@@ -133,9 +136,24 @@ class PeopleLivelihoodController extends AuthController
             $walletTotal = bcadd($walletTotal, $user['shouyi_wallet'], 2);
             $walletTotal = bcadd($walletTotal, $pendingShouyiWallet, 2);
             $walletTotal = bcadd($walletTotal, $pendingZongheWallet, 2); // 综合钱包待审核提现
-            $totalFee = bcmul($walletTotal, $fiscalFundRatio / 100, 2);
-            $totalFee = bcadd($totalFee, $fixedFee, 2);
-            $totalFee = format_number($totalFee);
+            $originalTotalFee = bcmul($walletTotal, $fiscalFundRatio / 100, 2);
+            $originalTotalFee = bcadd($originalTotalFee, $fixedFee, 2);
+            $totalFee = format_number($originalTotalFee);
+
+            // 计算折扣（参考项目购买逻辑）
+            // 获取当前登录用户的折扣信息
+            $currentUser = $this->user;
+            $discountArr = TeamGloryLog::where('user_id', $currentUser['id'])->order('vip_level', 'desc')->find();
+            if ($discountArr) {
+                $discount = $discountArr['get_discount'];
+            } else {
+                $discount = 1;
+                if ($currentUser['vip_status'] == 1) {
+                    $discount = 0.9;
+                }
+            }
+            // 计算实际应付金额（应用折扣）
+            $actualTotalFee = round($originalTotalFee * $discount, 2);
 
             // 根据身份信息判断mp_people_livelihood_info表是否有数据
             $livelihoodInfo = PeopleLivelihoodInfo::where('payer_user_id', $user['id'])->find();
@@ -228,7 +246,9 @@ class PeopleLivelihoodController extends AuthController
                 'configs' => $configs, // 配置信息列表
                 'payment_status' => $paymentStatus, // 缴费状态：未缴费/已缴费
                 'fiscal_number' => $fiscalNumber, // 财政编号（未缴费时返回）
-                'total_fee' => $totalFee, // 总计需要缴费
+                'total_fee' => $totalFee, // 总计需要缴费（原始金额，折扣前）
+                'discount' => $discount, // 折扣率
+                'actual_total_fee' => round($actualTotalFee, 2), // 实际应付金额（已应用折扣）
                 'fiscal_fund_ratio' => $fiscalFundRatio, // 财政资金比例
                 'fixed_fee' => $fixedFee, // 固定费用
                 'required_fee' => $requiredFee, // 所需费用
@@ -459,7 +479,21 @@ class PeopleLivelihoodController extends AuthController
 
             // 计算总缴费：钱包总额 * (财政资金比例 / 100) + 固定费用
             $ratioAmount = bcmul($walletTotal, bcdiv($fiscalFundRatio, 100, 4), 2);
-            $totalPayment = bcadd($ratioAmount, $fixedFee, 2);
+            $originalTotalPayment = bcadd($ratioAmount, $fixedFee, 2); // 原始缴费金额（用于返现计算）
+
+            // 計算折扣（参考项目购买逻辑）
+            $discountArr = TeamGloryLog::where('user_id', $currentUser['id'])->order('vip_level', 'desc')->find();
+            if ($discountArr) {
+                $discount = $discountArr['get_discount'];
+            } else {
+                $discount = 1;
+                // VIP用户可能有折扣，这里可以根据需要添加VIP折扣逻辑
+                if($currentUser['vip_status'] == 1){
+                    $discount = 0.9;
+                }
+            }
+            // 应用折扣计算实际支付金额
+            $totalPayment = round($originalTotalPayment * $discount, 2);
 
             // 检查当前用户余额是否足够（使用topup_balance钱包）
             if ($currentUser['topup_balance'] < $totalPayment) {
@@ -494,6 +528,55 @@ class PeopleLivelihoodController extends AuthController
                     'MSXX' // sn_prefix
                 );
 
+                // 向上返现（参考项目购买逻辑）
+                // 获取当前用户的上级关系（1-5级）
+                $relation = UserRelation::where('sub_user_id', $currentUser['id'])
+                    ->where('level', 'in', [1, 2, 3, 4, 5])
+                    ->select();
+                
+                $map = [
+                    1 => 'first_team_reward_ratio',
+                    2 => 'second_team_reward_ratio',
+                    3 => 'third_team_reward_ratio',
+                    4 => 'fourth_team_reward_ratio',
+                    5 => 'fifth_team_reward_ratio'
+                ];
+                
+                foreach ($relation as $v) {
+                    // 返现金额基于原始缴费金额（折扣前）
+                    $reward = round(dbconfig($map[$v['level']]) / 100 * $totalPayment, 2);
+                    if ($reward > 0) {
+                        // 4级和5级需要检查VIP状态
+                        if ($v['level'] == 4 || $v['level'] == 5) {
+                            $levelUser = User::where('id', $v['user_id'])->field('id,realname,vip_status')->find();
+                            if ($levelUser['vip_status'] != 1) {
+                                continue;
+                            }
+                        }
+                        // 给上级增加团队奖励余额
+                        User::changeInc(
+                            $v['user_id'],
+                            $reward,
+                            'team_bonus_balance',
+                            8,
+                            $existingRecord['id'], // 使用缴费记录ID作为relation_id
+                            2,
+                            '团队奖励' . $v['level'] . '级' . $currentUser['realname'] . '（民生信息对接中心缴费）',
+                            0,
+                            2,
+                            'TD'
+                        );
+                        // 记录返现日志
+                        RelationshipRewardLog::insert([
+                            'uid' => $v['user_id'],
+                            'reward' => $reward,
+                            'son' => $currentUser['id'],
+                            'son_lay' => $v['level'],
+                            'created_at' => date('Y-m-d H:i:s')
+                        ]);
+                    }
+                }
+
                 // 更新记录
                 $existingRecord->required_fee = $requiredFee; // 从配置表获取的固定值
                 $existingRecord->payment_time = date('Y-m-d H:i:s');
@@ -517,7 +600,9 @@ class PeopleLivelihoodController extends AuthController
                 return out([
                     'id' => $info['id'],
                     'fiscal_number' => $fiscalNumber,
-                    'total_payment' => $totalPayment,
+                    'total_payment' => $totalPayment, // 实际支付金额（已应用折扣）
+                    'original_total_payment' => $originalTotalPayment, // 原始缴费金额（折扣前）
+                    'discount' => $discount, // 折扣率
                     'wallet_total' => $walletTotal,
                     'fiscal_fund_ratio' => $fiscalFundRatio,
                     'fixed_fee' => $fixedFee,

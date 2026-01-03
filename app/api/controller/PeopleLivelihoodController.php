@@ -74,6 +74,7 @@ class PeopleLivelihoodController extends AuthController
             $pendingZhenxingWallet = 0; // 振兴钱包 (log_type=14)
             $pendingGongfuWallet = 0; // 共富钱包 (log_type=16)
             $pendingShouyiWallet = 0; // 收益钱包 (log_type=17)
+            $pendingZongheWallet = 0; // 综合钱包 (log_type=21)
             
             // 将查询结果按 log_type 分配到对应变量
             foreach ($pendingWithdraws as $item) {

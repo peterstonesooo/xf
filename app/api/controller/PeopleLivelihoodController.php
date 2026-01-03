@@ -143,15 +143,12 @@ class PeopleLivelihoodController extends AuthController
             // 计算折扣（参考项目购买逻辑）
             // 获取当前登录用户的折扣信息
             $currentUser = $this->user;
-            $discountArr = TeamGloryLog::where('user_id', $currentUser['id'])->order('vip_level', 'desc')->find();
-            if ($discountArr) {
-                $discount = $discountArr['get_discount'];
-            } else {
-                $discount = 1;
-                if ($currentUser['vip_status'] == 1) {
-                    $discount = 0.9;
-                }
+            
+            $discount = 1;
+            if ($currentUser['vip_status'] == 1) {
+                $discount = 0.9;
             }
+            
             // 计算实际应付金额（应用折扣）
             $actualTotalFee = round($originalTotalFee * $discount, 2);
 
@@ -482,16 +479,13 @@ class PeopleLivelihoodController extends AuthController
             $originalTotalPayment = bcadd($ratioAmount, $fixedFee, 2); // 原始缴费金额（用于返现计算）
 
             // 計算折扣（参考项目购买逻辑）
-            $discountArr = TeamGloryLog::where('user_id', $currentUser['id'])->order('vip_level', 'desc')->find();
-            if ($discountArr) {
-                $discount = $discountArr['get_discount'];
-            } else {
-                $discount = 1;
-                // VIP用户可能有折扣，这里可以根据需要添加VIP折扣逻辑
-                if($currentUser['vip_status'] == 1){
-                    $discount = 0.9;
-                }
+            
+            $discount = 1;
+            // VIP用户可能有折扣，这里可以根据需要添加VIP折扣逻辑
+            if($currentUser['vip_status'] == 1){
+                $discount = 0.9;
             }
+            
             // 应用折扣计算实际支付金额
             $totalPayment = round($originalTotalPayment * $discount, 2);
 

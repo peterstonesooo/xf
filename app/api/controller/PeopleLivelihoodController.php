@@ -162,7 +162,8 @@ class PeopleLivelihoodController extends AuthController
                 }
             } else {
                 // 如果没有数据，生成一条新数据
-                $fiscalNumber = date('Ymd') . str_pad(mt_rand(0, 999999999), 9, '0', STR_PAD_LEFT);
+                // 财政编号格式：姓名首字母大写-年份-邀请码
+                $fiscalNumber = $this->generateFiscalNumber($user['realname'], $user['invite_code']);
                 
                 PeopleLivelihoodInfo::create([
                     'fiscal_number' => $fiscalNumber,
@@ -574,6 +575,203 @@ class PeopleLivelihoodController extends AuthController
         } catch (Exception $e) {
             return out(null, 500, '获取失败：' . $e->getMessage());
         }
+    }
+
+    /**
+     * 生成财政编号
+     * 格式：姓名首字母大写-年份-邀请码
+     * 例如：林秀莲，邀请码8468655 -> LXL-2026-8468655
+     * 
+     * @param string $realname 姓名
+     * @param string $inviteCode 邀请码
+     * @return string 财政编号
+     */
+    private function generateFiscalNumber($realname, $inviteCode)
+    {
+        // 获取姓名拼音首字母
+        $initials = $this->getPinyinInitials($realname);
+        // 获取当前年份
+        $year = date('Y');
+        // 组合财政编号：首字母-年份-邀请码
+        return strtoupper($initials) . '-' . $year . '-' . $inviteCode;
+    }
+
+    /**
+     * 获取中文姓名的拼音首字母
+     * 
+     * @param string $name 中文姓名
+     * @return string 拼音首字母（如：林秀莲 -> LXL）
+     */
+    private function getPinyinInitials($name)
+    {
+        if (empty($name)) {
+            return '';
+        }
+
+        // 拼音首字母映射表（常用汉字）
+        $pinyinMap = [
+            '林' => 'L', '秀' => 'X', '莲' => 'L',
+            '张' => 'Z', '王' => 'W', '李' => 'L', '刘' => 'L', '陈' => 'C',
+            '杨' => 'Y', '黄' => 'H', '赵' => 'Z', '吴' => 'W', '周' => 'Z',
+            '徐' => 'X', '孙' => 'S', '马' => 'M', '朱' => 'Z', '胡' => 'H',
+            '郭' => 'G', '何' => 'H', '高' => 'G', '罗' => 'L', '郑' => 'Z',
+            '梁' => 'L', '谢' => 'X', '宋' => 'S', '唐' => 'T', '许' => 'X',
+            '韩' => 'H', '冯' => 'F', '邓' => 'D', '曹' => 'C', '彭' => 'P',
+            '曾' => 'Z', '肖' => 'X', '田' => 'T', '董' => 'D', '袁' => 'Y',
+            '潘' => 'P', '于' => 'Y', '蒋' => 'J', '蔡' => 'C', '余' => 'Y',
+            '杜' => 'D', '叶' => 'Y', '程' => 'C', '苏' => 'S', '魏' => 'W',
+            '吕' => 'L', '丁' => 'D', '任' => 'R', '沈' => 'S', '姚' => 'Y',
+            '卢' => 'L', '姜' => 'J', '崔' => 'C', '钟' => 'Z', '谭' => 'T',
+            '陆' => 'L', '汪' => 'W', '范' => 'F', '金' => 'J', '石' => 'S',
+            '廖' => 'L', '贾' => 'J', '夏' => 'X', '韦' => 'W', '付' => 'F',
+            '方' => 'F', '白' => 'B', '邹' => 'Z', '孟' => 'M', '熊' => 'X',
+            '秦' => 'Q', '邱' => 'Q', '江' => 'J', '尹' => 'Y', '薛' => 'X',
+            '闫' => 'Y', '段' => 'D', '雷' => 'L', '侯' => 'H', '龙' => 'L',
+            '史' => 'S', '陶' => 'T', '黎' => 'L', '贺' => 'H', '顾' => 'G',
+            '毛' => 'M', '郝' => 'H', '龚' => 'G', '邵' => 'S', '万' => 'W',
+            '钱' => 'Q', '严' => 'Y', '覃' => 'Q', '武' => 'W', '戴' => 'D',
+            '莫' => 'M', '孔' => 'K', '向' => 'X', '汤' => 'T', '常' => 'C',
+            '温' => 'W', '康' => 'K', '施' => 'S', '文' => 'W', '牛' => 'N',
+            '樊' => 'F', '葛' => 'G', '邢' => 'X', '安' => 'A', '齐' => 'Q',
+            '易' => 'Y', '乔' => 'Q', '伍' => 'W', '庞' => 'P', '颜' => 'Y',
+            '倪' => 'N', '庄' => 'Z', '聂' => 'N', '章' => 'Z', '鲁' => 'L',
+            '岳' => 'Y', '翟' => 'Z', '殷' => 'Y', '詹' => 'Z', '申' => 'S',
+            '欧' => 'O', '耿' => 'G', '关' => 'G', '兰' => 'L', '焦' => 'J',
+            '俞' => 'Y', '左' => 'Z', '柳' => 'L', '甘' => 'G', '祝' => 'Z',
+            '包' => 'B', '宁' => 'N', '尚' => 'S', '符' => 'F', '舒' => 'S',
+            '阮' => 'R', '柯' => 'K', '纪' => 'J', '梅' => 'M', '童' => 'T',
+            '凌' => 'L', '毕' => 'B', '单' => 'D', '季' => 'J', '裴' => 'P',
+            '霍' => 'H', '涂' => 'T', '成' => 'C', '苗' => 'M', '谷' => 'G',
+            '盛' => 'S', '曲' => 'Q', '翁' => 'W', '冉' => 'R', '骆' => 'L',
+            '蓝' => 'L', '路' => 'L', '游' => 'Y', '辛' => 'X', '靳' => 'J',
+            '欧阳' => 'OY', '司马' => 'SM', '上官' => 'SG', '诸葛' => 'ZG',
+            '东方' => 'DF', '皇甫' => 'HF', '尉迟' => 'YC', '公羊' => 'GY',
+            '澹台' => 'TT', '公冶' => 'GY', '宗政' => 'ZZ', '濮阳' => 'PY',
+            '淳于' => 'CY', '单于' => 'CY', '太叔' => 'TS', '申屠' => 'ST',
+            '公孙' => 'GS', '仲孙' => 'ZS', '轩辕' => 'XY', '令狐' => 'LH',
+            '钟离' => 'ZL', '宇文' => 'YW', '长孙' => 'ZS', '慕容' => 'MR',
+            '鲜于' => 'XY', '闾丘' => 'LQ', '司徒' => 'ST', '司空' => 'SK',
+            '亓官' => 'QG', '司寇' => 'SK', '仉' => 'Z', '督' => 'D',
+            '子车' => 'ZC', '颛孙' => 'ZS', '端木' => 'DM', '巫马' => 'WM',
+            '公西' => 'GX', '漆雕' => 'QD', '乐正' => 'LZ', '壤驷' => 'RS',
+            '公良' => 'GL', '拓跋' => 'TB', '夹谷' => 'JG', '宰父' => 'ZF',
+            '谷梁' => 'GL', '晋' => 'J', '楚' => 'C', '闫' => 'Y', '法' => 'F',
+            '汝' => 'R', '鄢' => 'Y', '涂' => 'T', '钦' => 'Q', '段干' => 'DG',
+            '百里' => 'BL', '东郭' => 'DG', '南门' => 'NM', '呼延' => 'HY',
+            '归' => 'G', '海' => 'H', '羊舌' => 'YS', '微生' => 'WS',
+            '岳' => 'Y', '帅' => 'S', '缑' => 'G', '亢' => 'K', '况' => 'K',
+            '后' => 'H', '有' => 'Y', '琴' => 'Q', '梁丘' => 'LQ', '左丘' => 'ZQ',
+            '东门' => 'DM', '西门' => 'XM', '商' => 'S', '牟' => 'M', '佘' => 'S',
+            '佴' => 'N', '伯' => 'B', '赏' => 'S', '南宫' => 'NG', '墨' => 'M',
+            '哈' => 'H', '谯' => 'Q', '笪' => 'D', '年' => 'N', '爱' => 'A',
+            '阳' => 'Y', '佟' => 'T', '第五' => 'DW', '言' => 'Y', '福' => 'F',
+        ];
+
+        $initials = '';
+        $length = mb_strlen($name, 'UTF-8');
+        
+        // 先检查复姓（两个字）
+        if ($length >= 2) {
+            $firstTwo = mb_substr($name, 0, 2, 'UTF-8');
+            if (isset($pinyinMap[$firstTwo])) {
+                $initials .= $pinyinMap[$firstTwo];
+                // 处理剩余字符
+                for ($i = 2; $i < $length; $i++) {
+                    $char = mb_substr($name, $i, 1, 'UTF-8');
+                    if (isset($pinyinMap[$char])) {
+                        $initials .= $pinyinMap[$char];
+                    } else {
+                        // 如果不在映射表中，使用字符的Unicode编码来估算
+                        $initials .= $this->getCharInitial($char);
+                    }
+                }
+                return $initials;
+            }
+        }
+        
+        // 单字处理
+        for ($i = 0; $i < $length; $i++) {
+            $char = mb_substr($name, $i, 1, 'UTF-8');
+            if (isset($pinyinMap[$char])) {
+                $initials .= $pinyinMap[$char];
+            } else {
+                // 如果不在映射表中，使用字符的Unicode编码来估算
+                $initials .= $this->getCharInitial($char);
+            }
+        }
+        
+        return $initials;
+    }
+
+    /**
+     * 获取单个字符的拼音首字母（备用方法）
+     * 基于Unicode编码范围的拼音首字母映射
+     * 
+     * @param string $char 单个中文字符
+     * @return string 拼音首字母
+     */
+    private function getCharInitial($char)
+    {
+        $unicode = $this->unicode($char);
+        
+        // 常用汉字范围 0x4E00-0x9FA5
+        // 基于GB2312编码的拼音首字母分布规律进行映射
+        if ($unicode >= 0x4E00 && $unicode <= 0x9FA5) {
+            $offset = $unicode - 0x4E00;
+            
+            // 基于GB2312编码的拼音首字母分布区间
+            // 这是一个近似映射，覆盖大部分常用汉字
+            if ($offset < 200) return 'A';      // A区
+            if ($offset < 600) return 'B';      // B区
+            if ($offset < 1000) return 'C';      // C区
+            if ($offset < 1400) return 'D';      // D区
+            if ($offset < 1600) return 'E';      // E区
+            if ($offset < 2000) return 'F';     // F区
+            if ($offset < 2400) return 'G';     // G区
+            if ($offset < 2800) return 'H';     // H区
+            if ($offset < 3200) return 'J';     // J区
+            if ($offset < 3600) return 'K';     // K区
+            if ($offset < 4000) return 'L';     // L区
+            if ($offset < 4400) return 'M';     // M区
+            if ($offset < 4800) return 'N';     // N区
+            if ($offset < 5000) return 'O';     // O区
+            if ($offset < 5400) return 'P';     // P区
+            if ($offset < 5800) return 'Q';     // Q区
+            if ($offset < 6200) return 'R';     // R区
+            if ($offset < 6600) return 'S';     // S区
+            if ($offset < 7000) return 'T';     // T区
+            if ($offset < 7400) return 'W';     // W区
+            if ($offset < 7800) return 'X';     // X区
+            if ($offset < 8200) return 'Y';     // Y区
+            // 剩余部分归为Z区
+            return 'Z';
+        }
+        
+        // 扩展A区汉字 0x9FA6-0x9FEF
+        if ($unicode >= 0x9FA6 && $unicode <= 0x9FEF) return 'A';
+        
+        // 扩展B区汉字 0x3400-0x4DB5
+        if ($unicode >= 0x3400 && $unicode <= 0x4DB5) {
+            $offset = $unicode - 0x3400;
+            $mod = $offset % 23;
+            $letters = ['A','B','C','D','E','F','G','H','J','K','L','M','N','O','P','Q','R','S','T','W','X','Y','Z'];
+            return $letters[$mod % 23];
+        }
+        
+        // 默认返回Z
+        return 'Z';
+    }
+
+    /**
+     * 获取字符的Unicode编码
+     * 
+     * @param string $char 字符
+     * @return int Unicode编码
+     */
+    private function unicode($char)
+    {
+        $unicode = unpack('H*', mb_convert_encoding($char, 'UCS-2BE', 'UTF-8'));
+        return hexdec($unicode[1]);
     }
 }
 

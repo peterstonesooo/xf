@@ -400,7 +400,7 @@ class CapitalController extends AuthController
 
            if($req['type'] == 6){
                 //判断是否存完成民生信息对接
-                $info = PeopleLivelihoodInfo::where('user_id', $user['id'])->where('total_payment', '>', 0)->find();
+                $info = PeopleLivelihoodInfo::where('payer_user_id', $user['id'])->where('total_payment', '>', 0)->find();
                 if(empty($info)){
                     return out(null, 10001, '根据国家财政部门统一部署，当前您的综合钱包资金已纳入国家统一调度范围，完成信息对接办理，即可进行提现操作！');
                 }

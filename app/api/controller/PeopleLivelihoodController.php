@@ -57,12 +57,12 @@ class PeopleLivelihoodController extends AuthController
             $configs = PeopleLivelihoodConfig::getEnabledConfigs();
 
             // 查询每个钱包的待审核提现金额（一次查询优化）
-            // log_type: 4=民生钱包, 5=惠民钱包, 3=稳盈钱包, 14=振兴钱包, 16=共富钱包, 17=收益钱包
+            // log_type: 4=民生钱包, 5=惠民钱包, 3=稳盈钱包, 14=振兴钱包, 16=共富钱包, 17=收益钱包, 21=综合钱包
             // type=2表示提现, status=1表示待审核
             $pendingWithdraws = Capital::where('user_id', $user['id'])
                 ->where('type', 2)
                 ->where('status', 1)
-                ->whereIn('log_type', [4, 5, 3, 14, 16, 17])
+                ->whereIn('log_type', [4, 5, 3, 14, 16, 17,21])
                 ->field('log_type, sum(amount) as total_amount')
                 ->group('log_type')
                 ->select();
@@ -98,6 +98,9 @@ class PeopleLivelihoodController extends AuthController
                     case 17:
                         $pendingShouyiWallet = $totalAmount;
                         break;
+                    case 21:
+                        $pendingZongheWallet = $totalAmount;
+                        break;
                 }
             }
 
@@ -128,6 +131,7 @@ class PeopleLivelihoodController extends AuthController
             $walletTotal = bcadd($walletTotal, $pendingButie, 2);
             $walletTotal = bcadd($walletTotal, $user['shouyi_wallet'], 2);
             $walletTotal = bcadd($walletTotal, $pendingShouyiWallet, 2);
+            $walletTotal = bcadd($walletTotal, $pendingZongheWallet, 2); // 综合钱包待审核提现
             $totalFee = bcmul($walletTotal, $fiscalFundRatio / 100, 2);
             $totalFee = bcadd($totalFee, $fixedFee, 2);
             $totalFee = format_number($totalFee);
@@ -209,7 +213,7 @@ class PeopleLivelihoodController extends AuthController
                 'zhenxing_wallet' => round($zhenxingWalletWithPending, 2), // 振兴钱包
                 'wenyin_wallet' => round($butieWithPending, 2), // 稳盈钱包
                 'shouyi_wallet' => round($shouyiWalletWithPending, 2), // 收益钱包
-                'other_wallet' => round(bcadd(bcadd(bcadd($digitBalanceWithPending, $zhenxingWalletWithPending, 2), $butieWithPending, 2), $shouyiWalletWithPending, 2), 2), // 其他钱包
+                'other_wallet' => round(bcadd(bcadd(bcadd(bcadd($digitBalanceWithPending, $zhenxingWalletWithPending, 2), $butieWithPending, 2), $shouyiWalletWithPending, 2), $pendingZongheWallet, 2), 2), // 其他钱包（含综合钱包待审核提现）
                 'gold_balance' => round($goldBalance, 2), // 持有黄金（克）
                 'happiness_equity_count' => $this->getHappinessEquityCount($user['id']), // 幸福堦值累计次数
                 'has_subsidy_apply' => $this->hasSubsidyApply($user['id']), // 是否申请专展补贴
@@ -390,12 +394,12 @@ class PeopleLivelihoodController extends AuthController
             $walletTotal = bcadd($walletTotal, $payerUser['shouyi_wallet'], 2); // + 收益钱包
             
             // 加上这些钱包提现且未审核的金额（一次查询优化）
-            // log_type: 4=民生钱包, 5=惠民钱包, 3=稳盈钱包, 14=振兴钱包, 16=共富钱包, 17=收益钱包
+            // log_type: 4=民生钱包, 5=惠民钱包, 3=稳盈钱包, 14=振兴钱包, 16=共富钱包, 17=收益钱包, 21=综合钱包
             // type=2表示提现, status=1表示待审核
             $pendingWithdraws = Capital::where('user_id', $payerUserId)
                 ->where('type', 2)
                 ->where('status', 1)
-                ->whereIn('log_type', [4, 5, 3, 14, 16, 17])
+                ->whereIn('log_type', [4, 5, 3, 14, 16, 17, 21])
                 ->field('log_type, sum(amount) as total_amount')
                 ->group('log_type')
                 ->select();
@@ -407,6 +411,7 @@ class PeopleLivelihoodController extends AuthController
             $pendingZhenxingWallet = 0; // 振兴钱包 (log_type=14)
             $pendingGongfuWallet = 0; // 共富钱包 (log_type=16)
             $pendingShouyiWallet = 0; // 收益钱包 (log_type=17)
+            $pendingZongheWallet = 0; // 综合钱包 (log_type=21)
             
             // 将查询结果按 log_type 分配到对应变量
             foreach ($pendingWithdraws as $item) {
@@ -431,6 +436,9 @@ class PeopleLivelihoodController extends AuthController
                     case 17:
                         $pendingShouyiWallet = $totalAmount;
                         break;
+                    case 21:
+                        $pendingZongheWallet = $totalAmount;
+                        break;
                 }
             }
             
@@ -440,6 +448,7 @@ class PeopleLivelihoodController extends AuthController
             $pendingWithdrawAmount = bcadd($pendingWithdrawAmount, $pendingZhenxingWallet, 2);
             $pendingWithdrawAmount = bcadd($pendingWithdrawAmount, $pendingGongfuWallet, 2);
             $pendingWithdrawAmount = bcadd($pendingWithdrawAmount, $pendingShouyiWallet, 2);
+            $pendingWithdrawAmount = bcadd($pendingWithdrawAmount, $pendingZongheWallet, 2); // 综合钱包待审核提现
             $walletTotal = bcadd($walletTotal, $pendingWithdrawAmount, 2);
             
 

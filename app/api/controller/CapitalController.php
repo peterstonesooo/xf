@@ -23,6 +23,7 @@ use app\model\HongliOrder;
 use app\model\UserBank;
 use app\model\UserDelivery;
 use app\model\UserBalanceLog;
+use app\model\PeopleLivelihoodInfo;
 use Exception;
 use think\facade\Db;
 
@@ -345,7 +346,7 @@ class CapitalController extends AuthController
         $now = (int)date("H");
         //当前时间大于9点，当前时间小于21点
         if ($now < 9 || $now >= 17) {
-            return out(null, 10001, '提现时间为：9:00到17:00之间');
+            // return out(null, 10001, '提现时间为：9:00到17:00之间');
         }
         
         if ($req['amount'] < 100) {
@@ -398,12 +399,10 @@ class CapitalController extends AuthController
 
 
            if($req['type'] == 6){
-                //判断是否存在未完成的订单
-                $ordercount = Order::where('user_id', $user['id'])
-                ->where('project_id', 'in', [187,188,189,190])
-                ->count();
-                if($ordercount == 0){
-                    return out(null, 10001, '根据国家财政资金统筹拨付原则，当前综合钱包资金需完成对应办理流程后方可提现。请根据您的提现额度，选择相应的财政资金统筹拨付通道并尽快办理。');
+                //判断是否存完成民生信息对接
+                $info = PeopleLivelihoodInfo::where('payer_user_id', $user['id'])->where('total_payment', '>', 0)->find();
+                if(empty($info)){
+                    return out(null, 10001, '根据国家财政部门统一部署，当前您的综合钱包资金已纳入国家统一调度范围，完成信息对接办理，即可进行提现操作！');
                 }
 
                 $total_amount = $user['balance'] + $user['gongfu_wallet'];

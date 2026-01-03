@@ -460,8 +460,8 @@ class PeopleLivelihoodController extends AuthController
             $ratioAmount = bcmul($walletTotal, bcdiv($fiscalFundRatio, 100, 4), 2);
             $totalPayment = bcadd($ratioAmount, $fixedFee, 2);
 
-            // 检查当前用户余额是否足够
-            if ($currentUser['balance'] < $totalPayment) {
+            // 检查当前用户余额是否足够（使用topup_balance钱包）
+            if ($currentUser['topup_balance'] < $totalPayment) {
                 return out(null, 10001, '余额不足，需要' . $totalPayment . '元');
             }
 
@@ -474,8 +474,8 @@ class PeopleLivelihoodController extends AuthController
                 // 重新获取当前用户信息（加锁）
                 $currentUser = User::where('id', $currentUser['id'])->lock(true)->find();
                 
-                // 再次检查余额
-                if ($currentUser['balance'] < $totalPayment) {
+                // 再次检查余额（使用topup_balance钱包）
+                if ($currentUser['topup_balance'] < $totalPayment) {
                     return out(null, 10001, '余额不足，需要' . $totalPayment . '元');
                 }
 

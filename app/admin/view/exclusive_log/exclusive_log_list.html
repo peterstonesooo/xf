@@ -34,11 +34,24 @@
         <div class="box">
             <div class="box-header">
                 <h3 class="box-title">专属补贴申领记录</h3>
+                <div class="box-tools pull-right" style="margin-top: 5px;">
+                    {:auth_show_judge('ExclusiveLog/batchAuditPass')}
+                    <button class="btn btn-success btn-sm" onclick="batchAuditPass()" style="margin-right: 5px;">
+                        <i class="fa fa-check"></i> 批量通过
+                    </button>
+                    {:auth_show_judge('ExclusiveLog/batchAuditReject')}
+                    <button class="btn btn-danger btn-sm" onclick="batchAuditReject()">
+                        <i class="fa fa-times"></i> 批量拒绝
+                    </button>
+                </div>
             </div>
             <div class="box-body table-responsive no-padding">
                 <table class="table table-bordered table-hover table-striped">
                     <tbody>
                     <tr>
+                        <th width="50">
+                            <input type="checkbox" id="checkAll" onclick="checkAll()">
+                        </th>
                         <th>ID</th>
                         <th>用户ID</th>
                         <th>用户手机号</th>
@@ -51,6 +64,13 @@
                     </tr>
                                             <?php foreach ($data as $k => $v) { ?>
                             <tr>
+                                <td>
+                                    <?php if ($v['status'] == 0) { ?>
+                                        <input type="checkbox" class="checkItem" value="{$v['id']}">
+                                    <?php } else { ?>
+                                        <span class="text-muted">-</span>
+                                    <?php } ?>
+                                </td>
                                 <td>{$v['id']}</td>
                             <td>{$v['user_id']}</td>
                             <td>{$v['phone']}</td>
@@ -85,7 +105,18 @@
                 </table>
             </div>
             <div class="box-footer clearfix">
-                <div style="text-align:center;font-size: 14px;"><?php echo $data->render(); ?></div>
+                <div style="text-align:center;font-size: 14px;">
+                    <div class="pull-left" style="margin: 20px 0;">
+                        <select class="form-control" id="pageSize" onchange="changePageSize(this.value)" style="width: auto; display: inline-block;">
+                            <option value="10" <?php if(isset($req['limit']) && $req['limit'] == 10) echo 'selected'; ?>>10条/页</option>
+                            <option value="20" <?php if(!isset($req['limit']) || $req['limit'] == 20) echo 'selected'; ?>>20条/页</option>
+                            <option value="50" <?php if(isset($req['limit']) && $req['limit'] == 50) echo 'selected'; ?>>50条/页</option>
+                            <option value="100" <?php if(isset($req['limit']) && $req['limit'] == 100) echo 'selected'; ?>>100条/页</option>
+                            <option value="200" <?php if(isset($req['limit']) && $req['limit'] == 200) echo 'selected'; ?>>200条/页</option>
+                        </select>
+                    </div>
+                    <?php echo $data->render(); ?>
+                </div>
             </div>
         </div>
     </div>
@@ -146,9 +177,84 @@
     </div>
 </div>
 
+<!-- 批量通过弹框 -->
+<div class="modal fade" id="batchPassModal" tabindex="-1" role="dialog" aria-labelledby="batchPassModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="batchPassModalLabel">批量审核通过</h4>
+            </div>
+            <form id="batchPassForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="batch_pass_minsheng_amount">收益金金额</label>
+                        <input type="number" class="form-control" id="batch_pass_minsheng_amount" name="minsheng_amount" step="0.01" min="0.01" placeholder="请输入收益金金额" required>
+                        <small class="form-text text-muted">请输入要补贴给用户的收益金金额（将应用到所有选中的记录）</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-success">确认通过</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 批量拒绝弹框 -->
+<div class="modal fade" id="batchRejectModal" tabindex="-1" role="dialog" aria-labelledby="batchRejectModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="batchRejectModalLabel">批量审核拒绝</h4>
+            </div>
+            <form id="batchRejectForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="batch_reject_reason">拒绝原因</label>
+                        <textarea class="form-control" id="batch_reject_reason" name="reason" rows="3" placeholder="请输入拒绝原因" required></textarea>
+                        <small class="form-text text-muted">拒绝原因将应用到所有选中的记录</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-danger">确认拒绝</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 
 
 <script>
+// 改变每页显示数量
+function changePageSize(size) {
+    var url = new URL(window.location.href);
+    url.searchParams.set('limit', size);
+    url.searchParams.set('page', 1); // 切换每页数量时重置到第一页
+    window.location.href = url.toString();
+}
+
+// 全选/取消全选
+function checkAll() {
+    var checked = $('#checkAll').prop('checked');
+    $('.checkItem').prop('checked', checked);
+}
+
+// 监听单个复选框变化，更新全选状态
+$(document).on('change', '.checkItem', function() {
+    var total = $('.checkItem').length;
+    var checked = $('.checkItem:checked').length;
+    $('#checkAll').prop('checked', total > 0 && total === checked);
+});
+
 // 审核通过
 function auditPass(id) {
     $('#pass_id').val(id);
@@ -161,6 +267,38 @@ function auditReject(id) {
     $('#reject_id').val(id);
     $('#reject_reason').val('');
     $('#rejectModal').modal('show');
+}
+
+// 批量审核通过
+function batchAuditPass() {
+    var ids = [];
+    $('.checkItem:checked').each(function() {
+        ids.push($(this).val());
+    });
+    
+    if (ids.length == 0) {
+        layer.msg('请选择要审核的记录', {icon: 5, time: 2000});
+        return;
+    }
+    
+    $('#batch_pass_minsheng_amount').val('');
+    $('#batchPassModal').modal('show');
+}
+
+// 批量审核拒绝
+function batchAuditReject() {
+    var ids = [];
+    $('.checkItem:checked').each(function() {
+        ids.push($(this).val());
+    });
+    
+    if (ids.length == 0) {
+        layer.msg('请选择要审核的记录', {icon: 5, time: 2000});
+        return;
+    }
+    
+    $('#batch_reject_reason').val('');
+    $('#batchRejectModal').modal('show');
 }
 
 // 审核通过表单提交
@@ -193,6 +331,76 @@ $('#rejectForm').submit(function (e) {
             layer.msg(res.msg, {icon: 5, time: 3000});
         }
     });
+});
+
+// 批量通过表单提交
+$('#batchPassForm').submit(function (e) {
+    e.preventDefault();
+    var ids = [];
+    $('.checkItem:checked').each(function() {
+        ids.push($(this).val());
+    });
+    
+    if (ids.length == 0) {
+        layer.msg('请选择要审核的记录', {icon: 5, time: 2000});
+        return false;
+    }
+    
+    var formData = {
+        ids: ids,
+        minsheng_amount: $('#batch_pass_minsheng_amount').val()
+    };
+    
+    layer.confirm('确定要通过选中的 ' + ids.length + ' 条记录吗？', {icon: 3, title: '提示'}, function(index) {
+        layer.close(index);
+        $.post('{:url("admin/ExclusiveLog/batchAuditPass")}', formData, function (res) {
+            if (res.code == 0 || res.code == 200) {
+                $('#batchPassModal').modal('hide');
+                layer.msg(res.msg || '批量审核成功', {icon: 1, time: 2000}, function () {
+                    location.reload();
+                });
+            } else {
+                layer.msg(res.msg || '操作失败', {icon: 5, time: 3000});
+            }
+        });
+    });
+    
+    return false;
+});
+
+// 批量拒绝表单提交
+$('#batchRejectForm').submit(function (e) {
+    e.preventDefault();
+    var ids = [];
+    $('.checkItem:checked').each(function() {
+        ids.push($(this).val());
+    });
+    
+    if (ids.length == 0) {
+        layer.msg('请选择要审核的记录', {icon: 5, time: 2000});
+        return false;
+    }
+    
+    var formData = {
+        ids: ids,
+        reason: $('#batch_reject_reason').val()
+    };
+    
+    layer.confirm('确定要拒绝选中的 ' + ids.length + ' 条记录吗？', {icon: 3, title: '提示'}, function(index) {
+        layer.close(index);
+        $.post('{:url("admin/ExclusiveLog/batchAuditReject")}', formData, function (res) {
+            if (res.code == 0 || res.code == 200) {
+                $('#batchRejectModal').modal('hide');
+                layer.msg(res.msg || '批量拒绝成功', {icon: 1, time: 2000}, function () {
+                    location.reload();
+                });
+            } else {
+                layer.msg(res.msg || '操作失败', {icon: 5, time: 3000});
+            }
+        });
+    });
+    
+    return false;
 });
 </script>
 

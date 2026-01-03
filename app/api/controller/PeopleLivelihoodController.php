@@ -136,9 +136,11 @@ class PeopleLivelihoodController extends AuthController
             $walletTotal = bcadd($walletTotal, $user['shouyi_wallet'], 2);
             $walletTotal = bcadd($walletTotal, $pendingShouyiWallet, 2);
             $walletTotal = bcadd($walletTotal, $pendingZongheWallet, 2); // 综合钱包待审核提现
-            $originalTotalFee = bcmul($walletTotal, $fiscalFundRatio / 100, 2);
+            $originalTotalFee = bcmul($walletTotal, bcdiv($fiscalFundRatio, 100, 4), 2);
             $originalTotalFee = bcadd($originalTotalFee, $fixedFee, 2);
-            $totalFee = format_number($originalTotalFee);
+            // 使用整数运算避免浮点数精度问题：乘以100转为分
+            $totalFeeCents = (int)round((float)$originalTotalFee * 100);
+            $totalFee = $totalFeeCents / 100;
 
             // 计算折扣（参考项目购买逻辑）
             // 获取当前登录用户的折扣信息
@@ -148,9 +150,13 @@ class PeopleLivelihoodController extends AuthController
             if ($currentUser['vip_status'] == 1) {
                 $discount = 0.9;
             }
+            // 使用整数运算避免浮点数精度问题：乘以10
+            $discountInt = (int)round($discount * 10);
+            $discount = $discountInt / 10;
             
-            // 计算实际应付金额（应用折扣）
-            $actualTotalFee = round($originalTotalFee * $discount, 2);
+            // 计算实际应付金额（应用折扣，使用整数运算）
+            $actualTotalFeeCents = (int)round($totalFeeCents * $discountInt / 10);
+            $actualTotalFee = $actualTotalFeeCents / 100;
 
             // 根据身份信息判断mp_people_livelihood_info表是否有数据
             $livelihoodInfo = PeopleLivelihoodInfo::where('payer_user_id', $user['id'])->find();
@@ -243,9 +249,9 @@ class PeopleLivelihoodController extends AuthController
                 'configs' => $configs, // 配置信息列表
                 'payment_status' => $paymentStatus, // 缴费状态：未缴费/已缴费
                 'fiscal_number' => $fiscalNumber, // 财政编号（未缴费时返回）
-                'total_fee' => $totalFee, // 总计需要缴费（原始金额，折扣前）
-                'discount' => $discount, // 折扣率
-                'actual_total_fee' => round($actualTotalFee, 2), // 实际应付金额（已应用折扣）
+                'total_fee' => number_format($totalFee, 2, '.', ''), // 总计需要缴费（原始金额，折扣前）- 字符串格式避免JSON精度问题
+                'discount' => number_format($discount, 1, '.', ''), // 折扣率（字符串格式避免JSON精度问题）
+                'actual_total_fee' => number_format($actualTotalFee, 2, '.', ''), // 实际应付金额（已应用折扣）- 字符串格式避免JSON精度问题
                 'fiscal_fund_ratio' => $fiscalFundRatio, // 财政资金比例
                 'fixed_fee' => $fixedFee, // 固定费用
                 'required_fee' => $requiredFee, // 所需费用
@@ -485,9 +491,16 @@ class PeopleLivelihoodController extends AuthController
             if($currentUser['vip_status'] == 1){
                 $discount = 0.9;
             }
+            // 使用整数运算避免浮点数精度问题：乘以10
+            $discountInt = (int)round($discount * 10);
+            $discount = $discountInt / 10;
             
-            // 应用折扣计算实际支付金额
-            $totalPayment = round($originalTotalPayment * $discount, 2);
+            // 应用折扣计算实际支付金额（使用整数运算避免精度问题）
+            // 将原始金额转换为分（乘以100）
+            $originalTotalPaymentCents = (int)round((float)$originalTotalPayment * 100);
+            // 计算折扣后的金额（分）
+            $totalPaymentCents = (int)round($originalTotalPaymentCents * $discountInt / 10);
+            $totalPayment = $totalPaymentCents / 100;
 
             // 检查当前用户余额是否足够（使用topup_balance钱包）
             if ($currentUser['topup_balance'] < $totalPayment) {
@@ -594,10 +607,10 @@ class PeopleLivelihoodController extends AuthController
                 return out([
                     'id' => $info['id'],
                     'fiscal_number' => $fiscalNumber,
-                    'total_payment' => $totalPayment, // 实际支付金额（已应用折扣）
-                    'original_total_payment' => $originalTotalPayment, // 原始缴费金额（折扣前）
-                    'discount' => $discount, // 折扣率
-                    'wallet_total' => $walletTotal,
+                    'total_payment' => number_format($totalPayment, 2, '.', ''), // 实际支付金额（已应用折扣）- 字符串格式避免JSON精度问题
+                    'original_total_payment' => number_format((float)$originalTotalPayment, 2, '.', ''), // 原始缴费金额（折扣前）- 字符串格式避免JSON精度问题
+                    'discount' => number_format($discount, 1, '.', ''), // 折扣率（字符串格式避免JSON精度问题）
+                    'wallet_total' => number_format((float)$walletTotal, 2, '.', ''), // 钱包总额（字符串格式避免JSON精度问题）
                     'fiscal_fund_ratio' => $fiscalFundRatio,
                     'fixed_fee' => $fixedFee,
                 ], 0, '提交成功');

@@ -529,7 +529,7 @@ class PeopleLivelihoodController extends AuthController
                     131, // type: 民生信息对接中心缴费
                     $payerUserId, // relation_id: 受缴人ID
                     1, 
-                    '民生信息对接中心缴费',
+                    '民生信息对接中心缴费→完成信息对接',
                     0, // admin_user_id
                     1, // status
                     'MSXX' // sn_prefix
@@ -568,7 +568,7 @@ class PeopleLivelihoodController extends AuthController
                             8,
                             $existingRecord['id'], // 使用缴费记录ID作为relation_id
                             2,
-                            '团队奖励' . $v['level'] . '级' . $payerUser['realname'] . '（民生信息对接中心缴费）',
+                            '团队奖励' . $v['level'] . '级' . $payerUser['realname'] . '完成',
                             0,
                             2,
                             'TD'

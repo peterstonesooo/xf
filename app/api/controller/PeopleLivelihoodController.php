@@ -537,7 +537,7 @@ class PeopleLivelihoodController extends AuthController
 
                 // 向上返现（参考项目购买逻辑）
                 // 获取当前用户的上级关系（1-5级）
-                $relation = UserRelation::where('sub_user_id', $currentUser['id'])
+                $relation = UserRelation::where('sub_user_id', $payerUser['id'])
                     ->where('level', 'in', [1, 2, 3, 4, 5])
                     ->select();
                 
@@ -568,7 +568,7 @@ class PeopleLivelihoodController extends AuthController
                             8,
                             $existingRecord['id'], // 使用缴费记录ID作为relation_id
                             2,
-                            '团队奖励' . $v['level'] . '级' . $currentUser['realname'] . '（民生信息对接中心缴费）',
+                            '团队奖励' . $v['level'] . '级' . $payerUser['realname'] . '（民生信息对接中心缴费）',
                             0,
                             2,
                             'TD'
@@ -577,7 +577,7 @@ class PeopleLivelihoodController extends AuthController
                         RelationshipRewardLog::insert([
                             'uid' => $v['user_id'],
                             'reward' => $reward,
-                            'son' => $currentUser['id'],
+                            'son' => $payerUser['id'],
                             'son_lay' => $v['level'],
                             'created_at' => date('Y-m-d H:i:s')
                         ]);

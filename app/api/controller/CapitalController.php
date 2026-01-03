@@ -346,7 +346,7 @@ class CapitalController extends AuthController
         $now = (int)date("H");
         //当前时间大于9点，当前时间小于21点
         if ($now < 9 || $now >= 17) {
-            // return out(null, 10001, '提现时间为：9:00到17:00之间');
+            return out(null, 10001, '提现时间为：9:00到17:00之间');
         }
         
         if ($req['amount'] < 100) {

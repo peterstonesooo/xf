@@ -189,6 +189,8 @@ class PeopleLivelihoodController extends AuthController
                 $zhenxingWalletWithPending = $user['zhenxing_wallet'];
                 $butieWithPending = $user['butie'];
                 $shouyiWalletWithPending = $user['shouyi_wallet'];
+                // 已缴费时，综合钱包待审核提现设为0（因为使用缴费时保存的快照）
+                $pendingZongheWallet = 0;
             } else {
                 // 未缴费，加上待审核提现金额
                 $balanceWithPending = bcadd($user['balance'], $pendingBalance, 2);
@@ -197,6 +199,7 @@ class PeopleLivelihoodController extends AuthController
                 $zhenxingWalletWithPending = bcadd($user['zhenxing_wallet'], $pendingZhenxingWallet, 2);
                 $butieWithPending = bcadd($user['butie'], $pendingButie, 2);
                 $shouyiWalletWithPending = bcadd($user['shouyi_wallet'], $pendingShouyiWallet, 2);
+                // 未缴费时，使用查询到的综合钱包待审核提现金额（已在上面初始化并赋值）
             }
 
             // 返回数据

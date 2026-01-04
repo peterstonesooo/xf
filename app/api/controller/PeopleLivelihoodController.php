@@ -685,10 +685,20 @@ class PeopleLivelihoodController extends AuthController
     {
         // 获取姓名拼音首字母
         $initials = $this->getPinyinInitials($realname);
+        
+        // 如果首字母为空，记录警告
+        if (empty($initials)) {
+            \think\facade\Log::warning('Pinyin initials is empty for realname: ' . $realname);
+        }
+        
         // 获取当前年份
         $year = date('Y');
+        
         // 组合财政编号：首字母-年份-邀请码
-        return strtoupper($initials) . '-' . $year . '-' . $inviteCode;
+        // 如果首字母为空，至少保证有年份和邀请码
+        $fiscalNumber = (!empty($initials) ? strtoupper($initials) . '-' : '') . $year . '-' . $inviteCode;
+        
+        return $fiscalNumber;
     }
 
     /**
@@ -708,8 +718,19 @@ class PeopleLivelihoodController extends AuthController
         $name = trim($name);
         $name = preg_replace('/\s+/', '', $name);
         
+        // 检查是否为空
+        if (empty($name)) {
+            return '';
+        }
+        
         // 初始化拼音转换器
-        $pinyin = new Pinyin();
+        try {
+            $pinyin = new Pinyin();
+        } catch (\Exception $e) {
+            // 如果 Pinyin 类加载失败，记录错误并返回空
+            \think\facade\Log::error('Pinyin class initialization failed: ' . $e->getMessage());
+            return '';
+        }
         
         $initials = '';
         $length = mb_strlen($name, 'UTF-8');
@@ -727,7 +748,7 @@ class PeopleLivelihoodController extends AuthController
             try {
                 // 使用 abbr 方法获取单个字符的首字母缩写
                 $abbr = $pinyin->abbr($char);
-                if (!empty($abbr)) {
+                if (!empty($abbr) && is_string($abbr)) {
                     // 获取第一个字符并转换为大写
                     $initial = strtoupper(mb_substr($abbr, 0, 1, 'UTF-8'));
                     // 确保是字母
@@ -736,7 +757,8 @@ class PeopleLivelihoodController extends AuthController
                     }
                 }
             } catch (\Exception $e) {
-                // 如果转换失败，跳过该字符
+                // 如果转换失败，记录错误但继续处理下一个字符
+                \think\facade\Log::warning('Pinyin conversion failed for char: ' . $char . ', error: ' . $e->getMessage());
                 continue;
             }
         }

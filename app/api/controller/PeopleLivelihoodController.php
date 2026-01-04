@@ -12,6 +12,7 @@ use app\model\OrderDailyBonus;
 use app\model\OrderTongxing;
 use app\model\OrderDingtou;
 use app\model\OrderTiyan;
+use app\model\OrderTransfer;
 use app\model\PeopleLivelihoodConfig;
 use app\model\PeopleLivelihoodInfo;
 use app\model\Capital;
@@ -265,15 +266,15 @@ class PeopleLivelihoodController extends AuthController
     }
 
     /**
-     * 获取幸福堦值累计次数（幸福权益激活次数）
+     * 获取幸福堦值累计次数（根据转入次数计算）
      * @param int $userId 用户ID
      * @return int
      */
     private function getHappinessEquityCount($userId)
     {
-        return HappinessEquityActivation::where('user_id', $userId)
-                                        ->where('status', 1)
-                                        ->count();
+        return OrderTransfer::where('user_id', $userId)
+                           ->where('type', 1)  // type=1 表示转入
+                           ->count();
     }
 
     /**

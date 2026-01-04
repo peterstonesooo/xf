@@ -20,6 +20,7 @@ use app\model\TeamGloryLog;
 use app\model\UserRelation;
 use app\model\RelationshipRewardLog;
 use think\facade\Db;
+use Overtrue\Pinyin\Pinyin;
 use Exception;
 
 class PeopleLivelihoodController extends AuthController
@@ -692,7 +693,7 @@ class PeopleLivelihoodController extends AuthController
 
     /**
      * 获取中文姓名的拼音首字母
-     * 逐字处理，每个字找到对应的拼音首字母并转换为大写
+     * 使用 overtrue/pinyin 库实现，逐字处理，每个字找到对应的拼音首字母并转换为大写
      * 
      * @param string $name 中文姓名
      * @return string 拼音首字母（如：林秀莲 -> LXL）
@@ -707,6 +708,9 @@ class PeopleLivelihoodController extends AuthController
         $name = trim($name);
         $name = preg_replace('/\s+/', '', $name);
         
+        // 初始化拼音转换器
+        $pinyin = new Pinyin();
+        
         $initials = '';
         $length = mb_strlen($name, 'UTF-8');
         
@@ -719,222 +723,124 @@ class PeopleLivelihoodController extends AuthController
                 continue;
             }
             
-            // 获取单个字符的拼音首字母
-            $initial = $this->getCharInitial($char);
-            
-            // 转换为大写并追加
-            $initials .= strtoupper($initial);
+            // 使用 overtrue/pinyin 获取拼音首字母
+            try {
+                // 使用 abbr 方法获取单个字符的首字母缩写
+                $abbr = $pinyin->abbr($char);
+                if (!empty($abbr)) {
+                    // 获取第一个字符并转换为大写
+                    $initial = strtoupper(mb_substr($abbr, 0, 1, 'UTF-8'));
+                    // 确保是字母
+                    if (preg_match('/^[A-Z]$/', $initial)) {
+                        $initials .= $initial;
+                    }
+                }
+            } catch (\Exception $e) {
+                // 如果转换失败，跳过该字符
+                continue;
+            }
         }
         
         return $initials;
     }
-
+    
     /**
-     * 获取单个字符的拼音首字母
-     * 基于GB2312编码的拼音首字母分布规律进行准确映射
-     * 
-     * @param string $char 单个中文字符
-     * @return string 拼音首字母（A-Z）
+     * 测试拼音首字母转换功能
+     * 从用户表读取用户名进行测试
      */
-    private function getCharInitial($char)
+    public function testPinyinInitials()
     {
-        // 先尝试转换为GB2312编码
-        $gb2312 = @iconv('UTF-8', 'GB2312//IGNORE', $char);
-        
-        if ($gb2312 && strlen($gb2312) >= 2) {
-            // GB2312编码：高字节0xA1-0xFE，低字节0xA1-0xFE
-            $high = ord($gb2312[0]);
-            $low = ord($gb2312[1]);
+        try {
+            // 从用户表获取前50个有真实姓名的用户
+            $users = User::where('realname', '<>', '')
+                         ->where('realname', 'not null')
+                         ->field('id,realname')
+                         ->limit(50)
+                         ->select()
+                         ->toArray();
             
-            // GB2312编码范围：0xA1A1-0xFEFE
-            if ($high >= 0xA1 && $high <= 0xFE && $low >= 0xA1 && $low <= 0xFE) {
-                // 计算区位码
-                $qu = $high - 0xA0;  // 区码
-                $wei = $low - 0xA0;  // 位码
+            if (empty($users)) {
+                return out(null, 10001, '用户表中没有找到有真实姓名的用户');
+            }
+            
+            $results = [];
+            $totalChars = 0;
+            $successChars = 0;
+            
+            // 初始化拼音转换器（用于统计）
+            $pinyin = new Pinyin();
+            
+            foreach ($users as $user) {
+                $realname = $user['realname'];
+                $initials = $this->getPinyinInitials($realname);
+                $length = mb_strlen($realname, 'UTF-8');
                 
-                // 基于GB2312的拼音首字母分布规律
-                // 1-9区：符号区，跳过
-                // 16-55区：一级汉字（按拼音排序）
-                // 56-87区：二级汉字（按部首排序）
-                
-                if ($qu >= 16 && $qu <= 55) {
-                    // 一级汉字区（16-55区），按拼音排序
-                    return $this->getPinyinByQuWei($qu, $wei);
-                } elseif ($qu >= 56 && $qu <= 87) {
-                    // 二级汉字区（56-87区），按部首排序，需要特殊处理
-                    return $this->getPinyinByQuWei2($qu, $wei);
+                // 统计字符数（用于统计信息）
+                for ($i = 0; $i < $length; $i++) {
+                    $char = mb_substr($realname, $i, 1, 'UTF-8');
+                    if (preg_match('/[\x{4e00}-\x{9fa5}]/u', $char)) {
+                        $totalChars++;
+                        // 检查是否能成功转换
+                        try {
+                            $abbr = $pinyin->abbr($char);
+                            if (!empty($abbr) && preg_match('/^[A-Za-z]/', $abbr)) {
+                                $successChars++;
+                            }
+                        } catch (\Exception $e) {
+                            // 转换失败，不计入成功
+                        }
+                    }
                 }
+                
+                $results[] = [
+                    'user_id' => $user['id'],
+                    'realname' => $realname,
+                    'initials' => $initials,
+                    'length' => $length
+                ];
             }
-        }
-        
-        // 如果GB2312转换失败，使用Unicode范围映射
-        return $this->getPinyinByUnicode($char);
-    }
-    
-    /**
-     * 根据GB2312区位码获取一级汉字拼音首字母
-     * 
-     * @param int $qu 区码
-     * @param int $wei 位码
-     * @return string 拼音首字母
-     */
-    private function getPinyinByQuWei($qu, $wei)
-    {
-        // GB2312一级汉字（16-55区）的拼音首字母分布
-        // 这是基于GB2312标准编码规律的近似映射
-        
-        // 16-19区：A
-        if ($qu >= 16 && $qu <= 19) return 'A';
-        // 20-22区：B
-        if ($qu >= 20 && $qu <= 22) return 'B';
-        // 23-25区：C
-        if ($qu >= 23 && $qu <= 25) return 'C';
-        // 26-28区：D
-        if ($qu >= 26 && $qu <= 28) return 'D';
-        // 29区：E
-        if ($qu == 29) return 'E';
-        // 30-32区：F
-        if ($qu >= 30 && $qu <= 32) return 'F';
-        // 33-35区：G
-        if ($qu >= 33 && $qu <= 35) return 'G';
-        // 36-38区：H
-        if ($qu >= 36 && $qu <= 38) return 'H';
-        // 39-41区：J
-        if ($qu >= 39 && $qu <= 41) return 'J';
-        // 42-43区：K
-        if ($qu >= 42 && $qu <= 43) return 'K';
-        // 44-46区：L
-        if ($qu >= 44 && $qu <= 46) return 'L';
-        // 47-48区：M
-        if ($qu >= 47 && $qu <= 48) return 'M';
-        // 49-50区：N
-        if ($qu >= 49 && $qu <= 50) return 'N';
-        // 51区：O
-        if ($qu == 51) return 'O';
-        // 52-53区：P
-        if ($qu >= 52 && $qu <= 53) return 'P';
-        // 54-55区：Q
-        if ($qu >= 54 && $qu <= 55) return 'Q';
-        
-        return 'Z';
-    }
-    
-    /**
-     * 根据GB2312区位码获取二级汉字拼音首字母
-     * 二级汉字按部首排序，需要特殊处理
-     * 
-     * @param int $qu 区码
-     * @param int $wei 位码
-     * @return string 拼音首字母
-     */
-    private function getPinyinByQuWei2($qu, $wei)
-    {
-        // 二级汉字区（56-87区）按部首排序，拼音分布较分散
-        // 使用基于区码的近似映射
-        $offset = ($qu - 56) * 94 + $wei;
-        
-        // 基于统计的拼音首字母分布
-        $ranges = [
-            ['min' => 0, 'max' => 200, 'letter' => 'A'],
-            ['min' => 201, 'max' => 400, 'letter' => 'B'],
-            ['min' => 401, 'max' => 600, 'letter' => 'C'],
-            ['min' => 601, 'max' => 800, 'letter' => 'D'],
-            ['min' => 801, 'max' => 900, 'letter' => 'E'],
-            ['min' => 901, 'max' => 1100, 'letter' => 'F'],
-            ['min' => 1101, 'max' => 1300, 'letter' => 'G'],
-            ['min' => 1301, 'max' => 1500, 'letter' => 'H'],
-            ['min' => 1501, 'max' => 1700, 'letter' => 'J'],
-            ['min' => 1701, 'max' => 1850, 'letter' => 'K'],
-            ['min' => 1851, 'max' => 2100, 'letter' => 'L'],
-            ['min' => 2101, 'max' => 2300, 'letter' => 'M'],
-            ['min' => 2301, 'max' => 2500, 'letter' => 'N'],
-            ['min' => 2501, 'max' => 2600, 'letter' => 'O'],
-            ['min' => 2601, 'max' => 2800, 'letter' => 'P'],
-            ['min' => 2801, 'max' => 3000, 'letter' => 'Q'],
-            ['min' => 3001, 'max' => 3200, 'letter' => 'R'],
-            ['min' => 3201, 'max' => 3500, 'letter' => 'S'],
-            ['min' => 3501, 'max' => 3800, 'letter' => 'T'],
-            ['min' => 3801, 'max' => 4000, 'letter' => 'W'],
-            ['min' => 4001, 'max' => 4200, 'letter' => 'X'],
-            ['min' => 4201, 'max' => 4500, 'letter' => 'Y'],
-            ['min' => 4501, 'max' => 9999, 'letter' => 'Z'],  // 剩余部分归为Z区
-        ];
-        
-        foreach ($ranges as $range) {
-            if ($offset >= $range['min'] && $offset <= $range['max']) {
-                return $range['letter'];
-            }
-        }
-        
-        return 'Z';
-    }
-    
-    /**
-     * 基于Unicode编码范围获取拼音首字母（备用方法）
-     * 
-     * @param string $char 单个中文字符
-     * @return string 拼音首字母
-     */
-    private function getPinyinByUnicode($char)
-    {
-        $unicode = $this->unicode($char);
-        
-        // 常用汉字范围 0x4E00-0x9FA5
-        if ($unicode >= 0x4E00 && $unicode <= 0x9FA5) {
-            $offset = $unicode - 0x4E00;
             
-            // 基于Unicode的拼音首字母分布区间（改进版）
-            // 这些区间是基于实际汉字拼音分布的统计结果
-            if ($offset < 200) return 'A';
-            if ($offset < 600) return 'B';
-            if ($offset < 1000) return 'C';
-            if ($offset < 1400) return 'D';
-            if ($offset < 1600) return 'E';
-            if ($offset < 2000) return 'F';
-            if ($offset < 2400) return 'G';
-            if ($offset < 2800) return 'H';
-            if ($offset < 3200) return 'J';
-            if ($offset < 3600) return 'K';
-            if ($offset < 4000) return 'L';
-            if ($offset < 4400) return 'M';
-            if ($offset < 4800) return 'N';
-            if ($offset < 5000) return 'O';
-            if ($offset < 5400) return 'P';
-            if ($offset < 5800) return 'Q';
-            if ($offset < 6200) return 'R';
-            if ($offset < 6600) return 'S';
-            if ($offset < 7000) return 'T';
-            if ($offset < 7400) return 'W';
-            if ($offset < 7800) return 'X';
-            if ($offset < 8200) return 'Y';
-            return 'Z';
+            // 输出测试结果
+            $output = "=== 拼音首字母转换测试结果 ===\n\n";
+            $output .= "共测试 " . count($results) . " 个用户名\n\n";
+            
+            foreach ($results as $index => $result) {
+                $output .= sprintf(
+                    "[%d] 用户ID: %d | 姓名: %s | 首字母: %s | 字数: %d\n",
+                    $index + 1,
+                    $result['user_id'],
+                    $result['realname'],
+                    $result['initials'],
+                    $result['length']
+                );
+            }
+            
+            $output .= "\n";
+            
+            // 统计信息
+            $output .= "=== 统计信息 ===\n";
+            $output .= sprintf("总字符数: %d\n", $totalChars);
+            $output .= sprintf("成功转换: %d\n", $successChars);
+            $output .= sprintf("成功率: %.2f%%\n", $totalChars > 0 ? ($successChars / $totalChars * 100) : 0);
+            
+            // 返回结果（同时输出到响应和日志）
+            \think\facade\Log::write($output, 'info');
+            
+            return out([
+                'summary' => [
+                    'total_users' => count($results),
+                    'total_chars' => $totalChars,
+                    'success_chars' => $successChars,
+                    'success_rate' => $totalChars > 0 ? round($successChars / $totalChars * 100, 2) : 0
+                ],
+                'results' => $results,
+                'output' => $output
+            ]);
+            
+        } catch (Exception $e) {
+            return out(null, 10001, '测试失败：' . $e->getMessage());
         }
-        
-        // 扩展A区汉字
-        if ($unicode >= 0x9FA6 && $unicode <= 0x9FEF) return 'A';
-        
-        // 扩展B区汉字
-        if ($unicode >= 0x3400 && $unicode <= 0x4DB5) {
-            $offset = $unicode - 0x3400;
-            $mod = $offset % 23;
-            $letters = ['A','B','C','D','E','F','G','H','J','K','L','M','N','O','P','Q','R','S','T','W','X','Y','Z'];
-            return $letters[$mod % 23];
-        }
-        
-        // 默认返回Z
-        return 'Z';
     }
 
-    /**
-     * 获取字符的Unicode编码
-     * 
-     * @param string $char 字符
-     * @return int Unicode编码
-     */
-    private function unicode($char)
-    {
-        $unicode = unpack('H*', mb_convert_encoding($char, 'UCS-2BE', 'UTF-8'));
-        return hexdec($unicode[1]);
-    }
 }
 

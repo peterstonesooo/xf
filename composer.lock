@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ab01e41a6bdd850d0794e8681193e497",
+    "content-hash": "2f1b6b4b2820183dfd12d08d8b268dd0",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -1409,6 +1409,79 @@
                 }
             ],
             "time": "2022-08-12T03:21:38+00:00"
+        },
+        {
+            "name": "overtrue/pinyin",
+            "version": "4.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/overtrue/pinyin.git",
+                "reference": "4d0fb4f27f0c79e81c9489e0c0ae4a4f8837eae7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/overtrue/pinyin/zipball/4d0fb4f27f0c79e81c9489e0c0ae4a4f8837eae7",
+                "reference": "4d0fb4f27f0c79e81c9489e0c0ae4a4f8837eae7",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1"
+            },
+            "require-dev": {
+                "brainmaestro/composer-git-hooks": "^2.7",
+                "friendsofphp/php-cs-fixer": "^2.16",
+                "phpunit/phpunit": "~8.0"
+            },
+            "type": "library",
+            "extra": {
+                "hooks": {
+                    "pre-push": [
+                        "composer test",
+                        "composer check-style"
+                    ],
+                    "pre-commit": [
+                        "composer test",
+                        "composer fix-style"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/const.php"
+                ],
+                "psr-4": {
+                    "Overtrue\\Pinyin\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "overtrue",
+                    "email": "anzhengchao@gmail.com",
+                    "homepage": "http://github.com/overtrue"
+                }
+            ],
+            "description": "Chinese to pinyin translator.",
+            "homepage": "https://github.com/overtrue/pinyin",
+            "keywords": [
+                "Chinese",
+                "Pinyin",
+                "cn2pinyin"
+            ],
+            "support": {
+                "issues": "https://github.com/overtrue/pinyin/issues",
+                "source": "https://github.com/overtrue/pinyin/tree/4.1.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/overtrue",
+                    "type": "github"
+                }
+            ],
+            "time": "2023-04-27T10:17:12+00:00"
         },
         {
             "name": "phpoffice/phpspreadsheet",
@@ -4728,12 +4801,12 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
         "php": ">=7.1.0"
     },
-    "platform-dev": [],
-    "plugin-api-version": "2.6.0"
+    "platform-dev": {},
+    "plugin-api-version": "2.9.0"
 }

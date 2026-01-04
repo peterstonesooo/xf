@@ -23,13 +23,14 @@ class ComposerStaticInitc9ba59474ec0898129571df8b63360c1
         'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '7cfce27594bbc1dd0dbf7e3eb5cd4911' => __DIR__ . '/..' . '/bitwasp/bitcoin/src/Script/functions.php',
         '37a3dc5111fe8f707ab4c132ef1dbc62' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/functions_include.php',
+        'dc1275c308c5b416beb314b6317daca2' => __DIR__ . '/..' . '/overtrue/pinyin/src/const.php',
         'ec07570ca5a812141189b1fa81503674' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/Assert/Functions.php',
         '667aeda72477189d0494fecd327c3641' => __DIR__ . '/..' . '/symfony/var-dumper/Resources/functions/dump.php',
         '1cfd2761b63b0a29ed23657ea394cb2d' => __DIR__ . '/..' . '/topthink/think-captcha/src/helper.php',
     );
 
     public static $prefixLengthsPsr4 = array (
-        't' => 
+        't' =>
         array (
             'think\\view\\driver\\' => 18,
             'think\\trace\\' => 12,
@@ -37,43 +38,43 @@ class ComposerStaticInitc9ba59474ec0898129571df8b63360c1
             'think\\app\\' => 10,
             'think\\' => 6,
         ),
-        'p' => 
+        'p' =>
         array (
             'phpseclib\\' => 10,
         ),
-        'l' => 
+        'l' =>
         array (
             'liliuwei\\think\\' => 15,
             'lastguest\\' => 10,
         ),
-        'k' => 
+        'k' =>
         array (
             'kornrunner\\' => 11,
         ),
-        'a' => 
+        'a' =>
         array (
             'app\\' => 4,
         ),
-        'Z' => 
+        'Z' =>
         array (
             'ZipStream\\' => 10,
         ),
-        'W' => 
+        'W' =>
         array (
             'Web3p\\EthereumUtil\\' => 19,
         ),
-        'S' => 
+        'S' =>
         array (
             'Symfony\\Polyfill\\Php80\\' => 23,
             'Symfony\\Polyfill\\Php72\\' => 23,
             'Symfony\\Polyfill\\Mbstring\\' => 26,
             'Symfony\\Component\\VarDumper\\' => 28,
         ),
-        'Q' => 
+        'Q' =>
         array (
             'Qiniu\\' => 6,
         ),
-        'P' => 
+        'P' =>
         array (
             'Psr\\SimpleCache\\' => 16,
             'Psr\\Log\\' => 8,
@@ -85,49 +86,50 @@ class ComposerStaticInitc9ba59474ec0898129571df8b63360c1
             'PhpParser\\' => 10,
             'PhpOffice\\PhpSpreadsheet\\' => 25,
         ),
-        'O' => 
+        'O' =>
         array (
+            'Overtrue\\Pinyin\\' => 16,
             'Overtrue\\Flysystem\\Qiniu\\' => 25,
         ),
-        'M' => 
+        'M' =>
         array (
             'MyCLabs\\Enum\\' => 13,
             'Mdanter\\Ecc\\' => 12,
             'Matrix\\' => 7,
         ),
-        'L' => 
+        'L' =>
         array (
             'League\\MimeTypeDetection\\' => 25,
             'League\\Flysystem\\Cached\\' => 24,
             'League\\Flysystem\\' => 17,
         ),
-        'G' => 
+        'G' =>
         array (
             'GuzzleHttp\\Psr7\\' => 16,
             'GuzzleHttp\\Promise\\' => 19,
             'GuzzleHttp\\' => 11,
         ),
-        'F' => 
+        'F' =>
         array (
             'FG\\' => 3,
         ),
-        'E' => 
+        'E' =>
         array (
             'Endroid\\QrCode\\' => 15,
             'Elliptic\\' => 9,
         ),
-        'D' => 
+        'D' =>
         array (
             'Doctrine\\Instantiator\\' => 22,
             'DeepCopy\\' => 9,
             'DASPRiD\\Enum\\' => 13,
         ),
-        'C' => 
+        'C' =>
         array (
             'Composer\\Semver\\' => 16,
             'Complex\\' => 8,
         ),
-        'B' => 
+        'B' =>
         array (
             'BitWasp\\Buffertools\\' => 20,
             'BitWasp\\Bitcoin\\' => 16,
@@ -139,224 +141,228 @@ class ComposerStaticInitc9ba59474ec0898129571df8b63360c1
     );
 
     public static $prefixDirsPsr4 = array (
-        'think\\view\\driver\\' => 
+        'think\\view\\driver\\' =>
         array (
             0 => __DIR__ . '/..' . '/topthink/think-view/src',
         ),
-        'think\\trace\\' => 
+        'think\\trace\\' =>
         array (
             0 => __DIR__ . '/..' . '/topthink/think-trace/src',
         ),
-        'think\\captcha\\' => 
+        'think\\captcha\\' =>
         array (
             0 => __DIR__ . '/..' . '/topthink/think-captcha/src',
         ),
-        'think\\app\\' => 
+        'think\\app\\' =>
         array (
             0 => __DIR__ . '/..' . '/topthink/think-multi-app/src',
         ),
-        'think\\' => 
+        'think\\' =>
         array (
-            0 => __DIR__ . '/..' . '/topthink/framework/src/think',
-            1 => __DIR__ . '/..' . '/topthink/think-filesystem/src',
-            2 => __DIR__ . '/..' . '/topthink/think-helper/src',
+            0 => __DIR__ . '/..' . '/topthink/think-filesystem/src',
+            1 => __DIR__ . '/..' . '/topthink/think-template/src',
+            2 => __DIR__ . '/..' . '/topthink/framework/src/think',
             3 => __DIR__ . '/..' . '/topthink/think-orm/src',
-            4 => __DIR__ . '/..' . '/topthink/think-template/src',
+            4 => __DIR__ . '/..' . '/topthink/think-helper/src',
         ),
-        'phpseclib\\' => 
+        'phpseclib\\' =>
         array (
             0 => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib',
         ),
-        'liliuwei\\think\\' => 
+        'liliuwei\\think\\' =>
         array (
             0 => __DIR__ . '/..' . '/liliuwei/thinkphp-jump/src',
         ),
-        'lastguest\\' => 
+        'lastguest\\' =>
         array (
             0 => __DIR__ . '/..' . '/lastguest/murmurhash/src/lastguest',
         ),
-        'kornrunner\\' => 
+        'kornrunner\\' =>
         array (
             0 => __DIR__ . '/..' . '/kornrunner/keccak/src',
         ),
-        'app\\' => 
+        'app\\' =>
         array (
             0 => __DIR__ . '/../..' . '/app',
         ),
-        'ZipStream\\' => 
+        'ZipStream\\' =>
         array (
             0 => __DIR__ . '/..' . '/maennchen/zipstream-php/src',
         ),
-        'Web3p\\EthereumUtil\\' => 
+        'Web3p\\EthereumUtil\\' =>
         array (
             0 => __DIR__ . '/..' . '/web3p/ethereum-util/src',
         ),
-        'Symfony\\Polyfill\\Php80\\' => 
+        'Symfony\\Polyfill\\Php80\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php80',
         ),
-        'Symfony\\Polyfill\\Php72\\' => 
+        'Symfony\\Polyfill\\Php72\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php72',
         ),
-        'Symfony\\Polyfill\\Mbstring\\' => 
+        'Symfony\\Polyfill\\Mbstring\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-mbstring',
         ),
-        'Symfony\\Component\\VarDumper\\' => 
+        'Symfony\\Component\\VarDumper\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/var-dumper',
         ),
-        'Qiniu\\' => 
+        'Qiniu\\' =>
         array (
             0 => __DIR__ . '/..' . '/qiniu/php-sdk/src/Qiniu',
         ),
-        'Psr\\SimpleCache\\' => 
+        'Psr\\SimpleCache\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/simple-cache/src',
         ),
-        'Psr\\Log\\' => 
+        'Psr\\Log\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/log/Psr/Log',
         ),
-        'Psr\\Http\\Message\\' => 
+        'Psr\\Http\\Message\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/http-factory/src',
             1 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
-        'Psr\\Http\\Client\\' => 
+        'Psr\\Http\\Client\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/http-client/src',
         ),
-        'Psr\\Container\\' => 
+        'Psr\\Container\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/container/src',
         ),
-        'Psr\\Cache\\' => 
+        'Psr\\Cache\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/cache/src',
         ),
-        'Predis\\' => 
+        'Predis\\' =>
         array (
             0 => __DIR__ . '/..' . '/predis/predis/src',
         ),
-        'PhpParser\\' => 
+        'PhpParser\\' =>
         array (
             0 => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser',
         ),
-        'PhpOffice\\PhpSpreadsheet\\' => 
+        'PhpOffice\\PhpSpreadsheet\\' =>
         array (
             0 => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet',
         ),
-        'Overtrue\\Flysystem\\Qiniu\\' => 
+        'Overtrue\\Pinyin\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/overtrue/pinyin/src',
+        ),
+        'Overtrue\\Flysystem\\Qiniu\\' =>
         array (
             0 => __DIR__ . '/..' . '/overtrue/flysystem-qiniu/src',
         ),
-        'MyCLabs\\Enum\\' => 
+        'MyCLabs\\Enum\\' =>
         array (
             0 => __DIR__ . '/..' . '/myclabs/php-enum/src',
         ),
-        'Mdanter\\Ecc\\' => 
+        'Mdanter\\Ecc\\' =>
         array (
             0 => __DIR__ . '/..' . '/mdanter/ecc/src',
         ),
-        'Matrix\\' => 
+        'Matrix\\' =>
         array (
             0 => __DIR__ . '/..' . '/markbaker/matrix/classes/src',
         ),
-        'League\\MimeTypeDetection\\' => 
+        'League\\MimeTypeDetection\\' =>
         array (
             0 => __DIR__ . '/..' . '/league/mime-type-detection/src',
         ),
-        'League\\Flysystem\\Cached\\' => 
+        'League\\Flysystem\\Cached\\' =>
         array (
             0 => __DIR__ . '/..' . '/league/flysystem-cached-adapter/src',
         ),
-        'League\\Flysystem\\' => 
+        'League\\Flysystem\\' =>
         array (
             0 => __DIR__ . '/..' . '/league/flysystem/src',
         ),
-        'GuzzleHttp\\Psr7\\' => 
+        'GuzzleHttp\\Psr7\\' =>
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/psr7/src',
         ),
-        'GuzzleHttp\\Promise\\' => 
+        'GuzzleHttp\\Promise\\' =>
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/promises/src',
         ),
-        'GuzzleHttp\\' => 
+        'GuzzleHttp\\' =>
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/guzzle/src',
         ),
-        'FG\\' => 
+        'FG\\' =>
         array (
             0 => __DIR__ . '/..' . '/fgrosse/phpasn1/lib',
         ),
-        'Endroid\\QrCode\\' => 
+        'Endroid\\QrCode\\' =>
         array (
             0 => __DIR__ . '/..' . '/endroid/qr-code/src',
         ),
-        'Elliptic\\' => 
+        'Elliptic\\' =>
         array (
             0 => __DIR__ . '/..' . '/simplito/elliptic-php/lib',
         ),
-        'Doctrine\\Instantiator\\' => 
+        'Doctrine\\Instantiator\\' =>
         array (
             0 => __DIR__ . '/..' . '/doctrine/instantiator/src/Doctrine/Instantiator',
         ),
-        'DeepCopy\\' => 
+        'DeepCopy\\' =>
         array (
             0 => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy',
         ),
-        'DASPRiD\\Enum\\' => 
+        'DASPRiD\\Enum\\' =>
         array (
             0 => __DIR__ . '/..' . '/dasprid/enum/src',
         ),
-        'Composer\\Semver\\' => 
+        'Composer\\Semver\\' =>
         array (
             0 => __DIR__ . '/..' . '/composer/semver/src',
         ),
-        'Complex\\' => 
+        'Complex\\' =>
         array (
             0 => __DIR__ . '/..' . '/markbaker/complex/classes/src',
         ),
-        'BitWasp\\Buffertools\\' => 
+        'BitWasp\\Buffertools\\' =>
         array (
             0 => __DIR__ . '/..' . '/bitwasp/buffertools/src/Buffertools',
         ),
-        'BitWasp\\Bitcoin\\' => 
+        'BitWasp\\Bitcoin\\' =>
         array (
             0 => __DIR__ . '/..' . '/bitwasp/bitcoin/src',
         ),
-        'BitWasp\\Bech32\\' => 
+        'BitWasp\\Bech32\\' =>
         array (
             0 => __DIR__ . '/..' . '/bitwasp/bech32/src',
         ),
-        'BaconQrCode\\' => 
+        'BaconQrCode\\' =>
         array (
             0 => __DIR__ . '/..' . '/bacon/bacon-qr-code/src',
         ),
-        'BN\\' => 
+        'BN\\' =>
         array (
             0 => __DIR__ . '/..' . '/simplito/bn-php/lib',
         ),
-        'BI\\' => 
+        'BI\\' =>
         array (
             0 => __DIR__ . '/..' . '/simplito/bigint-wrapper-php/lib',
         ),
     );
 
     public static $prefixesPsr0 = array (
-        'P' => 
+        'P' =>
         array (
-            'Pleo' => 
+            'Pleo' =>
             array (
                 0 => __DIR__ . '/..' . '/pleonasm/merkle-tree/src',
             ),
         ),
-        'H' => 
+        'H' =>
         array (
-            'HTMLPurifier' => 
+            'HTMLPurifier' =>
             array (
                 0 => __DIR__ . '/..' . '/ezyang/htmlpurifier/library',
             ),

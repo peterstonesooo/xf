@@ -274,6 +274,7 @@ class PeopleLivelihoodController extends AuthController
     {
         return OrderTransfer::where('user_id', $userId)
                            ->where('type', 1)  // type=1 表示转入
+                           ->where('period','>', 0)
                            ->count();
     }
 

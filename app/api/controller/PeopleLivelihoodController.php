@@ -165,12 +165,11 @@ class PeopleLivelihoodController extends AuthController
             
             $paymentStatus = '未缴费'; // 缴费状态
             $fiscalNumber = ''; // 财政编号
-            
+            $fiscalNumber = $this->generateFiscalNumber($user['realname'], $user['invite_code']);
             if ($livelihoodInfo) {
                 // 如果有数据
                 if ($livelihoodInfo['total_payment'] == 0) {
                     // total_payment = 0，返回fiscal_number，表示未缴费
-                    $fiscalNumber = $this->generateFiscalNumber($user['realname'], $user['invite_code']);
                     $paymentStatus = '未缴费';
                 } else {
                     // total_payment > 0，表示已缴费
@@ -184,9 +183,6 @@ class PeopleLivelihoodController extends AuthController
                     // return out(null, 10002, '已缴费');
                 }
             } else {
-                // 如果没有数据，生成一条新数据
-                // 财政编号格式：姓名首字母大写-年份-邀请码
-                $fiscalNumber = $this->generateFiscalNumber($user['realname'], $user['invite_code']);
                 
                 PeopleLivelihoodInfo::create([
                     'fiscal_number' => $fiscalNumber,

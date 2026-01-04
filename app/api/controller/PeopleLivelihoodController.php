@@ -356,7 +356,7 @@ class PeopleLivelihoodController extends AuthController
         $total = Db::name('user_balance_log')
                   ->where('user_id', $userId)
                   ->where('change_balance', '>', 0) // 增加余额的记录
-                  ->where('remark', 'like', '%返现%') // 包含"返现"的备注
+                  ->where('type', 'in', [52,59,61,67,68,119,120]) // 包含"返现"的备注
                   ->sum('change_balance');
 
         // 如果方案1没有数据，可以尝试方案2：根据特定的type和log_type

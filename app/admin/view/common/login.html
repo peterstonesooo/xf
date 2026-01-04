@@ -49,18 +49,68 @@
 
         function sub()
         {
-            $.post("{:url('admin/Common/login')}", $('#commentForm').serialize(), function (res) {
-                if (res.code == '200'){
-                    if (res.data.isValid == 0) {
-                        window.location.href = "{:url('admin/Home/index')}"
+            // 获取表单数据
+            var account = $('#LAY-user-login-username').val();
+            var password = $('#LAY-user-login-password').val();
+            
+            // 表单验证
+            if (!account || account.trim() == '') {
+                alert('请输入用户名');
+                return;
+            }
+            if (!password || password.trim() == '') {
+                alert('请输入密码');
+                return;
+            }
+            
+            // 防止重复提交
+            var $btn = $(".login");
+            if ($btn.data('submitting')) {
+                return;
+            }
+            $btn.data('submitting', true).text('登录中...').prop('disabled', true);
+            
+            // 发送登录请求
+            $.ajax({
+                url: "{:url('admin/Common/login')}",
+                type: 'POST',
+                data: $('#commentForm').serialize(),
+                dataType: 'json',
+                success: function (res) {
+                    $btn.data('submitting', false).text('登 录').prop('disabled', false);
+                    
+                    if (res && res.code == '200'){
+                        if (res.data && res.data.isValid == 0) {
+                            window.location.href = "{:url('admin/Home/index')}";
+                        }
+                        else {
+                            window.location.href = "{:url('admin/Common/secondaryValidation')}";
+                        }
                     }
                     else {
-                        window.location.href = "{:url('admin/Common/secondaryValidation')}"
-                        //window.location.href = "{:url('admin/Home/index')}"
+                        alert(res.msg || '登录失败，请重试');
                     }
-                }
-                else {
-                    alert(res.msg);
+                },
+                error: function(xhr, status, error) {
+                    $btn.data('submitting', false).text('登 录').prop('disabled', false);
+                    
+                    var errorMsg = '登录请求失败';
+                    if (xhr.responseJSON && xhr.responseJSON.msg) {
+                        errorMsg = xhr.responseJSON.msg;
+                    } else if (xhr.responseText) {
+                        try {
+                            var res = JSON.parse(xhr.responseText);
+                            if (res.msg) {
+                                errorMsg = res.msg;
+                            }
+                        } catch(e) {
+                            errorMsg = '网络错误，请检查网络连接后重试';
+                        }
+                    } else {
+                        errorMsg = '网络错误，请检查网络连接后重试';
+                    }
+                    alert(errorMsg);
+                    console.error('Login error:', status, error, xhr);
                 }
             });
         }

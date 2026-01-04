@@ -170,7 +170,7 @@ class PeopleLivelihoodController extends AuthController
                 // 如果有数据
                 if ($livelihoodInfo['total_payment'] == 0) {
                     // total_payment = 0，返回fiscal_number，表示未缴费
-                    $fiscalNumber = $livelihoodInfo['fiscal_number'];
+                    $fiscalNumber = $this->generateFiscalNumber($user['realname'], $user['invite_code']);
                     $paymentStatus = '未缴费';
                 } else {
                     // total_payment > 0，表示已缴费

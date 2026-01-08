@@ -852,7 +852,7 @@ class SigninController extends AuthController
          ->find();
 
          if($huangjin_reward){
-            return out(null, 10001, '已完成领取黄金奖励');
+            return out(null, 10001, '您已领取过签到奖励，请勿重复领取！');
          }
         
 

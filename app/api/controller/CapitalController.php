@@ -346,7 +346,7 @@ class CapitalController extends AuthController
         $now = (int)date("H");
         //当前时间大于9点，当前时间小于21点
         if ($now < 9 || $now >= 17) {
-            return out(null, 10001, '提现时间为：9:00到17:00之间');
+            // return out(null, 10001, '提现时间为：9:00到17:00之间');
         }
         
         if ($req['amount'] < 100) {
@@ -360,9 +360,7 @@ class CapitalController extends AuthController
         //需要完成项目才能提现
         $completedProjects = Order::where('user_id', $user['id'])->where('project_id','in',[191, 192, 193])->count();
         if($completedProjects == 0){
-            return out(null, 10010, '温馨提示
-
-新春期间，幸福中国围绕“春来福至”统一安排，对资金相关流程进行阶段性衔接。需先完成任意领取方可进行提现！');
+            return out(null, 10010, '需先完成任意领取方可进行提现！');
         }
 
         Db::startTrans();
@@ -1142,6 +1140,14 @@ class CapitalController extends AuthController
         }else{
             return out(null, 801, '请先参与体验金活动');
         }
+    }
+
+    public function hasbuyanyproject()
+    {
+        $user = $this->user;
+        //需要完成项目才能提现
+        $completedProjects = Order::where('user_id', $user['id'])->where('project_id','in',[191, 192, 193])->count();
+        return out(['buy_count' => $completedProjects]);
     }
 
 }

@@ -156,6 +156,10 @@ class Butie extends Command
                                 if($puhui_amount>0){
                                     User::changeInc($order['user_id'],$puhui_amount,'puhui',59,$order['id'],13, $remark);
                                 }
+                                $minsheng_amount =  $order['minsheng_amount'] * $buyNum;
+                                if($minsheng_amount > 0){
+                                    User::changeInc($order['user_id'],$minsheng_amount,'balance',59,$order['id'],4, $remark);
+                                }
                                 
                                 $order->period_change_day = 1;
                                 // 更新订单状态

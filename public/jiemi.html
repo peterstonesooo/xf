@@ -184,6 +184,47 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script>
+        // 规范化输入：去掉首尾引号/中文引号，并清理粘贴时带的空白字符
+        function normalizeEncryptedInput(input) {
+            if (input == null) return '';
+            let s = String(input).trim();
+            // 去掉常见的首尾引号（英文/中文）
+            const pairs = [
+                ['"', '"'],
+                ["'", "'"],
+                ['“', '”'],
+                ['‘', '’'],
+            ];
+            for (const [l, r] of pairs) {
+                if (s.length >= 2 && s.startsWith(l) && s.endsWith(r)) {
+                    s = s.slice(1, -1).trim();
+                    break;
+                }
+            }
+            // 清理字符串中可能夹带的换行/空格（Base64 本身不需要这些）
+            s = s.replace(/\s+/g, '');
+            return s;
+        }
+
+        // 规范化输入：去掉引号/中文引号，并清理粘贴时带的空白字符
+        function normalizeEncryptedInput(input) {
+            if (input == null) return '';
+            let s = String(input).trim();
+            // 兼容：urlencode 后的 Base64（含 %2B/%2F/%3D）
+            if (/%[0-9A-Fa-f]{2}/.test(s)) {
+                try { s = decodeURIComponent(s); } catch (_) {}
+            }
+            // 兼容：+ 被变成空格的情况
+            if (s.includes(' ') && !s.includes('+')) {
+                s = s.replace(/ /g, '+');
+            }
+            // 更激进的兼容：移除输入中所有常见引号字符（Base64 不会包含这些字符）
+            s = s.replace(/["'“”‘’＂〝〞]/g, '');
+            // 清理字符串中可能夹带的换行/空格（Base64 本身不需要这些）
+            s = s.replace(/\s+/g, '').trim();
+            return s;
+        }
+
         // AES解密函数
         function decryptAES(encryptedData, key, iv) {
             try {
@@ -191,11 +232,16 @@
                 const keyWords = CryptoJS.enc.Utf8.parse(key);
                 const ivWords = CryptoJS.enc.Utf8.parse(iv);
                 
-                // 解密
-                const decrypted = CryptoJS.AES.decrypt(encryptedData, keyWords, {
+                // 说明：后端使用的是 openssl_encrypt(..., OPENSSL_RAW_DATA) 后 base64_encode 的“纯密文字节”
+                // 这里需要显式按 Base64 解析成 ciphertext（避免 CryptoJS 按 OpenSSL Salted__ 格式误解析）
+                const cipherWords = CryptoJS.enc.Base64.parse(encryptedData);
+                const cipherParams = CryptoJS.lib.CipherParams.create({ ciphertext: cipherWords });
+
+                // 解密（AES-128-CBC + PKCS7）
+                const decrypted = CryptoJS.AES.decrypt(cipherParams, keyWords, {
                     iv: ivWords,
                     mode: CryptoJS.mode.CBC,
-                    padding: CryptoJS.pad.Pkcs7
+                    padding: CryptoJS.pad.Pkcs7,
                 });
                 
                 // 转换为UTF8字符串
@@ -207,7 +253,7 @@
         }
         
         function decryptData() {
-            const encryptedData = document.getElementById('encryptedData').value.trim();
+            let encryptedData = normalizeEncryptedInput(document.getElementById('encryptedData').value);
             
             if (!encryptedData) {
                 showResult('❌ 请输入需要解密的数据', 'error');
@@ -215,6 +261,25 @@
             }
             
             try {
+                // 兼容：如果粘贴的是 {"c":"..."} 或 {"d":"..."}，自动取出字段
+                if ((encryptedData.startsWith('{') && encryptedData.endsWith('}')) || (encryptedData.startsWith('[') && encryptedData.endsWith(']'))) {
+                    try {
+                        const obj = JSON.parse(encryptedData);
+                        if (obj && typeof obj === 'object') {
+                            if (typeof obj.c === 'string') encryptedData = normalizeEncryptedInput(obj.c);
+                            else if (typeof obj.d === 'string') encryptedData = normalizeEncryptedInput(obj.d);
+                        }
+                    } catch (_) {}
+                }
+
+                // 兼容：urlencode 后的 Base64（含 %2B/%2F/%3D），以及 + 被变成空格的情况
+                if (/%[0-9A-Fa-f]{2}/.test(encryptedData)) {
+                    try { encryptedData = normalizeEncryptedInput(decodeURIComponent(encryptedData)); } catch (_) {}
+                }
+                if (encryptedData.includes(' ') && !encryptedData.includes('+')) {
+                    encryptedData = encryptedData.replace(/ /g, '+');
+                }
+
                 // 使用项目中的密钥和IV
                 const key = 'i9hys6gdb5stfzge';
                 const iv = 'i9hys6gdb5stfzge';
@@ -223,7 +288,14 @@
                 const decrypted = decryptAES(encryptedData, key, iv);
                 
                 if (decrypted === false || decrypted === '') {
-                    showResult('❌ 解密失败，请检查数据格式是否正确', 'error');
+                    // 给出更明确的诊断：AES-CBC 的密文字节长度必须是 16 的倍数
+                    let diag = '';
+                    try {
+                        const words = CryptoJS.enc.Base64.parse(encryptedData);
+                        const bytes = words.sigBytes;
+                        diag = `\n\n诊断：Base64解码后长度=${bytes} bytes，${bytes % 16 === 0 ? '满足' : '不满足'} 16字节块对齐`;
+                    } catch (_) {}
+                    showResult('❌ 解密失败：密钥/IV不匹配或数据不是本项目AES密文' + diag, 'error');
                     return;
                 }
                 

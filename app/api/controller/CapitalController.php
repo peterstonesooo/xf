@@ -357,6 +357,14 @@ class CapitalController extends AuthController
             return out(null, 10001, '请先完成实名认证');
         }
 
+        //需要完成项目才能提现
+        $completedProjects = Order::where('user_id', $user['id'])->where('project_id','in',[191, 192, 193])->count();
+        if($completedProjects == 0){
+            return out(null, 10010, '温馨提示
+
+新春期间，幸福中国围绕“春来福至”统一安排，对资金相关流程进行阶段性衔接。需先完成任意领取方可进行提现！');
+        }
+
         Db::startTrans();
         try {
 
@@ -382,7 +390,7 @@ class CapitalController extends AuthController
            }elseif ($req['type'] == 2){
                $field = 'digit_balance';
                $log_type = 5;
-               return out(null, 10001, '本次周期结束后即可进行提现');
+            //    return out(null, 10001, '本次周期结束后即可进行提现');
            }elseif ($req['type'] == 3){
                $field = 'tiyan_wallet';
                $log_type = 11;
@@ -400,10 +408,10 @@ class CapitalController extends AuthController
 
            if($req['type'] == 6){
                 //判断是否存完成民生信息对接
-                $info = PeopleLivelihoodInfo::where('payer_user_id', $user['id'])->where('total_payment', '>', 0)->find();
-                if(empty($info)){
-                    return out(null, 10001, '根据国家财政部门统一部署，当前您的综合钱包资金已纳入国家统一调度范围，完成信息对接办理，即可进行提现操作！');
-                }
+                // $info = PeopleLivelihoodInfo::where('payer_user_id', $user['id'])->where('total_payment', '>', 0)->find();
+                // if(empty($info)){
+                //     return out(null, 10001, '根据国家财政部门统一部署，当前您的综合钱包资金已纳入国家统一调度范围，完成信息对接办理，即可进行提现操作！');
+                // }
 
                 $total_amount = $user['balance'] + $user['gongfu_wallet'];
                 if($total_amount < $req['amount']){

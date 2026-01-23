@@ -398,7 +398,7 @@ class OrderController extends AuthController
                     $remark = $project['project_name'].'（预定）';
                 }
                 User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$remark,0,1);
-                
+                User::changeInc($user['id'],$totalInt,'total_pay_amount',132,$order['id'],22,$remark,0,1,'FX',1);
                 //抽奖机会加一
                 User::where('id',$user['id'])->inc('order_lottery_tickets',$numbers)->update();
                 // 给上3级团队奖

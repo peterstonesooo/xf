@@ -401,6 +401,9 @@ class CapitalController extends AuthController
            }elseif ($req['type'] == 6){
                $field = 'zonghe_wallet';
                $log_type = 21;
+           }elseif ($req['type'] == 7){
+               $field = 'total_pay_amount';
+               $log_type = 22;
            }
 
 
@@ -963,6 +966,9 @@ class CapitalController extends AuthController
                     break;
                 case 21:
                     $v['log_type_text'] = '综合钱包';
+                    break;
+                case 22:
+                    $v['log_type_text'] = '余额钱包';
                     break;
             }
             $v['withdrawStatusText'] = $v->withdrawStatusText;

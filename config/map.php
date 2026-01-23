@@ -305,6 +305,7 @@ return array(
             129 => '定投未完成10次返还',
             130 => '赠送VIP',
             131 => '民生信息对接中心缴费',
+            132 => '费用缴存',//total_pay_amount
         ),
         'balance_type_map' =>
         array(
@@ -405,6 +406,7 @@ return array(
             129 => '定投未完成10次返还',
             130 => '赠送VIP',
             131 => '民生信息对接中心缴费',
+            132 => '费用缴存',//total_pay_amount
         ),
         'integral_type_map' =>
         array(
@@ -436,6 +438,7 @@ return array(
             19 => '幸运礼物',//lucky_tickets
             20 => 'VIP',//vip_status
             21 => '综合钱包',//zonghe_wallet
+            22 => '提现余额',//total_pay_amount
         ),
         'status_map' =>
         array(

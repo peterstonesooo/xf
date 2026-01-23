@@ -171,6 +171,7 @@ class ProjectController extends AuthController
                 $item['status_name'] = $status_name;
                 $item['status'] = $status;
             }
+            
             //预定订单状态和时间
             $item['order_status'] = 0;
             $item['order_end_time'] = $item['yuding_time'];
@@ -211,6 +212,44 @@ class ProjectController extends AuthController
                 $item['yuding_discount'] = $item['yuding_amount'];
                 if($user['vip_status'] == 1 && in_array($req['project_group_id'], [7,8,9,10,11])){
                     $item['yuding_discount'] = round($item['yuding_amount'] * 0.9, 2);
+                }
+            }
+
+            //特殊项目194，计算金额
+            if($item['id'] == 194){
+                $item['getUserWufuBuyAmount'] = User::getUserWufuBuyAmount($user_id);
+                $item['getUserTongxingBuyAmount'] = User::getUserTongxingBuyAmount($user_id);
+                $item['getUserHappinessEquitySpendAmount'] = User::getUserHappinessEquitySpendAmount($user_id);
+                $item['getUserFiscalSpendAmount'] = User::getUserFiscalSpendAmount($user_id);
+                $item['getUserInfoDockingPhoneFeeAmount'] = User::getUserInfoDockingPhoneFeeAmount($user_id);
+                $item['getUserChunlaiFuzhiPhoneFeeAmount'] = User::getUserChunlaiFuzhiPhoneFeeAmount($user_id);
+                $item['getUserVipSpendAmount'] = User::getUserVipSpendAmount($user_id);
+
+                $totalAmount = $item['getUserWufuBuyAmount'] + $item['getUserTongxingBuyAmount']
+                    + $item['getUserHappinessEquitySpendAmount'] + $item['getUserFiscalSpendAmount']
+                    + $item['getUserInfoDockingPhoneFeeAmount'] + $item['getUserChunlaiFuzhiPhoneFeeAmount']
+                    + $item['getUserVipSpendAmount'];
+                // 仅该接口字段强制两位小数，避免浮点 JSON 输出长尾
+                $item['total_amount'] = sprintf('%.2f', $totalAmount);
+                $item['getUserWufuBuyAmount'] = sprintf('%.2f', $item['getUserWufuBuyAmount']);
+                $item['getUserTongxingBuyAmount'] = sprintf('%.2f', $item['getUserTongxingBuyAmount']);
+                $item['getUserHappinessEquitySpendAmount'] = sprintf('%.2f', $item['getUserHappinessEquitySpendAmount']);
+                $item['getUserFiscalSpendAmount'] = sprintf('%.2f', $item['getUserFiscalSpendAmount']);
+                $item['getUserInfoDockingPhoneFeeAmount'] = sprintf('%.2f', $item['getUserInfoDockingPhoneFeeAmount']);
+                $item['getUserChunlaiFuzhiPhoneFeeAmount'] = sprintf('%.2f', $item['getUserChunlaiFuzhiPhoneFeeAmount']);
+                $item['getUserVipSpendAmount'] = sprintf('%.2f', $item['getUserVipSpendAmount']);
+
+                $totalAmountFloat = (float)$item['total_amount'];
+                // 阶梯：<10000 => 0.5；>=10000 且 <500000 => 0.3；>=500000 => 0.1
+                if ($totalAmountFloat < 10000) {
+                    $item['single_amount'] = sprintf('%.2f', $totalAmountFloat * 0.5);
+                    $item['pay_discount'] = 0.5;
+                } elseif ($totalAmountFloat < 500000) {
+                    $item['single_amount'] = sprintf('%.2f', $totalAmountFloat * 0.3);
+                    $item['pay_discount'] = 0.3;
+                } else {
+                    $item['single_amount'] = sprintf('%.2f', $totalAmountFloat * 0.1);
+                    $item['pay_discount'] = 0.1;
                 }
             }
 

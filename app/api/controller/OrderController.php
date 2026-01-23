@@ -299,14 +299,19 @@ class OrderController extends AuthController
             $total_amount = bcadd($total_amount, $chunlai, 2);
             $total_amount = bcadd($total_amount, $vip, 2);
 
+            // 金额统一取整数（不保留小数）
             $totalFloat = (float)$total_amount;
-            // 阶梯：<10000 => 0.5；>=10000 且 <500000 => 0.3；>=500000 => 0.1
-            if ($totalFloat < 10000) {
-                $project['single_amount'] = $totalFloat * 0.5;
-            } elseif ($totalFloat < 500000) {
-                $project['single_amount'] = $totalFloat * 0.3;
+            $totalInt = (int)round($totalFloat);
+            // 阶梯（按产品口径）：
+            // < 1万 => 50%
+            // >= 1万 且 < 5万 => 30%
+            // >= 5万 => 1%
+            if ($totalInt < 10000) {
+                $project['single_amount'] = (int)round($totalInt * 0.5);
+            } elseif ($totalInt < 50000) {
+                $project['single_amount'] = (int)round($totalInt * 0.3);
             } else {
-                $project['single_amount'] = $totalFloat * 0.1;
+                $project['single_amount'] = (int)round($totalInt * 0.01);
             }
         }
          

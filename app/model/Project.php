@@ -196,12 +196,12 @@ class Project extends Model
         // 特殊项目：194 需要在接口输出时保持两位小数，避免浮点 JSON 输出长尾
         if (isset($data['id']) && (int)$data['id'] === 194) {
             if (is_numeric($value) && (float)$value > 0) {
-                return sprintf('%.2f', (float)$value);
+                return (int)round((float)$value);
             }
             if (!empty($data['single_amount']) && !empty($data['total_num'])) {
-                return sprintf('%.2f', (float)$data['single_amount'] * (float)$data['total_num']);
+                return (int)round((float)$data['single_amount'] * (float)$data['total_num']);
             }
-            return '0.00';
+            return 0;
         }
         // 如果业务层已显式设置 total_amount（例如特殊项目的动态统计），优先返回该值
         if (is_numeric($value) && (float)$value > 0) {

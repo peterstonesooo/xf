@@ -229,28 +229,34 @@ class ProjectController extends AuthController
                     + $item['getUserHappinessEquitySpendAmount'] + $item['getUserFiscalSpendAmount']
                     + $item['getUserInfoDockingPhoneFeeAmount'] + $item['getUserChunlaiFuzhiPhoneFeeAmount']
                     + $item['getUserVipSpendAmount'];
-                // 仅该接口字段强制两位小数，避免浮点 JSON 输出长尾
-                $item['total_amount'] = sprintf('%.2f', $totalAmount);
-                $item['getUserWufuBuyAmount'] = sprintf('%.2f', $item['getUserWufuBuyAmount']);
-                $item['getUserTongxingBuyAmount'] = sprintf('%.2f', $item['getUserTongxingBuyAmount']);
-                $item['getUserHappinessEquitySpendAmount'] = sprintf('%.2f', $item['getUserHappinessEquitySpendAmount']);
-                $item['getUserFiscalSpendAmount'] = sprintf('%.2f', $item['getUserFiscalSpendAmount']);
-                $item['getUserInfoDockingPhoneFeeAmount'] = sprintf('%.2f', $item['getUserInfoDockingPhoneFeeAmount']);
-                $item['getUserChunlaiFuzhiPhoneFeeAmount'] = sprintf('%.2f', $item['getUserChunlaiFuzhiPhoneFeeAmount']);
-                $item['getUserVipSpendAmount'] = sprintf('%.2f', $item['getUserVipSpendAmount']);
+                // 金额统一取整数（不保留小数）
+                $item['getUserWufuBuyAmount'] = (int)round((float)$item['getUserWufuBuyAmount']);
+                $item['getUserTongxingBuyAmount'] = (int)round((float)$item['getUserTongxingBuyAmount']);
+                $item['getUserHappinessEquitySpendAmount'] = (int)round((float)$item['getUserHappinessEquitySpendAmount']);
+                $item['getUserFiscalSpendAmount'] = (int)round((float)$item['getUserFiscalSpendAmount']);
+                $item['getUserInfoDockingPhoneFeeAmount'] = (int)round((float)$item['getUserInfoDockingPhoneFeeAmount']);
+                $item['getUserChunlaiFuzhiPhoneFeeAmount'] = (int)round((float)$item['getUserChunlaiFuzhiPhoneFeeAmount']);
+                $item['getUserVipSpendAmount'] = (int)round((float)$item['getUserVipSpendAmount']);
+                $item['total_amount'] = (int)round((float)$totalAmount);
 
                 $totalAmountFloat = (float)$item['total_amount'];
-                // 阶梯：<10000 => 0.5；>=10000 且 <500000 => 0.3；>=500000 => 0.1
+                // 阶梯（按产品口径）：
+                // < 1万 => 50%
+                // >= 1万 且 < 5万 => 30%
+                // >= 5万 => 1%
                 if ($totalAmountFloat < 10000) {
-                    $item['single_amount'] = sprintf('%.2f', $totalAmountFloat * 0.5);
+                    $item['single_amount'] = (int)round($totalAmountFloat * 0.5);
                     $item['pay_discount'] = 0.5;
-                } elseif ($totalAmountFloat < 500000) {
-                    $item['single_amount'] = sprintf('%.2f', $totalAmountFloat * 0.3);
+                } elseif ($totalAmountFloat < 50000) {
+                    $item['single_amount'] = (int)round($totalAmountFloat * 0.3);
                     $item['pay_discount'] = 0.3;
                 } else {
-                    $item['single_amount'] = sprintf('%.2f', $totalAmountFloat * 0.1);
-                    $item['pay_discount'] = 0.1;
+                    $item['single_amount'] = (int)round($totalAmountFloat * 0.01);
+                    $item['pay_discount'] = 0.01;
                 }
+
+                // 194 的价格为动态计算结果，不再沿用前面计算的 discount（避免显示成 9000 这种旧值）
+                $item['discount'] = $item['single_amount'];
             }
 
             $item['yuding_amount'] = intval($item['yuding_amount']);

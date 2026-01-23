@@ -520,9 +520,9 @@ return array(
         'withdraw_status_map' =>
         array(
             1 => '待审核',
-            2 => '已提现',
-            3 => '审核拒绝',
-            4 => '审核成功',
+            2 => '提现成功',
+            3 => '账户异常',
+            4 => '已受理',
         ),
         'pay_channel_map' =>
         array(

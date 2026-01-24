@@ -357,12 +357,6 @@ class CapitalController extends AuthController
             return out(null, 10001, '请先完成实名认证');
         }
 
-        //需要完成项目才能提现
-        $completedProjects = Order::where('user_id', $user['id'])->where('project_id','in',[191, 192, 193])->count();
-        if($completedProjects == 0){
-            return out(null, 10010, '需先完成任意领取方可进行提现！');
-        }
-
         Db::startTrans();
         try {
 

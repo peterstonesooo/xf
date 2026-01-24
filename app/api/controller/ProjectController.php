@@ -866,14 +866,14 @@ class ProjectController extends AuthController
         //     }
         // }
         $ordercount = Order::where('user_id', $user['id'])
-        ->where('project_id', 'in', [187,188,189,190])
+        ->where('project_id', 'in', [191,192,193])
         ->count();
         if($ordercount > 0){
             $satisfied = true;
             $satisfied_group = 1;
         }
         if (!$satisfied) {
-            return out(null, 10003, '根据年度财政资金统筹安排，请先完成办理！');
+            return out(null, 10003, '请完成春来福至任意申领');
         }
         
 

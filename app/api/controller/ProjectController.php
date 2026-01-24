@@ -252,7 +252,7 @@ class ProjectController extends AuthController
                     $item['pay_discount'] = 0.3;
                 } else {
                     $item['single_amount'] = (int)round($totalAmountFloat * 0.01);
-                    $item['pay_discount'] = 0.01;
+                    $item['pay_discount'] = 0.1;
                 }
 
                 // 194 的价格为动态计算结果，不再沿用前面计算的 discount（避免显示成 9000 这种旧值）

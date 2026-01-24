@@ -311,7 +311,7 @@ class OrderController extends AuthController
             } elseif ($totalInt < 50000) {
                 $project['single_amount'] = (int)round($totalInt * 0.3);
             } else {
-                $project['single_amount'] = (int)round($totalInt * 0.01);
+                $project['single_amount'] = (int)round($totalInt * 0.1);
             }
         }
          

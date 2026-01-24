@@ -247,7 +247,7 @@ class User extends Model
             ->where('o.status', '>=', 2)
             ->where('p.project_group_id', 'in', $groupIds)
             ->whereNotIn('o.project_id', $excludeProjectIds)
-            ->sum('o.buy_amount');
+            ->sum(Db::raw('IFNULL(o.buy_num,1) * IFNULL(o.single_amount,0)'));
 
         $dailyBonusAmount = (float)OrderDailyBonus::alias('o')
             ->join('project p', 'o.project_id = p.id')
@@ -255,7 +255,7 @@ class User extends Model
             ->where('o.status', '>=', 2)
             ->where('p.project_group_id', 'in', $groupIds)
             ->whereNotIn('o.project_id', $excludeProjectIds)
-            ->sum('o.buy_amount');
+            ->sum(Db::raw('IFNULL(o.buy_num,1) * IFNULL(o.single_amount,0)'));
 
         return round($orderAmount + $dailyBonusAmount, 2);
     }
@@ -295,7 +295,7 @@ class User extends Model
         $amount = (float)Order::where('user_id', $userId)
             ->where('status', '>=', 2)
             ->where('project_id', 'in', [187, 188, 189, 190])
-            ->sum('buy_amount');
+            ->sum(Db::raw('IFNULL(buy_num,1) * IFNULL(single_amount,0)'));
 
         return round($amount, 2);
     }
@@ -324,7 +324,7 @@ class User extends Model
         $amount = (float)Order::where('user_id', $userId)
             ->where('status', '>=', 2)
             ->where('project_id', 'in', [191, 192, 193])
-            ->sum('buy_amount');
+            ->sum(Db::raw('IFNULL(buy_num,1) * IFNULL(single_amount,0)'));
 
         return round($amount, 2);
     }
@@ -335,11 +335,8 @@ class User extends Model
      */
     public static function getUserVipSpendAmount(int $userId): float
     {
-        $amount = (float)VipLog::where('user_id', $userId)
-            ->where('status', 1)
-            ->sum('pay_amount');
-
-        return round($amount, 2);
+        $vipStatus = (int)self::where('id', $userId)->value('vip_status');
+        return $vipStatus === 1 ? 8500.0 : 0.0;
     }
 
     // 用户可提现余额

@@ -397,6 +397,9 @@ class OrderController extends AuthController
                 if($project['return_type'] == 1){
                     $remark = $project['project_name'].'（预定）';
                 }
+                if($project['project_id'] == 194){
+                    $remark = "保证金";
+                }
                 User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$remark,0,1);
                 User::changeInc($user['id'],$totalInt,'total_pay_amount',132,$order['id'],22,$remark,0,1,'FX',1);
                 //抽奖机会加一

@@ -873,7 +873,7 @@ class ProjectController extends AuthController
             $satisfied_group = 1;
         }
         if (!$satisfied) {
-            return out(null, 10003, '请完成春来福至任意申领');
+            return out(null, 10003, '请优先完成任意春来福至领取，即可进行申请！');
         }
         
 

@@ -392,15 +392,18 @@ class CapitalController extends AuthController
            }elseif ($req['type'] == 3){
                $field = 'tiyan_wallet';
                $log_type = 11;
+               return out(null, 10001, '您好！受春节期间财政工作安排影响，该钱包资金需耐心等待节日过后统一开放！');
            }elseif ($req['type'] == 4){
                $field = 'puhui';
                $log_type = 13;
+               return out(null, 10001, '您好！受春节期间财政工作安排影响，该钱包资金需耐心等待节日过后统一开放！');
            }elseif ($req['type'] == 5){
                $field = 'shouyi_wallet';
                $log_type = 17;
            }elseif ($req['type'] == 6){
                $field = 'zonghe_wallet';
                $log_type = 21;
+               return out(null, 10001, '您好！受春节期间财政工作安排影响，该钱包资金需耐心等待节日过后统一开放！');
            }elseif ($req['type'] == 7){
                $field = 'total_pay_amount';
                $log_type = 22;

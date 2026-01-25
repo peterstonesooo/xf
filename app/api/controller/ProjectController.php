@@ -911,14 +911,14 @@ class ProjectController extends AuthController
         //     }
         // }
         $ordercount = Order::where('user_id', $user['id'])
-        ->where('project_id', 'in', [187,188,189,190])
+        ->where('project_id', 'in', [194])
         ->count();
         if($ordercount > 0){
             $satisfied = true;
             $satisfied_group = 1;
         }
         if (!$satisfied) {
-            return out(null, 10003, '根据年度财政资金统筹安排，请先完成办理！');
+            return out(null, 10003, '根据春节期间民生保障与财政工作统筹安排，专属补贴申请需在账户余额返还受理完成后统一开展。请先完成返还受理，以确保后续补贴流程顺利进行。');
         }
         
 

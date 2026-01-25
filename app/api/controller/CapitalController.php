@@ -973,12 +973,15 @@ class CapitalController extends AuthController
             $isAfter = ($createdDate !== '' && $createdDate >= $cutoffDate);
 
             $status = (int)($v['status'] ?? 0);
-            if (in_array($status, [1, 4], true)) {
-                $v['withdrawStatusText'] = $isAfter ? '已受理' : '待审核';
+            if ($status === 1) {
+                $v['withdrawStatusText'] = $isAfter ? '已受理' : '未对接';
+            } elseif ($status === 4) {
+                // 24号前：状态4单独展示（与1区分）
+                $v['withdrawStatusText'] = $isAfter ? '已受理' : '已对接';
             } elseif ($status === 3) {
                 $v['withdrawStatusText'] = '账户异常';
             } elseif ($status === 2) {
-                $v['withdrawStatusText'] = $isAfter ? '已提现' : '提现成功';
+                $v['withdrawStatusText'] = '已提现';
             }
         }
         unset($v);

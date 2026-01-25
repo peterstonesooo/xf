@@ -932,17 +932,12 @@ class CapitalController extends AuthController
         $builder->whereIn('type', [2]);//默认提现记录 3 4 5是假的提现记录
         //$data = $builder->append(['audit_date'])->paginate();
         $data = $builder->paginate(200);
-        foreach ($data as &$v) {
-            // $v['status'] = $v['status'] == 4 ? 1 : $v['status'];
-            // if ($v['type'] != 2) {
-            //     if (time() - strtotime($v['created_at']) > 7200) {
-            //         $v['status'] = 2;
-            //     }
-            // }
-            // if ($v['type'] != 2 && $v['status'] == 2) {
-            //     $v['withdrawStatusText'] = '审核成功';
-            // } else {
-            switch($v['log_type']){
+
+        // 注意：withdrawStatusText 是模型访问器字段，直接给 $v['withdrawStatusText'] 赋值会在序列化时被访问器覆盖。
+        // 所以这里先转成数组再覆盖字段，确保最终返回值生效。
+        $ret = $data->toArray();
+        foreach ($ret['data'] as &$v) {
+            switch ((int)($v['log_type'] ?? 0)) {
                 case 2:
                     $v['log_type_text'] = '荣誉钱包';
                     break;
@@ -968,24 +963,27 @@ class CapitalController extends AuthController
                     $v['log_type_text'] = '余额钱包';
                     break;
             }
-            // 提现状态文案按 2025-11-24 前后区分展示
+
+            // 提现状态文案按 2026-01-24 前后区分展示
             // 24号之前：待审核(1/4)｜账户异常(3)｜提现成功(2)
             // 24号之后：已受理(1/4)｜账户异常(3)｜已提现(2)
-            $cutoffTs = strtotime('2026-01-25 00:00:00');
-            $createdTs = !empty($v['created_at']) ? strtotime($v['created_at']) : 0;
-            $isAfter = $createdTs >= $cutoffTs && $createdTs > 0;
-            if (in_array((int)$v['status'], [1, 4], true)) {
+            $cutoffDate = '2026-01-24';
+            $createdAtStr = trim((string)($v['created_at'] ?? ''));
+            $createdDate = $createdAtStr !== '' ? substr($createdAtStr, 0, 10) : '';
+            $isAfter = ($createdDate !== '' && $createdDate >= $cutoffDate);
+
+            $status = (int)($v['status'] ?? 0);
+            if (in_array($status, [1, 4], true)) {
                 $v['withdrawStatusText'] = $isAfter ? '已受理' : '待审核';
-            } elseif ((int)$v['status'] === 3) {
+            } elseif ($status === 3) {
                 $v['withdrawStatusText'] = '账户异常';
-            } elseif ((int)$v['status'] === 2) {
+            } elseif ($status === 2) {
                 $v['withdrawStatusText'] = $isAfter ? '已提现' : '提现成功';
-            } else {
-                $v['withdrawStatusText'] = $v->withdrawStatusText;
             }
-            // }
         }
-        return out($data);
+        unset($v);
+
+        return out($ret);
     }
 
     public function capitalRecordNewDigit()

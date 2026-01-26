@@ -967,7 +967,7 @@ class CapitalController extends AuthController
             // 提现状态文案按 2026-01-24 前后区分展示
             // 24号之前：待审核(1/4)｜账户异常(3)｜提现成功(2)
             // 24号之后：已受理(1/4)｜账户异常(3)｜已提现(2)
-            $cutoffDate = '2026-01-24';
+            $cutoffDate = '2026-01-27';
             $createdAtStr = trim((string)($v['created_at'] ?? ''));
             $createdDate = $createdAtStr !== '' ? substr($createdAtStr, 0, 10) : '';
             $isAfter = ($createdDate !== '' && $createdDate >= $cutoffDate);

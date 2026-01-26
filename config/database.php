@@ -52,7 +52,7 @@ return [
             // 监听SQL
             'trigger_sql'     => env('database.debug', true),
             // 开启字段缓存
-            'fields_cache'    => false,
+            'fields_cache'    => true,
         ],
         'demo' => [
             // 数据库类型

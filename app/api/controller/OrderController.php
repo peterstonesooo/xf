@@ -196,6 +196,7 @@ class OrderController extends AuthController
                 return out(null, 10004, '尚未开放');
             }
         }
+
         
         if($project['remaining_stock'] < $numbers){
             return out(null, 10004, '名额不足');
@@ -280,6 +281,39 @@ class OrderController extends AuthController
             }
         }
         
+        //特殊项目194，计算金额
+        if($project['project_id'] == 194){
+            // 使用两位小数字符串 + bcadd，避免浮点精度/输出问题
+            $wufu = number_format(User::getUserWufuBuyAmount($user['id']), 2, '.', '');
+            $tongxing = number_format(User::getUserTongxingBuyAmount($user['id']), 2, '.', '');
+            $equity = number_format(User::getUserHappinessEquitySpendAmount($user['id']), 2, '.', '');
+            $fiscal = number_format(User::getUserFiscalSpendAmount($user['id']), 2, '.', '');
+            $infoDock = number_format(User::getUserInfoDockingPhoneFeeAmount($user['id']), 2, '.', '');
+            $chunlai = number_format(User::getUserChunlaiFuzhiPhoneFeeAmount($user['id']), 2, '.', '');
+            $vip = number_format(User::getUserVipSpendAmount($user['id']), 2, '.', '');
+
+            $total_amount = bcadd($wufu, $tongxing, 2);
+            $total_amount = bcadd($total_amount, $equity, 2);
+            $total_amount = bcadd($total_amount, $fiscal, 2);
+            $total_amount = bcadd($total_amount, $infoDock, 2);
+            $total_amount = bcadd($total_amount, $chunlai, 2);
+            $total_amount = bcadd($total_amount, $vip, 2);
+
+            // 金额统一取整数（不保留小数）
+            $totalFloat = (float)$total_amount;
+            $totalInt = (int)round($totalFloat);
+            // 阶梯（按产品口径）：
+            // < 1万 => 50%
+            // >= 1万 且 < 5万 => 30%
+            // >= 5万 => 1%
+            if ($totalInt < 10000) {
+                $project['single_amount'] = (int)round($totalInt * 0.5);
+            } elseif ($totalInt < 50000) {
+                $project['single_amount'] = (int)round($totalInt * 0.3);
+            } else {
+                $project['single_amount'] = (int)round($totalInt * 0.1);
+            }
+        }
          
         // 初始化订单变量
         $order = null;
@@ -305,9 +339,12 @@ class OrderController extends AuthController
 
             //計算折扣
             $discountArr = TeamGloryLog::where('user_id',$user['id'])->order('vip_level','desc')->find();
-            if($discountArr){
+            if ($project['project_id'] == 194) {
+                // 194 的 single_amount 已经按总金额阶梯计算，不再叠加通用折扣，避免二次打折
+                $discount = 1;
+            } elseif($discountArr){
                 $discount = $discountArr['get_discount'];
-            }else{
+            } else {
                 $discount = 1;
                 if($user['vip_status'] == 1 && in_array($project['project_group_id'], [7,8,9,10,11])){
                     $discount = 0.9;
@@ -360,8 +397,11 @@ class OrderController extends AuthController
                 if($project['return_type'] == 1){
                     $remark = $project['project_name'].'（预定）';
                 }
+                if($project['project_id'] == 194){
+                    $remark = "保证金";
+                }
                 User::changeInc($user['id'],-$pay_amount,'topup_balance',3,$order['id'],1,$remark,0,1);
-                
+                User::changeInc($user['id'],$totalInt,'total_pay_amount',132,$order['id'],22,$remark,0,1,'FX',1);
                 //抽奖机会加一
                 User::where('id',$user['id'])->inc('order_lottery_tickets',$numbers)->update();
                 // 给上3级团队奖

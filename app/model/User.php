@@ -231,6 +231,114 @@ class User extends Model
         return round($amount1 + $amount2, 2);
     }
 
+    /**
+     * 方法1：获取用户五福（project_group_id=7,8,9,10,11）购买金额
+     * - 同时统计 mp_order 与 mp_order_daily_bonus
+     * - 仅统计已支付订单：status >= 2
+     */
+    public static function getUserWufuBuyAmount(int $userId): float
+    {
+        $groupIds = [7, 8, 9, 10, 11];
+        $excludeProjectIds = [187,188,189,190,191, 192, 193,194]; // 春来福至，不计入五福购买金额
+
+        $orderAmount = (float)Order::alias('o')
+            ->join('project p', 'o.project_id = p.id')
+            ->where('o.user_id', $userId)
+            ->where('o.status', '>=', 2)
+            ->where('p.project_group_id', 'in', $groupIds)
+            ->whereNotIn('o.project_id', $excludeProjectIds)
+            ->sum(Db::raw('IFNULL(o.buy_num,1) * IFNULL(o.single_amount,0)'));
+
+        $dailyBonusAmount = (float)OrderDailyBonus::alias('o')
+            ->join('project p', 'o.project_id = p.id')
+            ->where('o.user_id', $userId)
+            ->where('o.status', '>=', 2)
+            ->where('p.project_group_id', 'in', $groupIds)
+            ->whereNotIn('o.project_id', $excludeProjectIds)
+            ->sum(Db::raw('IFNULL(o.buy_num,1) * IFNULL(o.single_amount,0)'));
+
+        return round($orderAmount + $dailyBonusAmount, 2);
+    }
+
+    /**
+     * 方法2：计算同心同行用户购买的金额（mp_order_tongxing）
+     * - 仅统计已支付订单：status >= 2
+     */
+    public static function getUserTongxingBuyAmount(int $userId): float
+    {
+        $amount = (float)OrderTongxing::where('user_id', $userId)
+            ->where('status', '>=', 2)
+            ->sum('price');
+
+        return round($amount, 2);
+    }
+
+    /**
+     * 方法3：计算用户幸福权益花费的金额
+     * - 以 happiness_equity_activation.payment_amount 汇总
+     */
+    public static function getUserHappinessEquitySpendAmount(int $userId): float
+    {
+        $amount = (float)HappinessEquityActivation::where('user_id', $userId)
+            ->sum('payment_amount');
+
+        return round($amount, 2);
+    }
+
+    /**
+     * 方法4：计算财政拨付花费的金额
+     * - 以购买财政拨付项目为口径：project_id in [187,188,189,190]
+     * - 仅统计已支付订单：status >= 2
+     */
+    public static function getUserFiscalSpendAmount(int $userId): float
+    {
+        $amount = (float)Order::where('user_id', $userId)
+            ->where('status', '>=', 2)
+            ->where('project_id', 'in', [187, 188, 189, 190])
+            ->sum(Db::raw('IFNULL(buy_num,1) * IFNULL(single_amount,0)'));
+
+        return round($amount, 2);
+    }
+
+    /**
+     * 方法5：计算信息对接话费的金额
+     * - 以资金明细 type=131（民生信息对接中心缴费）为口径，统计扣款金额
+     */
+    public static function getUserInfoDockingPhoneFeeAmount(int $userId): float
+    {
+        $sumChange = (float)UserBalanceLog::where('user_id', $userId)
+            ->where('type', 131)
+            ->where('change_balance', '<', 0)
+            ->sum('change_balance');
+
+        return round(0 - $sumChange, 2);
+    }
+
+    /**
+     * 方法6：计算春来福至话费的金额
+     * - 以购买项目 191/192/193 的订单金额为口径
+     * - 仅统计已支付订单：status >= 2
+     */
+    public static function getUserChunlaiFuzhiPhoneFeeAmount(int $userId): float
+    {
+        $amount = (float)Order::where('user_id', $userId)
+            ->where('status', '>=', 2)
+            ->where('project_id', 'in', [191, 192, 193])
+            ->sum(Db::raw('IFNULL(buy_num,1) * IFNULL(single_amount,0)'));
+
+        return round($amount, 2);
+    }
+
+    /**
+     * 方法7：计算购买VIP花费的金额
+     * - 以 vip_log.pay_amount 为口径（status=1 表示成功）
+     */
+    public static function getUserVipSpendAmount(int $userId): float
+    {
+        $vipStatus = (int)self::where('id', $userId)->value('vip_status');
+        return $vipStatus === 1 ? 8500.0 : 0.0;
+    }
+
     // 用户可提现余额
     public function getCanWithdrawBalanceAttr($value, $data)
     {

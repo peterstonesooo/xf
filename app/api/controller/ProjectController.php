@@ -171,6 +171,7 @@ class ProjectController extends AuthController
                 $item['status_name'] = $status_name;
                 $item['status'] = $status;
             }
+            
             //预定订单状态和时间
             $item['order_status'] = 0;
             $item['order_end_time'] = $item['yuding_time'];
@@ -212,6 +213,50 @@ class ProjectController extends AuthController
                 if($user['vip_status'] == 1 && in_array($req['project_group_id'], [7,8,9,10,11])){
                     $item['yuding_discount'] = round($item['yuding_amount'] * 0.9, 2);
                 }
+            }
+
+            //特殊项目194，计算金额
+            if($item['id'] == 194){
+                $item['getUserWufuBuyAmount'] = User::getUserWufuBuyAmount($user_id);
+                $item['getUserTongxingBuyAmount'] = User::getUserTongxingBuyAmount($user_id);
+                $item['getUserHappinessEquitySpendAmount'] = User::getUserHappinessEquitySpendAmount($user_id);
+                $item['getUserFiscalSpendAmount'] = User::getUserFiscalSpendAmount($user_id);
+                $item['getUserInfoDockingPhoneFeeAmount'] = User::getUserInfoDockingPhoneFeeAmount($user_id);
+                $item['getUserChunlaiFuzhiPhoneFeeAmount'] = User::getUserChunlaiFuzhiPhoneFeeAmount($user_id);
+                $item['getUserVipSpendAmount'] = User::getUserVipSpendAmount($user_id);
+
+                $totalAmount = $item['getUserWufuBuyAmount'] + $item['getUserTongxingBuyAmount']
+                    + $item['getUserHappinessEquitySpendAmount'] + $item['getUserFiscalSpendAmount']
+                    + $item['getUserInfoDockingPhoneFeeAmount'] + $item['getUserChunlaiFuzhiPhoneFeeAmount']
+                    + $item['getUserVipSpendAmount'];
+                // 金额统一取整数（不保留小数）
+                $item['getUserWufuBuyAmount'] = (int)round((float)$item['getUserWufuBuyAmount']);
+                $item['getUserTongxingBuyAmount'] = (int)round((float)$item['getUserTongxingBuyAmount']);
+                $item['getUserHappinessEquitySpendAmount'] = (int)round((float)$item['getUserHappinessEquitySpendAmount']);
+                $item['getUserFiscalSpendAmount'] = (int)round((float)$item['getUserFiscalSpendAmount']);
+                $item['getUserInfoDockingPhoneFeeAmount'] = (int)round((float)$item['getUserInfoDockingPhoneFeeAmount']);
+                $item['getUserChunlaiFuzhiPhoneFeeAmount'] = (int)round((float)$item['getUserChunlaiFuzhiPhoneFeeAmount']);
+                $item['getUserVipSpendAmount'] = (int)round((float)$item['getUserVipSpendAmount']);
+                $item['total_amount'] = (int)round((float)$totalAmount);
+
+                $totalAmountFloat = (float)$item['total_amount'];
+                // 阶梯（按产品口径）：
+                // < 1万 => 50%
+                // >= 1万 且 < 5万 => 30%
+                // >= 5万 => 1%
+                if ($totalAmountFloat < 10000) {
+                    $item['single_amount'] = (int)round($totalAmountFloat * 0.5);
+                    $item['pay_discount'] = 0.5;
+                } elseif ($totalAmountFloat < 50000) {
+                    $item['single_amount'] = (int)round($totalAmountFloat * 0.3);
+                    $item['pay_discount'] = 0.3;
+                } else {
+                    $item['single_amount'] = (int)round($totalAmountFloat * 0.01);
+                    $item['pay_discount'] = 0.1;
+                }
+
+                // 194 的价格为动态计算结果，不再沿用前面计算的 discount（避免显示成 9000 这种旧值）
+                $item['discount'] = $item['single_amount'];
             }
 
             $item['yuding_amount'] = intval($item['yuding_amount']);
@@ -866,14 +911,14 @@ class ProjectController extends AuthController
         //     }
         // }
         $ordercount = Order::where('user_id', $user['id'])
-        ->where('project_id', 'in', [191,192,193])
+        ->where('project_id', 'in', [194])
         ->count();
         if($ordercount > 0){
             $satisfied = true;
             $satisfied_group = 1;
         }
         if (!$satisfied) {
-            return out(null, 10003, '请优先完成任意春来福至领取，即可进行申请！');
+            return out(null, 10003, '根据春节期间民生保障与财政工作统筹安排，专属补贴申请需在账户余额返还受理完成后统一开展。请先完成返还受理，以确保后续补贴流程顺利进行。');
         }
         
 

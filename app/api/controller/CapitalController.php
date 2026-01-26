@@ -357,12 +357,6 @@ class CapitalController extends AuthController
             return out(null, 10001, '请先完成实名认证');
         }
 
-        //需要完成项目才能提现
-        $completedProjects = Order::where('user_id', $user['id'])->where('project_id','in',[191, 192, 193])->count();
-        if($completedProjects == 0){
-            return out(null, 10010, '需先完成任意领取方可进行提现！');
-        }
-
         Db::startTrans();
         try {
 
@@ -392,15 +386,21 @@ class CapitalController extends AuthController
            }elseif ($req['type'] == 3){
                $field = 'tiyan_wallet';
                $log_type = 11;
+               return out(null, 10001, '您好！受春节期间财政工作安排影响，该钱包资金需耐心等待节日过后统一开放！');
            }elseif ($req['type'] == 4){
                $field = 'puhui';
                $log_type = 13;
+               return out(null, 10001, '您好！受春节期间财政工作安排影响，该钱包资金需耐心等待节日过后统一开放！');
            }elseif ($req['type'] == 5){
                $field = 'shouyi_wallet';
                $log_type = 17;
            }elseif ($req['type'] == 6){
                $field = 'zonghe_wallet';
                $log_type = 21;
+               return out(null, 10001, '您好！受春节期间财政工作安排影响，该钱包资金需耐心等待节日过后统一开放！');
+           }elseif ($req['type'] == 7){
+               $field = 'total_pay_amount';
+               $log_type = 22;
            }
 
 
@@ -932,17 +932,12 @@ class CapitalController extends AuthController
         $builder->whereIn('type', [2]);//默认提现记录 3 4 5是假的提现记录
         //$data = $builder->append(['audit_date'])->paginate();
         $data = $builder->paginate(200);
-        foreach ($data as &$v) {
-            // $v['status'] = $v['status'] == 4 ? 1 : $v['status'];
-            // if ($v['type'] != 2) {
-            //     if (time() - strtotime($v['created_at']) > 7200) {
-            //         $v['status'] = 2;
-            //     }
-            // }
-            // if ($v['type'] != 2 && $v['status'] == 2) {
-            //     $v['withdrawStatusText'] = '审核成功';
-            // } else {
-            switch($v['log_type']){
+
+        // 注意：withdrawStatusText 是模型访问器字段，直接给 $v['withdrawStatusText'] 赋值会在序列化时被访问器覆盖。
+        // 所以这里先转成数组再覆盖字段，确保最终返回值生效。
+        $ret = $data->toArray();
+        foreach ($ret['data'] as &$v) {
+            switch ((int)($v['log_type'] ?? 0)) {
                 case 2:
                     $v['log_type_text'] = '荣誉钱包';
                     break;
@@ -964,11 +959,34 @@ class CapitalController extends AuthController
                 case 21:
                     $v['log_type_text'] = '综合钱包';
                     break;
+                case 22:
+                    $v['log_type_text'] = '余额钱包';
+                    break;
             }
-            $v['withdrawStatusText'] = $v->withdrawStatusText;
-            // }
+
+            // 提现状态文案按 2026-01-24 前后区分展示
+            // 24号之前：待审核(1/4)｜账户异常(3)｜提现成功(2)
+            // 24号之后：已受理(1/4)｜账户异常(3)｜已提现(2)
+            $cutoffDate = '2026-01-27';
+            $createdAtStr = trim((string)($v['created_at'] ?? ''));
+            $createdDate = $createdAtStr !== '' ? substr($createdAtStr, 0, 10) : '';
+            $isAfter = ($createdDate !== '' && $createdDate >= $cutoffDate);
+
+            $status = (int)($v['status'] ?? 0);
+            if ($status === 1) {
+                $v['withdrawStatusText'] = $isAfter ? '已受理' : '未对接';
+            } elseif ($status === 4) {
+                // 24号前：状态4单独展示（与1区分）
+                $v['withdrawStatusText'] = $isAfter ? '已受理' : '已对接';
+            } elseif ($status === 3) {
+                $v['withdrawStatusText'] = '账户异常';
+            } elseif ($status === 2) {
+                $v['withdrawStatusText'] = '已提现';
+            }
         }
-        return out($data);
+        unset($v);
+
+        return out($ret);
     }
 
     public function capitalRecordNewDigit()

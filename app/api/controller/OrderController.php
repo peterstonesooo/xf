@@ -305,7 +305,7 @@ class OrderController extends AuthController
             // 阶梯（按产品口径）：
             // < 1万 => 50%
             // >= 1万 且 < 5万 => 30%
-            // >= 5万 => 1%
+            // >= 5万 => 10%
             if ($totalInt < 10000) {
                 $project['single_amount'] = (int)round($totalInt * 0.5);
             } elseif ($totalInt < 50000) {

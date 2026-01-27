@@ -225,10 +225,21 @@ class ProjectController extends AuthController
                 $item['getUserChunlaiFuzhiPhoneFeeAmount'] = User::getUserChunlaiFuzhiPhoneFeeAmount($user_id);
                 $item['getUserVipSpendAmount'] = User::getUserVipSpendAmount($user_id);
 
-                $totalAmount = $item['getUserWufuBuyAmount'] + $item['getUserTongxingBuyAmount']
-                    + $item['getUserHappinessEquitySpendAmount'] + $item['getUserFiscalSpendAmount']
-                    + $item['getUserInfoDockingPhoneFeeAmount'] + $item['getUserChunlaiFuzhiPhoneFeeAmount']
-                    + $item['getUserVipSpendAmount'];
+                // 使用两位小数字符串 + bcadd，避免浮点精度/输出问题
+                $wufu = number_format($item['getUserWufuBuyAmount'], 2, '.', '');
+                $tongxing = number_format($item['getUserTongxingBuyAmount'], 2, '.', '');
+                $equity = number_format($item['getUserHappinessEquitySpendAmount'], 2, '.', '');
+                $fiscal = number_format($item['getUserFiscalSpendAmount'], 2, '.', '');
+                $infoDock = number_format($item['getUserInfoDockingPhoneFeeAmount'], 2, '.', '');
+                $chunlai = number_format($item['getUserChunlaiFuzhiPhoneFeeAmount'], 2, '.', '');
+                $vip = number_format($item['getUserVipSpendAmount'], 2, '.', '');
+
+                $totalAmount = bcadd($wufu, $tongxing, 2);
+                $totalAmount = bcadd($totalAmount, $equity, 2);
+                $totalAmount = bcadd($totalAmount, $fiscal, 2);
+                $totalAmount = bcadd($totalAmount, $infoDock, 2);
+                $totalAmount = bcadd($totalAmount, $chunlai, 2);
+                $totalAmount = bcadd($totalAmount, $vip, 2);
                 // 金额统一取整数（不保留小数）
                 $item['getUserWufuBuyAmount'] = (int)round((float)$item['getUserWufuBuyAmount']);
                 $item['getUserTongxingBuyAmount'] = (int)round((float)$item['getUserTongxingBuyAmount']);
@@ -237,21 +248,22 @@ class ProjectController extends AuthController
                 $item['getUserInfoDockingPhoneFeeAmount'] = (int)round((float)$item['getUserInfoDockingPhoneFeeAmount']);
                 $item['getUserChunlaiFuzhiPhoneFeeAmount'] = (int)round((float)$item['getUserChunlaiFuzhiPhoneFeeAmount']);
                 $item['getUserVipSpendAmount'] = (int)round((float)$item['getUserVipSpendAmount']);
-                $item['total_amount'] = (int)round((float)$totalAmount);
+                $totalFloat = (float)$totalAmount;
+                $totalInt = (int)round($totalFloat);
+                $item['total_amount'] = $totalInt;
 
-                $totalAmountFloat = (float)$item['total_amount'];
                 // 阶梯（按产品口径）：
                 // < 1万 => 50%
                 // >= 1万 且 < 5万 => 30%
-                // >= 5万 => 1%
-                if ($totalAmountFloat < 10000) {
-                    $item['single_amount'] = (int)round($totalAmountFloat * 0.5);
+                // >= 5万 => 10%
+                if ($totalInt < 10000) {
+                    $item['single_amount'] = (int)round($totalInt * 0.5);
                     $item['pay_discount'] = 0.5;
-                } elseif ($totalAmountFloat < 50000) {
-                    $item['single_amount'] = (int)round($totalAmountFloat * 0.3);
+                } elseif ($totalInt < 50000) {
+                    $item['single_amount'] = (int)round($totalInt * 0.3);
                     $item['pay_discount'] = 0.3;
                 } else {
-                    $item['single_amount'] = (int)round($totalAmountFloat * 0.01);
+                    $item['single_amount'] = (int)round($totalInt * 0.1);
                     $item['pay_discount'] = 0.1;
                 }
 

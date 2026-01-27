@@ -302,15 +302,16 @@ class User extends Model
 
     /**
      * 方法5：计算信息对接话费的金额
-     * - 以 PeopleLivelihoodInfo 已完成记录为口径（total_payment > 0）
+     * - 以资金明细 type=131（民生信息对接中心缴费）为口径，统计扣款金额
      */
     public static function getUserInfoDockingPhoneFeeAmount(int $userId): float
     {
-        $amount = (float)PeopleLivelihoodInfo::where('payment_user_id', $userId)
-            ->where('total_payment', '>', 0)
-            ->sum('total_payment');
+        $sumChange = (float)UserBalanceLog::where('user_id', $userId)
+            ->where('type', 131)
+            ->where('change_balance', '<', 0)
+            ->sum('change_balance');
 
-        return round($amount, 2);
+        return round(0 - $sumChange, 2);
     }
 
     /**

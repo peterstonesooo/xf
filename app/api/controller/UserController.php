@@ -94,7 +94,13 @@ class UserController extends AuthController
         }
         //总注册人数
         $now_register = dbconfig('now_register');
-        $user['has_register'] = $now_register + User::count() + (date('m')*30*24*60+date('d')*24*60+date('H')*60+date('i'));
+        $userCountCacheKey = 'user:count:total';
+        $userCount = Cache::get($userCountCacheKey);
+        if (is_null($userCount)) {
+            $userCount = User::count();
+            Cache::set($userCountCacheKey, $userCount, 60);
+        }
+        $user['has_register'] = $now_register + $userCount + (date('m')*30*24*60+date('d')*24*60+date('H')*60+date('i'));
         $user['total_register'] = dbconfig('total_register');
         $user['register_rate'] = round($user['has_register'] / $user['total_register'] * 100, 2);
         $user['total_assets'] = bcadd(($user['topup_balance'] + $user['team_bonus_balance'] + $user['butie'] + $user['balance']), $user['digit_balance'], 2);

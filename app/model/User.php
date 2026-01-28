@@ -531,7 +531,18 @@ class User extends Model
         }
 
         
-        Db::startTrans();
+        $startedTrans = false;
+        try {
+            $pdo = Db::connect()->getPdo();
+            $inTransaction = $pdo && $pdo->inTransaction();
+        } catch (\Throwable $e) {
+            $inTransaction = false;
+        }
+
+        if (!$inTransaction) {
+            Db::startTrans();
+            $startedTrans = true;
+        }
         try {
             $ret = User::where('id',$user_id)->inc($field,$amount)->update();
             $sn = build_order_sn($user_id,$sn_prefix);
@@ -549,10 +560,14 @@ class User extends Model
                 'order_sn'=>$sn,
                 'is_delete'=>$is_delete,
             ]);
-            Db::commit();
+            if ($startedTrans) {
+                Db::commit();
+            }
             return 'success';
         }catch(\Exception $e){
-            Db::rollback();
+            if ($startedTrans) {
+                Db::rollback();
+            }
             //return $e->getMessage();
             throw $e;
         }
@@ -566,7 +581,18 @@ class User extends Model
 //            throw new Exception('余额不足');
 //        }
 
-        Db::startTrans();
+        $startedTrans = false;
+        try {
+            $pdo = Db::connect()->getPdo();
+            $inTransaction = $pdo && $pdo->inTransaction();
+        } catch (\Throwable $e) {
+            $inTransaction = false;
+        }
+
+        if (!$inTransaction) {
+            Db::startTrans();
+            $startedTrans = true;
+        }
         try {
             $ret = User::where('id',$user_id)->inc($field,$amount)->update();
             $sn = build_order_sn($user_id,$sn_prefix);
@@ -583,10 +609,14 @@ class User extends Model
                 'status' => $status,
                 'order_sn'=>$sn,
             ]);
-            Db::commit();
+            if ($startedTrans) {
+                Db::commit();
+            }
             return 'success';
         }catch(\Exception $e){
-            Db::rollback();
+            if ($startedTrans) {
+                Db::rollback();
+            }
             //return $e->getMessage();
             throw $e;
         }

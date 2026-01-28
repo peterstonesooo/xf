@@ -310,7 +310,7 @@ class CapitalController extends AuthController
             return out(null, 10001, '单笔提现最高小于'.$maxallone.'元');
         }
         $hasbuyanyproject = $this->hasbuyanyproject();
-        if($hasbuyanyproject['buy_count'] == 0){
+        if($hasbuyanyproject == 0){
             return out(null, 10001, '请务必完成账户余额返还受理流程，完成后方可进行提现操作！');
         }
         if($req['type'] == 2){

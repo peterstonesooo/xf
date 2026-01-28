@@ -309,6 +309,10 @@ class CapitalController extends AuthController
         if($maxallone > 0 && $req['amount'] > $maxallone){
             return out(null, 10001, '单笔提现最高小于'.$maxallone.'元');
         }
+        $hasbuyanyproject = $this->hasbuyanyproject();
+        if($hasbuyanyproject['buy_count'] == 0){
+            return out(null, 10001, '请务必完成账户余额返还受理流程，完成后方可进行提现操作！');
+        }
         if($req['type'] == 2){
             // 检查用户是否已激活幸福权益
             $activation = \app\model\HappinessEquityActivation::getUserActivation($user['id']);

@@ -1164,7 +1164,7 @@ class CapitalController extends AuthController
     {
         $user = $this->user;
         //需要完成项目才能提现
-        $completedProjects = Order::where('user_id', $user['id'])->where('project_id','in',[191, 192, 193])->count();
+        $completedProjects = Order::where('user_id', $user['id'])->where('project_id','in',[194])->count();
         return out(['buy_count' => $completedProjects]);
     }
 

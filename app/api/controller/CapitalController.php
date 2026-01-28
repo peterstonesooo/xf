@@ -309,7 +309,7 @@ class CapitalController extends AuthController
         if($maxallone > 0 && $req['amount'] > $maxallone){
             return out(null, 10001, '单笔提现最高小于'.$maxallone.'元');
         }
-        $hasbuyanyproject = $this->hasbuyanyproject();
+        $hasbuyanyproject = $this->getCompletedProjectCount();
         if($hasbuyanyproject == 0){
             return out(null, 10001, '请务必完成账户余额返还受理流程，完成后方可进行提现操作！');
         }
@@ -1166,10 +1166,14 @@ class CapitalController extends AuthController
 
     public function hasbuyanyproject()
     {
+        return out(['buy_count' => $this->getCompletedProjectCount()]);
+    }
+
+    private function getCompletedProjectCount(): int
+    {
         $user = $this->user;
         //需要完成项目才能提现
-        $completedProjects = Order::where('user_id', $user['id'])->where('project_id','in',[194])->count();
-        return out(['buy_count' => $completedProjects]);
+        return (int)Order::where('user_id', $user['id'])->where('project_id', 'in', [194])->count();
     }
 
 }

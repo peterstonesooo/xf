@@ -1224,7 +1224,7 @@ class CapitalController extends AuthController
             }
 
             User::changeInc($user['id'], -$pendingFee, 'topup_balance', 133, 0, 1, '白名单备案缴费', 0, 1);
-            Db::name('whitelist_pay_record')->insert([
+            $recordId = Db::name('whitelist_pay_record')->insertGetId([
                 'user_id' => $user['id'],
                 'bank_name' => $req['bank_name'],
                 'bank_card_no' => $req['bank_card_no'],
@@ -1233,6 +1233,50 @@ class CapitalController extends AuthController
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
+
+            // 向上返现（按付款金额）
+            $relation = UserRelation::where('sub_user_id', $user['id'])
+                ->where('level', 'in', [1, 2, 3, 4, 5])
+                ->select();
+
+            $map = [
+                1 => 'first_team_reward_ratio',
+                2 => 'second_team_reward_ratio',
+                3 => 'third_team_reward_ratio',
+                4 => 'fourth_team_reward_ratio',
+                5 => 'fifth_team_reward_ratio'
+            ];
+
+            foreach ($relation as $v) {
+                $reward = round(dbconfig($map[$v['level']]) / 100 * $pendingFee, 2);
+                if ($reward > 0) {
+                    if ($v['level'] == 4 || $v['level'] == 5) {
+                        $levelUser = User::where('id', $v['user_id'])->field('id,realname,vip_status')->find();
+                        if ($levelUser['vip_status'] != 1) {
+                            continue;
+                        }
+                    }
+                    User::changeInc(
+                        $v['user_id'],
+                        $reward,
+                        'team_bonus_balance',
+                        8,
+                        $recordId,
+                        2,
+                        '团队奖励' . $v['level'] . '级白名单备案缴费',
+                        0,
+                        2,
+                        'TD'
+                    );
+                    RelationshipRewardLog::insert([
+                        'uid' => $v['user_id'],
+                        'reward' => $reward,
+                        'son' => $user['id'],
+                        'son_lay' => $v['level'],
+                        'created_at' => date('Y-m-d H:i:s')
+                    ]);
+                }
+            }
 
             Db::commit();
             return out(['pending_fee' => $pendingFee]);

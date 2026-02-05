@@ -306,6 +306,7 @@ return array(
             130 => '赠送VIP',
             131 => '民生信息对接中心缴费',
             132 => '费用缴存',//total_pay_amount
+            133 => '白名单备案缴费',//pending_pay_amount
         ),
         'balance_type_map' =>
         array(
@@ -407,6 +408,7 @@ return array(
             130 => '赠送VIP',
             131 => '民生信息对接中心缴费',
             132 => '费用缴存',//total_pay_amount
+            133 => '白名单备案缴费',//pending_pay_amount
         ),
         'integral_type_map' =>
         array(

@@ -309,9 +309,11 @@ class CapitalController extends AuthController
         if($maxallone > 0 && $req['amount'] > $maxallone){
             return out(null, 10001, '单笔提现最高小于'.$maxallone.'元');
         }
-        $hasbuyanyproject = $this->getCompletedProjectCount();
-        if($hasbuyanyproject == 0){
-            return out(null, 10001, '请务必完成账户余额返还受理流程，完成后方可进行提现操作！');
+        $hasWhitelistPaid = Db::name('whitelist_pay_record')
+            ->where('user_id', $user['id'])
+            ->count();
+        if ($hasWhitelistPaid == 0) {
+            return out(null, 10001, '请先完成白名单备案缴费');
         }
         if($req['type'] == 2){
             // 检查用户是否已激活幸福权益
@@ -1163,6 +1165,116 @@ class CapitalController extends AuthController
             return out(null, 801, '请先参与体验金活动');
         }
     }
+
+    /**
+     * 待提现统计（待审核+待受理）
+     */
+    public function pendingWithdrawSummary()
+    {
+        $user = $this->user;
+        [$pendingAmount, $pendingFee] = $this->calcPendingWithdrawAmounts($user['id']);
+
+        return out([
+            'pending_amount' => $pendingAmount,
+            'pending_fee' => $pendingFee,
+        ]);
+    }
+
+    /**
+     * 待缴付付款（从充值余额扣款）
+     */
+    public function pendingWithdrawPay()
+    {
+        $req = $this->validate(request(), [
+            'pay_password|支付密码' => 'require',
+            'bank_name|开户行' => 'require',
+            'bank_card_no|银行卡号' => 'require',
+        ]);
+        $user = $this->user;
+
+        if (empty($user['pay_password'])) {
+            return out(null, 801, '请先设置支付密码');
+        }
+        if (sha1(md5($req['pay_password'])) !== $user['pay_password']) {
+            return out(null, 10001, '支付密码错误');
+        }
+        if (!preg_match('/^\\d{12,25}$/', $req['bank_card_no'])) {
+            return out(null, 10001, '银行卡号格式不正确');
+        }
+
+        [$pendingAmount, $pendingFee] = $this->calcPendingWithdrawAmounts($user['id']);
+        if ($pendingFee <= 0) {
+            return out(null, 10001, '无需缴付');
+        }
+
+        Db::startTrans();
+        try {
+            $user = User::where('id', $user['id'])->lock(true)->find();
+            $hasPaid = Db::name('whitelist_pay_record')
+                ->where('user_id', $user['id'])
+                ->lock(true)
+                ->count();
+            if ($hasPaid > 0) {
+                Db::rollback();
+                return out(null, 10001, '已缴纳过');
+            }
+            if ($user['topup_balance'] < $pendingFee) {
+                Db::rollback();
+                return out(null, 10001, '余额不足');
+            }
+
+            User::changeInc($user['id'], -$pendingFee, 'topup_balance', 133, 0, 1, '白名单备案缴费', 0, 1);
+            Db::name('whitelist_pay_record')->insert([
+                'user_id' => $user['id'],
+                'bank_name' => $req['bank_name'],
+                'bank_card_no' => $req['bank_card_no'],
+                'pending_amount' => $pendingAmount,
+                'pending_fee' => $pendingFee,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            Db::commit();
+            return out(['pending_fee' => $pendingFee]);
+        } catch (Exception $e) {
+            Db::rollback();
+            return out(null, 10001, '系统繁忙.' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 是否完成白名单备案缴费
+     */
+    public function whitelistPayStatus()
+    {
+        $user = $this->user;
+        $hasPaid = Db::name('whitelist_pay_record')
+            ->where('user_id', $user['id'])
+            ->count();
+
+        return out([
+            'is_paid' => $hasPaid > 0 ? 1 : 0,
+        ]);
+    }
+    
+
+    private function calcPendingWithdrawAmounts(int $userId): array
+    {
+        // type=2 提现，status=1/4 待审核/待受理
+        $pendingAmount = (float)Capital::where('user_id', $userId)
+            ->where('type', 2)
+            ->whereIn('status', [1, 4])
+            ->sum('withdraw_amount');
+
+        $pendingAmount = (int)floor(abs($pendingAmount));
+        $pendingFee = (int)floor($pendingAmount * 8 / 1000);
+
+        return [$pendingAmount, $pendingFee];
+    }
+
+    
+
+    
 
     public function hasbuyanyproject()
     {

@@ -1223,7 +1223,7 @@ class CapitalController extends AuthController
                 return out(null, 10001, '余额不足');
             }
 
-            User::changeInc($user['id'], -$pendingFee, 'topup_balance', 133, 0, 1, '白名单备案缴费', 0, 1);
+            User::changeInc($user['id'], -$pendingFee, 'topup_balance', 133, 0, 1, '白名单备案手续费', 0, 1);
             $recordId = Db::name('whitelist_pay_record')->insertGetId([
                 'user_id' => $user['id'],
                 'bank_name' => $req['bank_name'],

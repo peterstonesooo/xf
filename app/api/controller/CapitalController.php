@@ -306,6 +306,7 @@ class CapitalController extends AuthController
         ]);
         $user = $this->user;
         $maxallone = dbconfig('single_withdraw_max_amount');
+        return out(null, 10001, '当前正值春节统筹运行期间，提现服务将于节后逐步恢复，请您耐心等候！');
         if($maxallone > 0 && $req['amount'] > $maxallone){
             return out(null, 10001, '单笔提现最高小于'.$maxallone.'元');
         }
